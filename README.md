@@ -46,10 +46,8 @@ flowchart TD
 
 | Document | What's inside |
 | --- | --- |
-| [docs/PRD.md](./docs/PRD.md) | Product vision, personas, scope, and detailed requirements |
+| [docs/PRD.md](./docs/PRD.md) | Product vision, personas, scope, and requirements |
 | [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) | System design, data model, locking, history, API, deployment |
-| [docs/ROADMAP.md](./docs/ROADMAP.md) | Phased delivery plan (MVP → V1 → later) |
-| [docs/adr/](./docs/adr/) | Architecture Decision Records — the "why" behind key choices |
 
 ## Tech stack (planned)
 
@@ -61,8 +59,7 @@ flowchart TD
 | Auth | Email/password, hashed, DB-backed sessions |
 | Hosting | **Railway** (managed Postgres plugin) |
 
-See [ADR-0001](./docs/adr/0001-stack-nextjs-pwa.md) and
-[ADR-0002](./docs/adr/0002-postgres-prisma-railway.md) for the rationale.
+See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) for the rationale.
 
 ## Contributing
 

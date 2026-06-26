@@ -1,10 +1,9 @@
 # Keepou — Architecture
 
-**Status:** Draft for review · **Last updated:** 2026-06-26
+**Status:** Reviewed · **Last updated:** 2026-06-26
 
 This document describes the technical design behind the requirements in
-[PRD.md](./PRD.md). Decisions with trade-offs are recorded as
-[ADRs](./adr/).
+[PRD.md](./PRD.md).
 
 ---
 
@@ -37,10 +36,10 @@ project as the UI (Route Handlers). This keeps deployment to a single artifact.
 
 | Concern | Choice | Why |
 | --- | --- | --- |
-| App framework | **Next.js (App Router) + React + TypeScript** | One project for UI + API, SSR for fast first paint, easy PWA. See [ADR-0001](./adr/0001-stack-nextjs-pwa.md). |
-| Database | **PostgreSQL** | Robust concurrency for shared notes + history; first-class on Railway. See [ADR-0002](./adr/0002-postgres-prisma-railway.md). |
+| App framework | **Next.js (App Router) + React + TypeScript** | One project for UI + API, SSR for fast first paint, easy PWA. |
+| Database | **PostgreSQL** | Robust concurrency for shared notes + history; first-class on Railway. |
 | ORM | **Prisma** | Typed schema, migrations, good DX. |
-| Auth | **Email/password + DB sessions** | No third-party dependency; works offline of any IdP. See [ADR-0005](./adr/0005-allowlist-access-control.md). |
+| Auth | **Email/password + DB sessions** | No third-party dependency; works without any external identity provider. |
 | Hosting | **Railway** | Managed Postgres plugin injects `DATABASE_URL`; simple deploys. |
 | Client delivery | **PWA** (manifest + service worker) | Installable, responsive, one codebase for mobile + desktop. |
 
@@ -119,8 +118,8 @@ erDiagram
 - **Session.tokenHash** — only a hash of the cookie token is stored, so a DB leak
   doesn't yield usable sessions.
 - **Note.content** — stored as **JSON** to natively support **checklists** (an
-  array of `{ text, checked }`) alongside plain text, without a schema change
-  when we add richer blocks later. A plain-text note is `{ type: "text", text }`.
+  array of `{ text, checked }`) alongside plain text, without a schema change if
+  richer blocks are added later. A plain-text note is `{ type: "text", text }`.
 - **Note.lockedById / lockedAt** — the single-editor lock (see §5). Only
   meaningful when `isPublic`.
 - **NoteVersion** — immutable snapshot per content-changing save (FR-H1). Append
@@ -170,8 +169,7 @@ flowchart TD
 ## 5. Locking mechanism (public notes)
 
 A **pessimistic, single-writer lock** with a short TTL and client heartbeat —
-chosen over real-time co-editing for simplicity. See
-[ADR-0003](./adr/0003-single-editor-lock.md).
+chosen over real-time co-editing for simplicity.
 
 - **Acquire** — `POST /api/notes/:id/lock`. Granted if the note is unlocked, the
   existing lock is **stale** (`now − lockedAt > TTL`), or the caller already
@@ -212,13 +210,14 @@ sequenceDiagram
   `NoteVersion` (snapshot of title + content + `authorId` + timestamp) in the
   **same transaction** as the note update (FR-H1).
 - Non-content changes (visibility, color, archive) and lifecycle (create/delete)
-  append an `ActivityLog` entry instead (FR-H4).
-- **Viewing**: `GET /api/notes/:id/history` returns versions + activity, ordered
-  newest-first, gated by the same visibility rules as the note itself (FR-H2).
-- **MVP is read-only** (FR-H5). **Restore** (FR-H6) is a V1 feature: it will
-  create a *new* version equal to the chosen old one (non-destructive).
-- **Retention**: keep everything in the MVP; a pruning policy comes later
-  (FR-H7).
+  append an `ActivityLog` entry instead (FR-H4). It is **stored for audit but not
+  surfaced in the UI for now**.
+- **Viewing**: `GET /api/notes/:id/history` returns the content **versions**,
+  ordered newest-first, gated by the same visibility rules as the note itself
+  (FR-H2).
+- History is **read-only** (FR-H5): viewing past states, no restore.
+- **Retention**: all versions are kept (snapshots are small text/checklist
+  content).
 
 ## 7. API surface (REST, JSON)
 
@@ -235,7 +234,7 @@ sequenceDiagram
 | DELETE | `/api/notes/:id` | Delete note | Owner or admin |
 | POST | `/api/notes/:id/lock` | Acquire / heartbeat lock | `423` if held by another |
 | DELETE | `/api/notes/:id/lock` | Release lock | |
-| GET | `/api/notes/:id/history` | Versions + activity | Visibility-checked |
+| GET | `/api/notes/:id/history` | Content version history | Visibility-checked |
 | GET | `/api/search?q=` | Search notes | Own + accessible public |
 | GET | `/api/admin/users` | List members (registered + allowed) | Admin |
 | POST | `/api/admin/allowlist` | Add allowed email | Admin |
@@ -256,9 +255,8 @@ sequenceDiagram
 
 - **Manifest** (`manifest.webmanifest`): name, icons, theme color, `display:
   standalone`, start URL.
-- **Service worker**: in the MVP, a minimal SW for installability and static-asset
-  caching (app shell). **Offline editing / background sync is a later phase**
-  (FR-P3).
+- **Service worker**: a minimal SW for installability and static-asset caching
+  (app shell). Offline editing and background sync are out of scope.
 - **Responsive layout**: CSS multi-column masonry that collapses from 4 columns
   (desktop) to 1–2 (mobile); touch-friendly targets; a single floating composer.
 
@@ -288,13 +286,3 @@ sequenceDiagram
 - **Last-admin guard** prevents locking everyone out of administration (FR-U5).
 - Private-note content is shielded **even from admins** (§4.2).
 - AGPL-3.0: running a modified network service obliges offering source to users.
-
-## 12. Future evolution (non-binding)
-
-- **Presence & live read** — show who's viewing; push saved updates via SSE so
-  read-only viewers refresh automatically (stepping stone, not co-editing).
-- **Restore** from history (V1), then **retention/pruning** policies.
-- **Labels, pinning, search ranking.**
-- **Richer content** — Markdown, images (object storage), attachments.
-- **Email** — invitations and password reset once SMTP is configured.
-- **Offline-first** — service-worker queued edits with conflict handling.

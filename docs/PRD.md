@@ -1,6 +1,6 @@
 # Keepou — Product Requirements Document (PRD)
 
-**Status:** Draft for review · **Owner:** @guillaume · **Last updated:** 2026-06-26
+**Status:** Reviewed · **Owner:** @fregogui · **Last updated:** 2026-06-26
 
 ---
 
@@ -24,13 +24,16 @@ notes, and a full history of who changed what.
 - The app is **installable** and pleasant on both phone and desktop.
 - A single instance is **trivial to self-host** (one database, one service).
 
-### Non-goals (explicitly out of scope, at least for now)
+### Non-goals (out of scope — Keepou stays small)
 - ❌ Real-time collaborative co-editing (multiple live cursors, CRDT merge).
 - ❌ Multi-tenant SaaS (one instance = one group; no org isolation).
 - ❌ Public/anonymous access — everything is behind login.
-- ❌ Rich content beyond text + checklists in the MVP (no images, no Markdown).
-- ❌ Email-dependent flows (password reset, email invites) in the MVP.
+- ❌ Rich content beyond text + checklists (no images, no Markdown).
+- ❌ Email-dependent flows (password reset, email invitations — no SMTP
+  dependency).
 - ❌ Native mobile apps (the PWA covers mobile).
+- ❌ Nice-to-haves that aren't part of the current scope: pinning, labels/tags,
+  history restore, retention/pruning, offline editing, and allowlist bulk-add.
 
 ## 3. Personas
 
@@ -55,111 +58,98 @@ notes, and a full history of who changed what.
 
 ## 5. Functional requirements
 
-Each requirement is tagged: **[MVP]**, **[V1]** (right after MVP), or **[Later]**.
-
 ### 5.1 Access & accounts
-- **FR-A1 [MVP]** The first account ever created becomes **Admin**, bypassing the
+- **FR-A1** The first account ever created becomes **Admin**, bypassing the
   allowlist (bootstrap).
-- **FR-A2 [MVP]** Subsequent sign-ups are allowed **only if the email is on the
+- **FR-A2** Subsequent sign-ups are allowed **only if the email is on the
   allowlist**; otherwise the user is politely rejected on the login/register page.
-- **FR-A3 [MVP]** Authentication is **email + password**; passwords are stored
-  hashed.
-- **FR-A4 [MVP]** Sessions persist via secure, httpOnly cookies.
-- **FR-A5 [MVP]** A **deactivated** user can no longer sign in, but **their notes
-  are kept** (never deleted). Reactivation restores access.
-- **FR-A6 [Later]** Password reset by email, email-based invitations (requires
-  SMTP).
+- **FR-A3** Authentication is **email + password**; passwords are stored hashed.
+- **FR-A4** Sessions persist via secure, httpOnly cookies.
+- **FR-A5** A **deactivated** user can no longer sign in, but **their notes are
+  kept** (never deleted). Reactivation restores access.
 
 ### 5.2 User management (admin interface)
-- **FR-U1 [MVP]** Admins can **add / remove emails** on the allowlist.
-- **FR-U2 [MVP]** Admins can see the member list: who is **registered** vs merely
+- **FR-U1** Admins can **add / remove emails** on the allowlist.
+- **FR-U2** Admins can see the member list: who is **registered** vs merely
   **allowed (pending first sign-in)**.
-- **FR-U3 [MVP]** Admins can **promote** a member to admin and **demote** an admin
-  back to member.
-- **FR-U4 [MVP]** Admins can **deactivate / reactivate** a user (no hard delete).
-- **FR-U5 [MVP]** Guardrail: the instance must always have **at least one active
-  admin** (an admin cannot demote/deactivate the last admin — including
-  themselves).
+- **FR-U3** Admins can **promote** a member to admin and **demote** an admin back
+  to member.
+- **FR-U4** Admins can **deactivate / reactivate** a user (no hard delete).
+- **FR-U5** Guardrail: the instance must always have **at least one active admin**
+  (an admin cannot demote/deactivate the last admin — including themselves).
 
 ### 5.3 Notes
-- **FR-N1 [MVP]** A member can **create, read, update, archive** their notes.
-- **FR-N2 [MVP]** A note is **private** (owner-only) or **public** (all members).
-- **FR-N3 [MVP]** Note content supports **plain text and checklists** (checkable
-  items).
-- **FR-N4 [MVP]** A note has a **color** chosen from a fixed palette.
-- **FR-N5 [MVP]** Only the **owner** can change a note's **visibility**
-  (private ⇄ public).
-- **FR-N6 [MVP]** **Deleting** a note (private or public) is restricted to the
-  **owner or an admin**.
-- **FR-N7 [MVP]** Any member can **edit the content** of a public note (subject to
-  the lock, see 5.4).
-- **FR-N8 [MVP]** **Archive** hides a note from the main board without deleting it.
-- **FR-N9 [V1]** **Pinning** notes to the top.
-- **FR-N10 [V1]** **Labels / tags** for organization.
+- **FR-N1** A member can **create, read, update, archive** their notes.
+- **FR-N2** A note is **private** (owner-only) or **public** (all members).
+- **FR-N3** Note content supports **plain text and checklists** (checkable items).
+- **FR-N4** A note has a **color** chosen from a fixed palette.
+- **FR-N5** Only the **owner** can change a note's **visibility** (private ⇄
+  public).
+- **FR-N6** **Deleting** a note (private or public) is restricted to the **owner or
+  an admin**.
+- **FR-N7** Any member can **edit the content** of a public note (subject to the
+  lock, see 5.4).
+- **FR-N8** **Archive** hides a note from the main board without deleting it.
 
 ### 5.4 Public-note locking (single editor)
-- **FR-L1 [MVP]** When a member opens a public note to edit, the client attempts
-  to **acquire a lock**.
-- **FR-L2 [MVP]** Only the **lock holder** can save changes to a public note;
-  others are in **read-only** mode.
-- **FR-L3 [MVP]** While editing, the client **refreshes the lock** (heartbeat) so
-  it doesn't expire mid-session.
-- **FR-L4 [MVP]** A lock **auto-expires** after a short TTL of inactivity (e.g.
-  ~30s without heartbeat) so a closed tab never blocks others permanently.
-- **FR-L5 [MVP]** If a member tries to edit a locked note, they see a **gentle
-  message** identifying who's editing and inviting them to try again shortly —
-  never a hard error.
-- **FR-L6 [MVP]** Leaving the editor **releases the lock** promptly.
+- **FR-L1** When a member opens a public note to edit, the client attempts to
+  **acquire a lock**.
+- **FR-L2** Only the **lock holder** can save changes to a public note; others are
+  in **read-only** mode.
+- **FR-L3** While editing, the client **refreshes the lock** (heartbeat) so it
+  doesn't expire mid-session.
+- **FR-L4** A lock **auto-expires** after a short TTL of inactivity (e.g. ~30s
+  without heartbeat) so a closed tab never blocks others permanently.
+- **FR-L5** If a member tries to edit a locked note, they see a **gentle message**
+  identifying who's editing and inviting them to try again shortly — never a hard
+  error.
+- **FR-L6** Leaving the editor **releases the lock** promptly.
 
 ### 5.5 History
-- **FR-H1 [MVP]** Each **save that changes title or content** creates an immutable
+- **FR-H1** Each **save that changes title or content** creates an immutable
   **version** with **author + timestamp**.
-- **FR-H2 [MVP]** Members can **view the history** of any note they can see
-  (public-note history is visible to all members; private-note history only to
-  the owner).
-- **FR-H3 [MVP]** History shows **who** made each change and **when**, and lets the
+- **FR-H2** Members can **view the history** of any note they can see (public-note
+  history is visible to all members; private-note history only to the owner).
+- **FR-H3** History shows **who** made each change and **when**, and lets the
   viewer read the **content of any past version**.
-- **FR-H4 [MVP]** Changes to color / visibility / archive are recorded in a
-  **lightweight activity log**, not as content versions.
-- **FR-H5 [MVP]** **No restore** in the MVP — history is read-only.
-- **FR-H6 [V1]** **Restore** a note to a previous version (non-destructive: the
-  restore itself becomes a new version).
-- **FR-H7 [Later]** **Retention policy** (prune versions older than N days / keep
-  last K). MVP keeps all versions.
+- **FR-H4** Changes to color / visibility / archive are recorded in a **lightweight
+  activity log** (stored for audit; **not surfaced in the UI for now**), separate
+  from content versions.
+- **FR-H5** History is **read-only** — viewing past states, no restore.
 
 ### 5.6 Organization & search
-- **FR-S1 [MVP]** A member can **search** their notes (and accessible public
-  notes) by title/content (simple text match).
-- **FR-S2 [MVP]** Two boards: **"My notes"** (the member's own) and **"Public"**
-  (all public notes, with author shown).
+- **FR-S1** A member can **search** their notes (and accessible public notes) by
+  title/content (simple text match).
+- **FR-S2** Two boards: **"My notes"** (the member's own) and **"Public"** (all
+  public notes, with author shown).
 
 ### 5.7 Platform (PWA)
-- **FR-P1 [MVP]** The app is a **responsive PWA**: usable on phone and desktop,
-  with a web app manifest and installability.
-- **FR-P2 [MVP]** Layout adapts (multi-column masonry on desktop, 1–2 columns on
-  mobile).
-- **FR-P3 [Later]** Offline reading / queued edits via service worker caching.
+- **FR-P1** The app is a **responsive PWA**: usable on phone and desktop, with a
+  web app manifest and installability.
+- **FR-P2** Layout adapts (multi-column masonry on desktop, 1–2 columns on mobile).
+
+> **Settled decisions:** the activity log is **stored but not shown in the UI**
+> (FR-H4); the allowlist is managed **one email at a time** (no bulk add); and the
+> **first registered user becomes admin** (FR-A1), with no environment-seeded admin.
 
 ## 6. Key user stories
 
 > Format: _As a **role**, I want **capability**, so that **benefit**._
 
-- **[MVP]** As an **admin**, I want to add an email to the allowlist, so that a
-  new person can sign up.
-- **[MVP]** As a **prospective user** not on the list, I want a clear message when
-  I try to register, so that I know to ask the admin for access.
-- **[MVP]** As a **member**, I want to jot a private note quickly, so that I don't
-  lose a thought.
-- **[MVP]** As a **member**, I want to make a note public, so that the whole group
-  can read and update it.
-- **[MVP]** As a **member**, I want to be told politely when a public note is
-  being edited by someone else, so that I wait instead of losing my changes.
-- **[MVP]** As a **member**, I want to see who last changed a shared note and
-  when, so that I can trust its content.
-- **[MVP]** As an **admin**, I want to deactivate a user, so that they can no
-  longer sign in — without losing their notes.
-- **[V1]** As a **member**, I want to restore a note to a previous version, so
-  that I can undo a bad edit.
+- As an **admin**, I want to add an email to the allowlist, so that a new person
+  can sign up.
+- As a **prospective user** not on the list, I want a clear message when I try to
+  register, so that I know to ask the admin for access.
+- As a **member**, I want to jot a private note quickly, so that I don't lose a
+  thought.
+- As a **member**, I want to make a note public, so that the whole group can read
+  and update it.
+- As a **member**, I want to be told politely when a public note is being edited by
+  someone else, so that I wait instead of losing my changes.
+- As a **member**, I want to see who last changed a shared note and when, so that I
+  can trust its content.
+- As an **admin**, I want to deactivate a user, so that they can no longer sign in
+  — without losing their notes.
 
 ## 7. UX principles
 
@@ -177,11 +167,3 @@ Each requirement is tagged: **[MVP]**, **[V1]** (right after MVP), or **[Later]*
 - Zero "lost edit" incidents on public notes (lock effectiveness).
 - 100% of public-note changes attributable to a user via history.
 - An admin can onboard a new member end-to-end in < 1 minute.
-
-## 9. Open questions / to revisit
-
-- Should the activity log (color/visibility/archive changes) be surfaced in the
-  UI in the MVP, or only stored for later?
-- Do we want a per-note "viewers" indicator in V1 (presence), as a stepping stone
-  toward live updates?
-- Allowlist UX: bulk add (paste multiple emails) in MVP or V1?
