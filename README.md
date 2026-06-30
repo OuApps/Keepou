@@ -1,68 +1,25 @@
-# Keepou
+# CODING AGENTS: READ THIS FIRST
 
-> A simple, self-hosted, multi-user alternative to Google Keep — with private
-> and shared public notes, a single-editor lock for safe collaboration, and full
-> note history.
+This is a **handoff bundle** from Claude Design (claude.ai/design).
 
-**Status:** 📐 _Specification & design phase._ This repository currently
-contains the product and architecture specs. Application code follows once the
-UI is designed (with Claude Design).
+A user mocked up designs in HTML/CSS/JS using an AI design tool, then exported this bundle so a coding agent can implement the designs for real.
 
-**License:** [AGPL-3.0](./LICENSE)
+## What you should do — IMPORTANT
 
----
+**Read the chat transcripts first.** There are 1 chat transcript(s) in `chats/`. The transcripts show the full back-and-forth between the user and the design assistant — they tell you **what the user actually wants** and **where they landed** after iterating. Don't skip them. The final HTML files are the output, but the chat is where the intent lives.
 
-## What is Keepou?
+**Read `project/Keepou - Auth.dc.html` in full.** The user had this file open when they triggered the handoff, so it's almost certainly the primary design they want built. Read it top to bottom — don't skim. Then **follow its imports**: open every file it pulls in (shared components, CSS, scripts) so you understand how the pieces fit together before you start implementing.
 
-Keepou is a minimalist note-taking app you host yourself for a small group — a
-family, a team, a community. It keeps the spirit of Google Keep (fast, simple,
-colorful cards) while adding what a self-hosted multi-user tool needs:
+**If anything is ambiguous, ask the user to confirm before you start implementing.** It's much cheaper to clarify scope up front than to build the wrong thing.
 
-- **Private or public notes.** A private note is yours alone. A public note is
-  visible **and editable by every member**.
-- **One editor at a time on public notes.** A lightweight lock prevents two
-  people from clobbering each other; if a note is busy, you're gently asked to
-  wait.
-- **Full history.** Every save is recorded with its author and timestamp, so you
-  can see who changed what and when.
-- **Invite-only by design.** Access is gated by an admin-managed email
-  allowlist. The first user to sign up becomes the admin.
-- **Installable PWA.** Works on phone and desktop, responsive, installable to the
-  home screen.
+## About the design files
 
-## How access works (in one picture)
+The design medium is **HTML/CSS/JS** — these are prototypes, not production code. Your job is to **recreate them pixel-perfectly** in whatever technology makes sense for the target codebase (React, Vue, native, whatever fits). Match the visual output; don't copy the prototype's internal structure unless it happens to fit.
 
-```mermaid
-flowchart TD
-    A[Visitor opens the app] --> B{Email on the allowlist?}
-    B -- No --> C[Politely rejected]
-    B -- Yes --> D[Create account / sign in]
-    D --> E[Access notes]
-    F[First ever user] --> G[Becomes Admin automatically]
-    G --> H[Manages allowlist & promotes admins]
-```
+**Don't render these files in a browser or take screenshots unless the user asks you to.** Everything you need — dimensions, colors, layout rules — is spelled out in the source. Read the HTML and CSS directly; a screenshot won't tell you anything they don't.
 
-## Documentation
+## Bundle contents
 
-| Document | What's inside |
-| --- | --- |
-| [docs/PRD.md](./docs/PRD.md) | Product vision, personas, scope, and requirements |
-| [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) | System design, data model, locking, history, API, deployment |
-
-## Tech stack (planned)
-
-| Layer | Choice |
-| --- | --- |
-| Frontend | Next.js (App Router) + React, responsive, **PWA** |
-| Backend | Next.js Route Handlers (same project) |
-| Database | **PostgreSQL** via Prisma |
-| Auth | Email/password, hashed, DB-backed sessions |
-| Hosting | **Railway** (managed Postgres plugin) |
-
-See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) for the rationale.
-
-## Contributing
-
-Keepou is licensed under the **GNU Affero General Public License v3.0**. If you
-run a modified version as a network service, the AGPL requires you to offer your
-users the corresponding source. See [LICENSE](./LICENSE).
+- `README.md` — this file
+- `chats/` — conversation transcripts (read these!)
+- `project/` — the `Keepou` project files (HTML prototypes, assets, components)

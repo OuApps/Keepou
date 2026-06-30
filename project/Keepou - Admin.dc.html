@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="design_doc_mode" content="canvas">
+<style>*{box-sizing:border-box}body{margin:0}</style>
+</helmet>
+
+<!-- ===== INTRO ===== -->
+<div style="position:absolute;left:80px;top:36px;width:1200px">
+  <div data-drags-parent="1" style="display:flex;align-items:center;gap:14px">
+    <img src="assets/keepou-mascot.png" alt="Keepou" style="width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 4px 8px rgba(46,42,32,.18))">
+    <div>
+      <div style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:25px;color:#2E2A20">Administration</div>
+      <div style="font-family:'Nunito Sans',sans-serif;font-size:14px;color:#6B6456;margin-top:2px">Allowlist · membres inscrits vs invités en attente · rôles &amp; activation. <b style="color:#3A5132">Bascule l'onglet</b> et ajoute un e-mail.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DESKTOP ADMIN ===== -->
+<div style="position:absolute;left:80px;top:140px;width:1200px">
+  <div data-drags-parent="1" style="font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:13px;color:#5C5648;margin-bottom:10px">Desktop · gestion des accès</div>
+  <div style="width:1200px;height:800px;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08),0 30px 60px -40px rgba(46,42,32,.5);background:#FBF4E6;display:flex">
+
+    <!-- sidebar -->
+    <div style="width:230px;flex:none;background:#fff;border-right:1px solid #EBDFC6;padding:20px 16px;display:flex;flex-direction:column;gap:5px">
+      <div style="display:flex;align-items:center;gap:9px;padding:0 8px 18px"><img src="assets/keepou-mascot.png" style="width:30px;height:30px;object-fit:contain"><span style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:20px;color:#2E2A20">Keepou</span></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-family:'Nunito Sans',sans-serif;font-weight:600;font-size:14px;color:#6E6757"><svg width="16" height="16" viewBox="0 0 20 20"><rect x="3" y="3" width="6" height="6" rx="1.5" fill="none" stroke="#9A917E" stroke-width="1.5"></rect><rect x="11" y="3" width="6" height="6" rx="1.5" fill="none" stroke="#9A917E" stroke-width="1.5"></rect><rect x="3" y="11" width="6" height="6" rx="1.5" fill="none" stroke="#9A917E" stroke-width="1.5"></rect><rect x="11" y="11" width="6" height="6" rx="1.5" fill="none" stroke="#9A917E" stroke-width="1.5"></rect></svg>Mes notes</div>
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:#FBF4E6;border:1px solid #EBDFC6;font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:14px;color:#2E2A20" data-comment-anchor="1396670e56-div"><svg width="16" height="16" viewBox="0 0 20 20"><path d="M10 2.5 L16.5 5.5 V10 c0 4-3 6.5-6.5 7.5 C6.5 16.5 3.5 14 3.5 10 V5.5 Z" fill="none" stroke="#3A5132" stroke-width="1.5" stroke-linejoin="round"></path></svg>Administration</div>
+      <div style="margin-top:auto;display:flex;align-items:center;gap:9px;padding:8px"><div style="width:30px;height:30px;border-radius:999px;background:#3A5132;color:#fff;font-family:'Fredoka',sans-serif;font-weight:600;font-size:12px;display:flex;align-items:center;justify-content:center">MA</div><div style="font-family:'Nunito Sans',sans-serif;font-size:12.5px;color:#4A4436;line-height:1.2">Marie<br><span style="color:#9A917E;font-size:11px">Admin</span></div></div>
+    </div>
+
+    <!-- main -->
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+      <!-- header -->
+      <div style="padding:24px 30px 0">
+        <div style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:26px;color:#2E2A20">Gestion des accès</div>
+        <div style="font-family:'Nunito Sans',sans-serif;font-size:13px;color:#8A8270;margin-top:2px">Seuls les e-mails autorisés peuvent créer un compte sur cette instance.</div>
+
+        <!-- add to allowlist -->
+        <div style="margin-top:18px;display:flex;gap:10px;align-items:center;background:#fff;border:1px solid #EBDFC6;border-radius:12px;padding:9px 9px 9px 16px;box-shadow:0 4px 14px -10px rgba(46,42,32,.3)">
+          <svg width="18" height="18" viewBox="0 0 20 20"><rect x="2.5" y="4.5" width="15" height="11" rx="2" fill="none" stroke="#A99E87" stroke-width="1.4"></rect><path d="M3 5.5 L10 10.5 L17 5.5" fill="none" stroke="#A99E87" stroke-width="1.4" stroke-linejoin="round"></path></svg>
+          <span style="flex:1;font-family:'Nunito Sans',sans-serif;font-size:14.5px;color:{{ inputColor }}">{{ inputText }}</span>
+          <span onClick="{{ addEmail }}" style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:13.5px;color:#fff;background:#3A5132;padding:10px 20px;border-radius:999px;cursor:pointer">Ajouter à la liste</span>
+        </div>
+
+        <!-- tabs -->
+        <div style="display:flex;gap:24px;margin-top:22px;border-bottom:1px solid #EBDFC6">
+          <div onClick="{{ showMembers }}" style="{{ membersTabStyle }}">Membres <span style="{{ membersBadge }}">{{ membersCount }}</span></div>
+          <div onClick="{{ showPending }}" style="{{ pendingTabStyle }}">Invités en attente <span style="{{ pendingBadge }}">{{ pendingCount }}</span></div>
+        </div>
+      </div>
+
+      <!-- list -->
+      <div style="flex:1;overflow:hidden;padding:10px 30px 24px">
+
+        <!-- MEMBERS -->
+        <sc-if value="{{ isMembers }}" hint-placeholder-val="{{ true }}">
+          <sc-for list="{{ members }}" as="m" hint-placeholder-count="4">
+            <div style="display:flex;align-items:center;gap:14px;padding:14px 4px;border-bottom:1px solid #F0E7D6">
+              <div style="{{ m.avatarStyle }}">{{ m.initial }}</div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:9px"><span style="font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:14.5px;color:#2E2A20">{{ m.name }}</span><sc-if value="{{ m.isAdmin }}" hint-placeholder-val="{{ false }}"><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#3A5132;background:rgba(58,81,50,.12);padding:2px 8px;border-radius:999px">admin</span></sc-if></div>
+                <div style="font-family:'Nunito Sans',sans-serif;font-size:12.5px;color:#9A917E;margin-top:2px">{{ m.email }} · inscrit {{ m.joined }}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="{{ m.statusStyle }}">{{ m.statusLabel }}</span>
+                <span style="font-family:'Nunito Sans',sans-serif;font-size:20px;color:#C6BCA4;cursor:pointer;line-height:1;padding:0 6px">⋯</span>
+              </div>
+            </div>
+          </sc-for>
+        </sc-if>
+
+        <!-- PENDING -->
+        <sc-if value="{{ isPending }}" hint-placeholder-val="{{ false }}">
+          <sc-for list="{{ pending }}" as="p" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:14px;padding:14px 4px;border-bottom:1px solid #F0E7D6">
+              <div style="width:38px;height:38px;border-radius:999px;border:1.6px dashed #C6BCA4;display:flex;align-items:center;justify-content:center;flex:none"><svg width="16" height="16" viewBox="0 0 20 20"><rect x="2.5" y="4.5" width="15" height="11" rx="2" fill="none" stroke="#A99E87" stroke-width="1.4"></rect><path d="M3 5.5 L10 10.5 L17 5.5" fill="none" stroke="#A99E87" stroke-width="1.4" stroke-linejoin="round"></path></svg></div>
+              <div style="flex:1;min-width:0">
+                <div style="font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:14.5px;color:#2E2A20">{{ p.email }}</div>
+                <div style="font-family:'Nunito Sans',sans-serif;font-size:12.5px;color:#9A917E;margin-top:2px">Autorisé {{ p.added }} · pas encore de compte</div>
+              </div>
+              <span style="font-family:'Nunito Sans',sans-serif;font-size:12px;font-weight:700;color:#9A7420;background:rgba(234,182,76,.18);padding:6px 13px;border-radius:999px">En attente</span>
+              <span style="font-family:'Nunito Sans',sans-serif;font-size:12.5px;font-weight:700;color:#C75D43;cursor:pointer;padding:0 6px">Retirer</span>
+            </div>
+          </sc-for>
+        </sc-if>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ROW ACTIONS MENU ===== -->
+<div style="position:absolute;left:1340px;top:140px;width:300px">
+  <div data-drags-parent="1" style="font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:13px;color:#5C5648;margin-bottom:10px">Menu d'un membre (⋯)</div>
+  <div style="background:#fff;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.08),0 18px 40px -24px rgba(46,42,32,.5);padding:8px;font-family:'Nunito Sans',sans-serif;font-size:14px;color:#3A3026">
+    <div style="display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:9px"><svg width="17" height="17" viewBox="0 0 20 20"><path d="M10 2.5 L16.5 5.5 V10 c0 4-3 6.5-6.5 7.5 C6.5 16.5 3.5 14 3.5 10 V5.5 Z" fill="none" stroke="#3A5132" stroke-width="1.4" stroke-linejoin="round"></path></svg>Promouvoir admin</div>
+    <div style="display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:9px;color:#9A7420" data-comment-anchor="cb3d553c4e-div"><span style="font-size:15px;width:17px;text-align:center">⏸️</span>Désactiver le compte</div>
+  </div>
+  <div style="margin-top:16px;background:#fff;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:18px 20px;font-family:'Nunito Sans',sans-serif;font-size:12.5px;color:#857C6A;line-height:1.55">
+    <b style="color:#2E2A20">Désactiver, jamais supprimer —</b> désactiver <b>bloque la connexion</b> tout en conservant le compte et ses notes. Aucune suppression de compte : un membre désactivé peut être réactivé à tout moment.
+  </div>
+</div>
+
+<!-- ===== STATES NOTE ===== -->
+<div style="position:absolute;left:1340px;top:560px;width:300px">
+  <div data-drags-parent="1" style="font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:13px;color:#5C5648;margin-bottom:10px">Statuts d'un membre</div>
+  <div style="background:#fff;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:18px 20px;display:flex;flex-direction:column;gap:12px;font-family:'Nunito Sans',sans-serif;font-size:13px;color:#5C5648">
+    <div style="display:flex;align-items:center;gap:10px"><span style="font-family:'Nunito Sans',sans-serif;font-size:11.5px;font-weight:700;color:#3A5132;background:rgba(58,81,50,.12);padding:5px 12px;border-radius:999px">Actif</span>Peut se connecter &amp; éditer</div>
+    <div style="display:flex;align-items:center;gap:10px"><span style="font-family:'Nunito Sans',sans-serif;font-size:11.5px;font-weight:700;color:#9A7420;background:rgba(234,182,76,.18);padding:5px 12px;border-radius:999px">Désactivé</span>Connexion bloquée</div>
+    <div style="display:flex;align-items:center;gap:10px"><span style="font-family:'Nunito Sans',sans-serif;font-size:11.5px;font-weight:700;color:#9A7420;background:rgba(234,182,76,.18);padding:5px 12px;border-radius:999px">En attente</span>Autorisé, sans compte créé</div>
+  </div>
+</div>
+
+<!-- ===== POINT D'ENTRÉE ===== -->
+<div style="position:absolute;left:80px;top:990px;width:560px">
+  <div data-drags-parent="1" style="font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:13px;color:#3A5132;margin-bottom:10px">D'où arrive-t-on ? — menu avatar du board</div>
+  <div style="background:#fff;border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,.08),0 24px 50px -34px rgba(46,42,32,.5);overflow:hidden">
+    <!-- mini board topbar -->
+    <div style="position:relative;background:#FBF4E6;padding:14px 18px;border-bottom:1px solid #EBDFC6;display:flex;align-items:center;gap:14px">
+      <div style="display:flex;align-items:center;gap:8px"><img src="assets/keepou-mascot.png" style="width:28px;height:28px;object-fit:contain"><span style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:18px;color:#2E2A20">Keepou</span></div>
+      <div style="flex:1"></div>
+      <div style="width:180px;height:32px;border-radius:999px;background:#fff;border:1px solid #EBDFC6"></div>
+      <!-- avatar with ring -->
+      <div style="width:38px;height:38px;border-radius:999px;background:linear-gradient(150deg,#EAB64C,#D89030);display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-weight:600;color:#fff;font-size:15px;box-shadow:0 0 0 3px rgba(58,81,50,.3)">M</div>
+      <!-- dropdown -->
+      <div style="position:absolute;top:58px;right:16px;width:210px;background:#fff;border-radius:13px;box-shadow:0 18px 40px -18px rgba(46,42,32,.5);border:1px solid #F0E7D6;padding:7px;z-index:2">
+        <div style="padding:9px 11px 7px;border-bottom:1px solid #F0E7D6;margin-bottom:5px"><div style="font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:13.5px;color:#2E2A20">Marie</div><div style="font-family:'Nunito Sans',sans-serif;font-size:11.5px;color:#9A917E">Admin de l'instance</div></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:8px;font-family:'Nunito Sans',sans-serif;font-size:13.5px;color:#3A3026"><svg width="15" height="15" viewBox="0 0 20 20"><circle cx="10" cy="6.5" r="3" fill="none" stroke="#8A7F69" stroke-width="1.4"></circle><path d="M4 16 c0-3.3 2.7-5 6-5 s6 1.7 6 5" fill="none" stroke="#8A7F69" stroke-width="1.4" stroke-linecap="round"></path></svg>Mon profil</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:8px;background:#FBF4E6;font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:13.5px;color:#2E2A20"><svg width="15" height="15" viewBox="0 0 20 20"><path d="M10 2.5 L16.5 5.5 V10 c0 4-3 6.5-6.5 7.5 C6.5 16.5 3.5 14 3.5 10 V5.5 Z" fill="none" stroke="#3A5132" stroke-width="1.4" stroke-linejoin="round"></path></svg>Administration</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:8px;font-family:'Nunito Sans',sans-serif;font-size:13.5px;color:#3A3026"><svg width="15" height="15" viewBox="0 0 20 20"><path d="M8 3 H6 a2 2 0 0 0-2 2 v10 a2 2 0 0 0 2 2 h2 M13 14 L17 10 L13 6 M17 10 H8" fill="none" stroke="#8A7F69" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>Déconnexion</div>
+      </div>
+    </div>
+    <div style="padding:16px 20px;font-family:'Nunito Sans',sans-serif;font-size:13px;color:#5C5648;line-height:1.55">L'entrée <b style="color:#2E2A20">Administration</b> n'apparaît dans ce menu que pour les comptes <b>admin</b>. Les membres standard ne la voient pas et n'ont pas la route <code style="font-family:'IBM Plex Mono',monospace;font-size:12px;background:#F1EADB;padding:1px 6px;border-radius:4px">/admin</code> (protégée côté serveur).</div>
+  </div>
+</div>
+
+<!-- ===== MOBILE ADMIN ===== -->
+<div style="position:absolute;left:1700px;top:140px;width:392px">
+  <div data-drags-parent="1" style="font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:13px;color:#5C5648;margin-bottom:10px">Mobile · admin</div>
+  <div style="width:392px;height:780px;border-radius:34px;overflow:hidden;border:8px solid #2E2A20;box-shadow:0 1px 3px rgba(0,0,0,.08),0 26px 50px -34px rgba(46,42,32,.55);background:#FBF4E6;display:flex;flex-direction:column">
+    <div style="padding:16px 18px 0">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><svg width="18" height="18" viewBox="0 0 20 20"><path d="M12.5 4 L6 10.5 L12.5 17" fill="none" stroke="#8A7F69" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg><span style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:20px;color:#2E2A20">Accès</span></div>
+      <div style="display:flex;gap:10px;align-items:center;background:#fff;border:1px solid #EBDFC6;border-radius:11px;padding:8px 8px 8px 13px;margin-bottom:16px"><span style="flex:1;font-family:'Nunito Sans',sans-serif;font-size:14px;color:#A1977F">Ajouter un e-mail…</span><span style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:13px;color:#fff;background:#3A5132;padding:8px 14px;border-radius:999px">Ajouter</span></div>
+      <div style="display:flex;gap:18px;border-bottom:1px solid #EBDFC6;font-family:'Nunito Sans',sans-serif;font-size:13.5px;font-weight:700">
+        <span style="color:#2E2A20;border-bottom:2.5px solid #3A5132;padding:0 2px 10px">Membres <span style="color:#9A917E">4</span></span>
+        <span style="color:#9A917E;padding:0 2px 10px">En attente <span>2</span></span>
+      </div>
+    </div>
+    <div style="flex:1;overflow:hidden;padding:6px 16px">
+      <div style="display:flex;align-items:center;gap:11px;padding:13px 2px;border-bottom:1px solid #F0E7D6">
+        <div style="width:36px;height:36px;border-radius:999px;background:#3A5132;color:#fff;font-family:'Fredoka',sans-serif;font-weight:600;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none">MA</div>
+        <div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:7px"><span style="font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:14px;color:#2E2A20">Marie</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;text-transform:uppercase;color:#3A5132;background:rgba(58,81,50,.12);padding:2px 7px;border-radius:999px">admin</span></div><div style="font-family:'Nunito Sans',sans-serif;font-size:11.5px;color:#9A917E">marie@famille-ou.fr</div></div>
+        <span style="font-size:18px;color:#C6BCA4">⋯</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:11px;padding:13px 2px;border-bottom:1px solid #F0E7D6">
+        <div style="width:36px;height:36px;border-radius:999px;background:#C75D43;color:#fff;font-family:'Fredoka',sans-serif;font-weight:600;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none">L</div>
+        <div style="flex:1;min-width:0"><div style="font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:14px;color:#2E2A20">Léa</div><div style="font-family:'Nunito Sans',sans-serif;font-size:11.5px;color:#9A917E">lea@famille-ou.fr</div></div>
+        <span style="font-family:'Nunito Sans',sans-serif;font-size:11px;font-weight:700;color:#3A5132;background:rgba(58,81,50,.12);padding:5px 11px;border-radius:999px">Actif</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:11px;padding:13px 2px;border-bottom:1px solid #F0E7D6">
+        <div style="width:36px;height:36px;border-radius:999px;background:#EAB64C;color:#2E2A20;font-family:'Fredoka',sans-serif;font-weight:600;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none">B</div>
+        <div style="flex:1;min-width:0"><div style="font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:14px;color:#2E2A20">Bob</div><div style="font-family:'Nunito Sans',sans-serif;font-size:11.5px;color:#9A917E">bob@famille-ou.fr</div></div>
+        <span style="font-family:'Nunito Sans',sans-serif;font-size:11px;font-weight:700;color:#9A7420;background:rgba(234,182,76,.18);padding:5px 11px;border-radius:999px">Désactivé</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { tab: 'members', added: false };
+  renderVals() {
+    const members = [
+      { name: "Marie", initial: "MA", email: "marie@famille-ou.fr", joined: "le 9 juin", color: "#3A5132", isAdmin: true, status: "active" },
+      { name: "Léa", initial: "L", email: "lea@famille-ou.fr", joined: "le 10 juin", color: "#C75D43", status: "active" },
+      { name: "Papa", initial: "P", email: "papa@famille-ou.fr", joined: "le 11 juin", color: "#5FA39A", status: "active" },
+      { name: "Bob", initial: "B", email: "bob@famille-ou.fr", joined: "le 11 juin", color: "#EAB64C", status: "disabled" }
+    ];
+    let pending = [
+      { email: "tom@famille-ou.fr", added: "le 14 juin" },
+      { email: "mamie@famille-ou.fr", added: "le 15 juin" }
+    ];
+    if (this.state.added) pending = [{ email: "nouveau@famille-ou.fr", added: "à l'instant" }, ...pending];
+
+    const tab = this.state.tab;
+    const tabBase = "font-family:'Nunito Sans',sans-serif;font-size:15px;font-weight:700;padding:0 2px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;";
+    const active = tabBase + "color:#2E2A20;border-bottom:2.5px solid #3A5132;";
+    const idle = tabBase + "color:#9A917E;border-bottom:2.5px solid transparent;";
+    const badge = (on) => "font-family:'Nunito Sans',sans-serif;font-size:11px;font-weight:700;padding:1px 8px;border-radius:999px;" + (on ? "background:rgba(58,81,50,.14);color:#3A5132;" : "background:#EFE4CE;color:#9A917E;");
+
+    const mappedMembers = members.map(m => ({
+      ...m,
+      avatarStyle: "width:38px;height:38px;border-radius:999px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-weight:600;font-size:13px;color:" + (m.initial === "B" ? "#2E2A20" : "#fff") + ";background:" + m.color,
+      statusLabel: m.status === "active" ? "Actif" : "Désactivé",
+      statusStyle: m.status === "active"
+        ? "font-family:'Nunito Sans',sans-serif;font-size:11.5px;font-weight:700;color:#3A5132;background:rgba(58,81,50,.12);padding:5px 13px;border-radius:999px"
+        : "font-family:'Nunito Sans',sans-serif;font-size:11.5px;font-weight:700;color:#9A7420;background:rgba(234,182,76,.18);padding:5px 13px;border-radius:999px"
+    }));
+
+    return {
+      members: mappedMembers,
+      pending,
+      membersCount: members.length,
+      pendingCount: pending.length,
+      isMembers: tab === 'members',
+      isPending: tab === 'pending',
+      membersTabStyle: tab === 'members' ? active : idle,
+      pendingTabStyle: tab === 'pending' ? active : idle,
+      membersBadge: badge(tab === 'members'),
+      pendingBadge: badge(tab === 'pending'),
+      inputText: this.state.added ? "nouveau@famille-ou.fr" : "nouvel.invite@famille-ou.fr",
+      inputColor: this.state.added ? "#A1977F" : "#2E2A20",
+      showMembers: () => this.setState({ tab: 'members' }),
+      showPending: () => this.setState({ tab: 'pending' }),
+      addEmail: () => this.setState({ tab: 'pending', added: true })
+    };
+  }
+}
+</script>
+</body>
+</html>

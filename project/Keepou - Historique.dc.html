@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="design_doc_mode" content="canvas">
+<style>*{box-sizing:border-box}body{margin:0}</style>
+</helmet>
+
+<!-- ===== INTRO ===== -->
+<div style="position:absolute;left:80px;top:36px;width:1200px">
+  <div data-drags-parent="1" style="display:flex;align-items:center;gap:14px">
+    <img src="assets/keepou-mascot.png" alt="Keepou" style="width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 4px 8px rgba(46,42,32,.18))">
+    <div>
+      <div style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:25px;color:#2E2A20">Historique des versions</div>
+      <div style="font-family:'Nunito Sans',sans-serif;font-size:14px;color:#6B6456;margin-top:2px">Panneau latéral depuis l'éditeur · une version par session d'édition · auteur + date. <b style="color:#3A5132">Clique une version</b> pour la revoir telle quelle, puis restaurer.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DESKTOP · ÉDITEUR + PANNEAU HISTORIQUE ===== -->
+<div style="position:absolute;left:80px;top:140px;width:1180px">
+  <div data-drags-parent="1" style="font-family:'Nunito Sans',sans-serif;margin-bottom:12px"><span style="font-weight:700;font-size:15px;color:#2E2A20">Desktop · panneau d'historique</span><span style="font-size:13px;color:#7A7263"> — s'ouvre à droite de l'éditeur, le contenu reste lisible.</span></div>
+  <div style="position:relative;width:1180px;height:740px;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08),0 30px 60px -40px rgba(46,42,32,.5);display:flex;background:#FBF4E6">
+
+    <!-- left: note preview (selected version) -->
+    <div style="flex:1;display:flex;flex-direction:column;background:linear-gradient(170deg,#FCEFCF,#F6DFA6)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 22px;background:rgba(251,244,230,.5);border-bottom:1px solid #EFD79E">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="width:34px;height:34px;border-radius:999px;background:#fff;border:1px solid #EFD79E;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 20 20"><path d="M12.5 4 L6 10.5 L12.5 17" fill="none" stroke="#8A7F69" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+          <span style="font-family:'Nunito Sans',sans-serif;font-size:13px;color:#8A7F69;font-weight:600">Retour à l'édition</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-family:'Nunito Sans',sans-serif;font-size:12px;color:#9A7420;font-weight:700;background:rgba(234,182,76,.18);padding:6px 12px;border-radius:999px">{{ viewingLabel }}</div>
+      </div>
+      <div style="flex:1;padding:30px 44px;overflow:hidden">
+        <div style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:26px;color:#2E2A20;margin-bottom:6px">Repas de quartier 🌮</div>
+        <div style="font-family:'Nunito Sans',sans-serif;font-size:12.5px;color:#A1977F;margin-bottom:22px">{{ versionMeta }}</div>
+        <div style="display:flex;flex-direction:column;gap:11px;font-family:'Nunito Sans',sans-serif;font-size:15px;line-height:1.6;color:#4A4636">
+          <div>{{ introLine }}</div>
+          <sc-for list="{{ items }}" as="it" hint-placeholder-count="4">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="{{ it.boxStyle }}"><sc-if value="{{ it.done }}" hint-placeholder-val="{{ false }}"><svg width="11" height="11" viewBox="0 0 10 10"><path d="M2 5.2 L4 7.2 L8 2.6" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if></span>
+              <span style="{{ it.textStyle }}">{{ it.text }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <!-- right: history panel -->
+    <div style="width:340px;flex:none;background:#fff;border-left:1px solid #EBDFC6;display:flex;flex-direction:column">
+      <div style="padding:18px 20px 14px;border-bottom:1px solid #F0E7D6">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:17px;color:#2E2A20">Historique</span>
+          <span style="font-family:'Nunito Sans',sans-serif;font-size:18px;color:#A1977F;cursor:pointer;line-height:1">×</span>
+        </div>
+        <div style="font-family:'Nunito Sans',sans-serif;font-size:12px;color:#9A917E;margin-top:2px">6 versions · depuis le 9 juin</div>
+      </div>
+      <div style="flex:1;overflow:hidden;padding:8px 12px">
+        <sc-for list="{{ versions }}" as="v" hint-placeholder-count="6">
+          <div onClick="{{ v.onSelect }}" style="{{ v.rowStyle }}">
+            <div style="display:flex;align-items:flex-start;gap:11px">
+              <div style="display:flex;flex-direction:column;align-items:center;flex:none;padding-top:2px">
+                <span style="{{ v.dotStyle }}"></span>
+                <sc-if value="{{ v.notLast }}" hint-placeholder-val="{{ true }}"><span style="width:2px;flex:1;min-height:24px;background:#EEE3CE;margin-top:3px"></span></sc-if>
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                  <span style="font-family:'Nunito Sans',sans-serif;font-size:13.5px;font-weight:700;color:#2E2A20">{{ v.when }}</span>
+                  <sc-if value="{{ v.current }}" hint-placeholder-val="{{ false }}"><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#3A5132;background:rgba(58,81,50,.12);padding:2px 7px;border-radius:999px">actuelle</span></sc-if>
+                </div>
+                <div style="display:flex;align-items:center;gap:7px;margin-top:5px">
+                  <span style="{{ v.avatarStyle }}">{{ v.initial }}</span>
+                  <span style="font-family:'Nunito Sans',sans-serif;font-size:12px;color:#6A6354">{{ v.author }}</span>
+                </div>
+                <sc-if value="{{ v.selected }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;gap:8px;margin-top:10px">
+                    <span style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:12px;color:#fff;background:#3A5132;padding:6px 14px;border-radius:999px" data-comment-anchor="d763fdf603-span">Restaurer cette version</span>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== RESTORE CONFIRM ===== -->
+<div style="position:absolute;left:1320px;top:140px;width:440px">
+  <div data-drags-parent="1" style="font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:13px;color:#5C5648;margin-bottom:10px">Confirmation de restauration</div>
+  <div style="background:#fff;border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,.08),0 24px 50px -34px rgba(46,42,32,.5);overflow:hidden">
+    <div style="padding:22px 24px">
+      <div style="width:44px;height:44px;border-radius:999px;background:rgba(234,182,76,.18);display:flex;align-items:center;justify-content:center;margin-bottom:14px"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M5 12a7 7 0 1 1 2 5" fill="none" stroke="#B58A2E" stroke-width="2" stroke-linecap="round"></path><path d="M5 8.5 L5 12 L8.5 12" fill="none" stroke="#B58A2E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+      <div style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:19px;color:#2E2A20;margin-bottom:7px">Restaurer la version du 12 juin ?</div>
+      <div style="font-family:'Nunito Sans',sans-serif;font-size:13.5px;line-height:1.55;color:#6A6354">La version actuelle sera <b style="color:#2E2A20">conservée dans l'historique</b> — rien n'est perdu. Le contenu de cette note redevient celui de Léa du 12 juin à 18:42.</div>
+    </div>
+    <div style="display:flex;gap:10px;padding:0 24px 22px">
+      <span style="flex:1;text-align:center;font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:13.5px;color:#6A6354;background:#F4EEE1;padding:11px;border-radius:999px">Annuler</span>
+      <span style="flex:1;text-align:center;font-family:'Fredoka',sans-serif;font-weight:600;font-size:13.5px;color:#fff;background:linear-gradient(150deg,#EAB64C,#D89030);padding:11px;border-radius:999px">Restaurer cette version</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== RÈGLE DE VERSIONNAGE ===== -->
+<div style="position:absolute;left:1320px;top:470px;width:440px">
+  <div data-drags-parent="1" style="font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:13px;color:#5C5648;margin-bottom:10px">Une session = une version</div>
+  <div style="background:#fff;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:20px 22px;font-family:'Nunito Sans',sans-serif">
+    <div style="display:flex;flex-direction:column;gap:11px;font-size:13px;color:#5C5648;line-height:1.5">
+      <div style="display:flex;gap:9px"><span style="color:#3A5132;font-weight:800">·</span><span>Une nouvelle version est créée <b>une seule fois par session d'édition</b> (à la fermeture / au relâchement du verrou) — cocher 4 cases d'affilée ne fait <b>pas</b> 4 versions.</span></div>
+      <div style="display:flex;gap:9px"><span style="color:#3A5132;font-weight:800">·</span><span>La liste indique <b>qui</b> a édité et <b>quand</b>, sans détailler les changements.</span></div>
+      <div style="display:flex;gap:9px"><span style="color:#3A5132;font-weight:800">·</span><span>Sélectionner une version la <b>réaffiche telle quelle</b> (pas de surlignage de diff) ; un seul bouton : <b>Restaurer</b>.</span></div>
+    </div>
+    <div style="margin-top:14px;padding-top:13px;border-top:1px solid #ECE4D5;font-size:12px;color:#857C6A;line-height:1.5">Restaurer crée à son tour une nouvelle version : rien n'est jamais écrasé.</div>
+  </div>
+</div>
+
+<!-- ===== MOBILE · FLOW EN 2 ÉCRANS ===== -->
+<div style="position:absolute;left:1820px;top:140px;width:850px">
+  <div data-drags-parent="1" style="font-family:'Nunito Sans',sans-serif;margin-bottom:10px"><span style="font-weight:700;font-size:13px;color:#5C5648">Mobile · flow en 2 temps</span><span style="font-size:12.5px;color:#7A7263"> — taper une version l'ouvre en aperçu (lecture seule), d'où on peut restaurer.</span></div>
+  <div style="display:flex;gap:30px;align-items:flex-start">
+
+    <!-- écran 1 : liste -->
+    <div style="width:392px;flex:none">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#9A917E;margin-bottom:8px">1 · Liste — taper pour ouvrir</div>
+      <div style="width:392px;height:740px;border-radius:34px;overflow:hidden;border:8px solid #2E2A20;box-shadow:0 1px 3px rgba(0,0,0,.08),0 26px 50px -34px rgba(46,42,32,.55);background:#fff;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:1px solid #F0E7D6">
+          <svg width="18" height="18" viewBox="0 0 20 20"><path d="M12.5 4 L6 10.5 L12.5 17" fill="none" stroke="#8A7F69" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          <div><div style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:17px;color:#2E2A20;line-height:1.1">Historique</div><div style="font-family:'Nunito Sans',sans-serif;font-size:11.5px;color:#9A917E">Repas de quartier · 6 versions</div></div>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:10px 14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 14px;border-radius:12px;background:#FBF4E6;border:1px solid #EBDFC6;margin-bottom:9px">
+            <div><div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Nunito Sans',sans-serif;font-size:13.5px;font-weight:700;color:#2E2A20">Aujourd'hui · 14:32</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;text-transform:uppercase;color:#3A5132;background:rgba(58,81,50,.12);padding:2px 6px;border-radius:999px">actuelle</span></div><div style="display:flex;align-items:center;gap:7px;margin-top:6px"><span style="width:18px;height:18px;border-radius:999px;background:#3A5132;color:#fff;font-family:'Fredoka',sans-serif;font-size:10px;display:flex;align-items:center;justify-content:center">M</span><span style="font-family:'Nunito Sans',sans-serif;font-size:12px;color:#6A6354">Modifié par Marie</span></div></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 14px;border-radius:12px;border:1.5px solid #3A5132;margin-bottom:9px;background:#fff">
+            <div><div style="font-family:'Nunito Sans',sans-serif;font-size:13.5px;font-weight:700;color:#2E2A20">Hier · 18:42</div><div style="display:flex;align-items:center;gap:7px;margin-top:6px"><span style="width:18px;height:18px;border-radius:999px;background:#C75D43;color:#fff;font-family:'Fredoka',sans-serif;font-size:10px;display:flex;align-items:center;justify-content:center">L</span><span style="font-family:'Nunito Sans',sans-serif;font-size:12px;color:#6A6354">Modifié par Léa</span></div></div>
+            <svg width="16" height="16" viewBox="0 0 20 20"><path d="M7.5 4 L14 10.5 L7.5 17" fill="none" stroke="#8A7F69" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 14px;border-radius:12px;border:1px solid #F0E7D6;margin-bottom:9px">
+            <div><div style="font-family:'Nunito Sans',sans-serif;font-size:13.5px;font-weight:700;color:#2E2A20">11 juin · 09:15</div><div style="display:flex;align-items:center;gap:7px;margin-top:6px"><span style="width:18px;height:18px;border-radius:999px;background:#EAB64C;color:#2E2A20;font-family:'Fredoka',sans-serif;font-size:10px;display:flex;align-items:center;justify-content:center">B</span><span style="font-family:'Nunito Sans',sans-serif;font-size:12px;color:#6A6354">Créée par Bob</span></div></div>
+            <svg width="16" height="16" viewBox="0 0 20 20"><path d="M7.5 4 L14 10.5 L7.5 17" fill="none" stroke="#8A7F69" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- écran 2 : aperçu lecture seule -->
+    <div style="width:392px;flex:none">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#9A917E;margin-bottom:8px">2 · Aperçu — lecture seule</div>
+      <div style="width:392px;height:740px;border-radius:34px;overflow:hidden;border:8px solid #2E2A20;box-shadow:0 1px 3px rgba(0,0,0,.08),0 26px 50px -34px rgba(46,42,32,.55);background:#FBF4E6;display:flex;flex-direction:column">
+        <!-- header -->
+        <div style="display:flex;align-items:center;gap:12px;padding:14px 18px;background:#fff;border-bottom:1px solid #F0E7D6">
+          <svg width="18" height="18" viewBox="0 0 20 20"><path d="M12.5 4 L6 10.5 L12.5 17" fill="none" stroke="#8A7F69" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          <div style="font-family:'Nunito Sans',sans-serif;font-size:13px;color:#8A7F69;font-weight:600">Historique</div>
+        </div>
+        <!-- preview banner -->
+        <div style="display:flex;align-items:center;gap:9px;padding:11px 18px;background:rgba(234,182,76,.18);border-bottom:1px solid rgba(234,182,76,.4)">
+          <svg width="15" height="15" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5" fill="none" stroke="#9A7420" stroke-width="1.6"></circle><path d="M10 6.5 L10 10.5" stroke="#9A7420" stroke-width="1.8" stroke-linecap="round"></path><circle cx="10" cy="13.6" r="1" fill="#9A7420"></circle></svg>
+          <div style="font-family:'Nunito Sans',sans-serif;font-size:12px;color:#9A7420;line-height:1.35"><b>Aperçu — lecture seule</b><br><span style="color:#A98A40">Version de Léa · hier à 18:42</span></div>
+        </div>
+        <!-- read-only content -->
+        <div style="flex:1;padding:22px 22px;overflow:hidden;opacity:.92">
+          <div style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:22px;color:#2E2A20;margin-bottom:14px">Repas de quartier 🌮</div>
+          <div style="font-family:'Nunito Sans',sans-serif;font-size:14.5px;line-height:1.6;color:#4A4636;margin-bottom:14px">Pour le repas de quartier on se répartit les tâches. RDV samedi 10h sur la place.</div>
+          <div style="display:flex;flex-direction:column;gap:11px;font-family:'Nunito Sans',sans-serif;font-size:14.5px;color:#4A4636">
+            <div style="display:flex;align-items:center;gap:10px"><span style="width:18px;height:18px;border-radius:5px;border:1.7px solid #C6BCA4;flex:none"></span>Réserver la salle</div>
+            <div style="display:flex;align-items:center;gap:10px"><span style="width:18px;height:18px;border-radius:5px;border:1.7px solid #C6BCA4;flex:none"></span>Liste des plats par famille</div>
+            <div style="display:flex;align-items:center;gap:10px"><span style="width:18px;height:18px;border-radius:5px;border:1.7px solid #C6BCA4;flex:none"></span>Tables &amp; chaises</div>
+          </div>
+        </div>
+        <!-- action bar -->
+        <div style="padding:14px 18px;background:#fff;border-top:1px solid #F0E7D6;display:flex;gap:10px">
+          <span style="flex:none;text-align:center;font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:13.5px;color:#6A6354;background:#F4EEE1;padding:12px 18px;border-radius:999px">Fermer</span>
+          <span style="flex:1;text-align:center;font-family:'Fredoka',sans-serif;font-weight:600;font-size:14px;color:#fff;background:linear-gradient(150deg,#EAB64C,#D89030);padding:12px;border-radius:999px">Restaurer cette version</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { sel: 1 };
+  data() {
+    return [
+      { when: "Aujourd'hui · 14:32", author: "Marie", initial: "M", color: "#3A5132", summary: "A coché « Réserver la salle »", current: true,
+        meta: "Version actuelle · Marie · aujourd'hui à 14:32", intro: "Pour le repas de quartier on se répartit les tâches. RDV samedi 10h sur la place.",
+        items: [ {text:"Réserver la salle",done:true}, {text:"Liste des plats par famille",done:false}, {text:"Tables & chaises",done:false} ] },
+      { when: "Hier · 18:42", author: "Léa", initial: "L", color: "#C75D43", summary: "+2 éléments de liste",
+        meta: "Version du 14 juin · Léa · 18:42", intro: "Pour le repas de quartier on se répartit les tâches. RDV samedi 10h sur la place.",
+        items: [ {text:"Réserver la salle",done:false}, {text:"Liste des plats par famille",done:false,added:true}, {text:"Tables & chaises",done:false,added:true} ] },
+      { when: "12 juin · 20:10", author: "Léa", initial: "L", color: "#C75D43", summary: "Réécriture de l'intro",
+        meta: "Version du 12 juin · Léa · 20:10", intro: "On organise un repas de quartier ! Détails à venir.",
+        items: [ {text:"Réserver la salle",done:false} ] },
+      { when: "11 juin · 14:03", author: "Papa", initial: "P", color: "#5FA39A", summary: "A rendu la note publique",
+        meta: "Version du 11 juin · Papa · 14:03", intro: "On organise un repas de quartier ! Détails à venir.",
+        items: [ {text:"Réserver la salle",done:false} ] },
+      { when: "10 juin · 19:30", author: "Marie", initial: "M", color: "#3A5132", summary: "Ajout du titre",
+        meta: "Version du 10 juin · Marie · 19:30", intro: "Idée : repas de quartier.",
+        items: [] },
+      { when: "9 juin · 09:15", author: "Bob", initial: "B", color: "#EAB64C", summary: "Création de la note", first: true,
+        meta: "Création · Bob · 9 juin à 09:15", intro: "Idée : repas de quartier.",
+        items: [] }
+    ];
+  }
+  renderVals() {
+    const d = this.data();
+    const sel = this.state.sel;
+    const cur = d[sel];
+    const rowBase = "border-radius:12px;padding:11px 12px;cursor:pointer;transition:background .15s;margin-bottom:2px;";
+    const versions = d.map((v, i) => ({
+      ...v,
+      idx: i,
+      selected: i === sel,
+      notLast: !v.first,
+      rowStyle: rowBase + (i === sel ? "background:#FBF4E6;border:1px solid #EBDFC6;" : "background:transparent;border:1px solid transparent;"),
+      dotStyle: "width:11px;height:11px;border-radius:999px;flex:none;background:" + (i === sel ? "#3A5132" : "#D8C9A8") + (i === sel ? ";box-shadow:0 0 0 3px rgba(58,81,50,.16)" : ""),
+      avatarStyle: "width:18px;height:18px;border-radius:999px;flex:none;display:inline-flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-size:10px;color:" + (v.initial==="B"?"#2E2A20":"#fff") + ";background:" + v.color,
+      onSelect: () => this.setState({ sel: i })
+    }));
+    const items = (cur.items || []).map(it => ({
+      text: it.text, done: !!it.done, added: !!it.added,
+      boxStyle: "width:18px;height:18px;border-radius:5px;flex:none;display:inline-flex;align-items:center;justify-content:center;" + (it.done ? "background:#3A5132;" : "border:1.7px solid #9DAE6C;"),
+      textStyle: "font-family:'Nunito Sans',sans-serif;" + (it.done ? "text-decoration:line-through;color:#8C9270;" : "color:#4A4636;")
+    }));
+    return {
+      versions,
+      items,
+      introLine: cur.intro,
+      versionMeta: cur.meta,
+      viewingLabel: cur.current ? "Version actuelle" : ("Aperçu — " + cur.when)
+    };
+  }
+}
+</script>
+</body>
+</html>
