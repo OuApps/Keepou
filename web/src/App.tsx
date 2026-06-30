@@ -53,9 +53,7 @@ export default function App() {
       </header>
 
       <main style={{ maxWidth: 1320, margin: '0 auto', padding: '40px 28px', width: '100%' }}>
-        <h1 style={{ fontFamily: 'var(--font-brand)', color: 'var(--ink)' }}>
-          Squelette prêt
-        </h1>
+        <h1 style={{ fontFamily: 'var(--font-brand)', color: 'var(--ink)' }}>Squelette prêt</h1>
         <p style={{ color: 'var(--ink-soft)', maxWidth: 560, lineHeight: 1.6 }}>
           Design system câblé (polices Fredoka / Nunito Sans / IBM Plex Mono, tokens clair +
           sombre). Les écrans sont implémentés epic par epic — voir <code>EPICS.md</code>.
