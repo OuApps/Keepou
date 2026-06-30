@@ -1,0 +1,32 @@
+# --- Node / front (web/) ---
+node_modules/
+web/dist/
+web/.vite/
+*.tsbuildinfo
+*.local
+
+# --- Python / back (api/) ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Bases de données locales ---
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Env ---
+.env
+.env.*
+!.env.example
+
+# --- Divers ---
+.DS_Store
+*.log
+.idea/
+.vscode/

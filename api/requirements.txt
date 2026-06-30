@@ -1,0 +1,10 @@
+fastapi>=0.115,<0.116
+uvicorn[standard]>=0.30,<0.35
+sqlmodel>=0.0.22,<0.1
+alembic>=1.13,<2.0
+pydantic-settings>=2.4,<3.0
+passlib[bcrypt]>=1.7,<2.0
+# passlib 1.7.x est incompatible avec bcrypt>=4.1 (erreur "password cannot be longer than 72 bytes").
+bcrypt>=4.0,<4.1
+itsdangerous>=2.2,<3.0
+python-multipart>=0.0.9,<0.1
