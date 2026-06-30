@@ -1,25 +1,60 @@
-# CODING AGENTS: READ THIS FIRST
+# Keepou
 
-This is a **handoff bundle** from Claude Design (claude.ai/design).
+**Google Keep auto-hébergé**, privé, pour une petite communauté (famille, voisins).
+Notes texte + cases à cocher, privées ou publiques, édition **mono-éditeur verrouillée**,
+historique de versions, accès par **allowlist** gérée par un admin. PWA responsive
+(desktop + mobile), thème clair + sombre.
 
-A user mocked up designs in HTML/CSS/JS using an AI design tool, then exported this bundle so a coding agent can implement the designs for real.
+> Ce dépôt part des maquettes validées avec un designer. Le design est **figé** et fait
+> office de source de vérité visuelle. L'implémentation se fait **epic par epic** — voir
+> [`EPICS.md`](./EPICS.md).
 
-## What you should do — IMPORTANT
+## Structure du dépôt
 
-**Read the chat transcripts first.** There are 1 chat transcript(s) in `chats/`. The transcripts show the full back-and-forth between the user and the design assistant — they tell you **what the user actually wants** and **where they landed** after iterating. Don't skip them. The final HTML files are the output, but the chat is where the intent lives.
+```
+.
+├── EPICS.md          # Découpage macro en epics (point d'entrée du dev)
+├── design/           # Maquettes validées + handoff (SOURCE DE VÉRITÉ visuelle)
+│   ├── HANDOFF.md            # Tokens, comportements, modèle de données, API, copy FR
+│   ├── claude.md            # Règles produit non négociables
+│   ├── Keepou - *.dc.html   # Maquettes interactives (board, éditeur, historique, auth, admin)
+│   ├── assets/ uploads/     # Logo mascotte, favicon
+│   └── chats/               # Transcript des échanges design
+├── web/              # Front — React + Vite + TypeScript (SPA découplée)
+└── api/              # Back — Python + FastAPI + SQLModel + Alembic
+```
 
-**Read `project/Keepou - Auth.dc.html` in full.** The user had this file open when they triggered the handoff, so it's almost certainly the primary design they want built. Read it top to bottom — don't skim. Then **follow its imports**: open every file it pulls in (shared components, CSS, scripts) so you understand how the pieces fit together before you start implementing.
+## Stack
 
-**If anything is ambiguous, ask the user to confirm before you start implementing.** It's much cheaper to clarify scope up front than to build the wrong thing.
+| Couche | Techno |
+|---|---|
+| Front | React + TypeScript (Vite), React Router, consomme l'API REST |
+| Back | Python + FastAPI, SQLModel (SQLAlchemy + Pydantic), Alembic |
+| Auth | Session/cookie, e-mail + mot de passe (passlib/bcrypt), allowlist **serveur** |
+| Stockage notes | Markdown (GFM task lists `- [ ]` / `- [x]`) |
 
-## About the design files
+## Démarrer (squelette)
 
-The design medium is **HTML/CSS/JS** — these are prototypes, not production code. Your job is to **recreate them pixel-perfectly** in whatever technology makes sense for the target codebase (React, Vue, native, whatever fits). Match the visual output; don't copy the prototype's internal structure unless it happens to fit.
+### Front (`web/`)
+```bash
+cd web
+npm install
+npm run dev          # http://localhost:5173
+```
 
-**Don't render these files in a browser or take screenshots unless the user asks you to.** Everything you need — dimensions, colors, layout rules — is spelled out in the source. Read the HTML and CSS directly; a screenshot won't tell you anything they don't.
+### Back (`api/`)
+```bash
+cd api
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload   # http://localhost:8000 — /api/health
+```
 
-## Bundle contents
+> ⚠️ À ce stade le projet est un **squelette** : structure, tooling et design system
+> sont en place, la logique métier est implémentée **story par story** au fil des epics.
 
-- `README.md` — this file
-- `chats/` — conversation transcripts (read these!)
-- `project/` — the `Keepou` project files (HTML prototypes, assets, components)
+## Règles produit non négociables
+
+Voir [`design/claude.md`](./design/claude.md). En résumé : verrou mono-éditeur,
+autosave, 1 session = 1 version, allowlist serveur, **désactivation jamais suppression**,
+`/admin` protégée serveur, visibilité privé⇄public réversible.
