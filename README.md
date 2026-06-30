@@ -42,16 +42,30 @@ npm install
 npm run dev          # http://localhost:5173
 ```
 
-### Back (`api/`)
+### Back (`api/`) — géré avec [uv](https://docs.astral.sh/uv/)
 ```bash
 cd api
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload   # http://localhost:8000 — /api/health
+uv sync                              # crée .venv + installe runtime & dev (lockfile uv.lock)
+uv run uvicorn app.main:app --reload # http://localhost:8000 — /api/health
 ```
 
-> ⚠️ À ce stade le projet est un **squelette** : structure, tooling et design system
-> sont en place, la logique métier est implémentée **story par story** au fil des epics.
+> `requirements.txt` est **généré** depuis `uv.lock` (`uv export --no-dev`) pour le
+> déploiement (Nixpacks/Railway) — ne pas l'éditer à la main.
+
+## Qualité & tests
+
+| | Back (`api/`) | Front (`web/`) |
+|---|---|---|
+| Lint | `uv run ruff check .` | `npm run lint` (ESLint) |
+| Format | `uv run ruff format .` | `npm run format` (Prettier) |
+| Types | `uv run ty check` | `npm run typecheck` (tsc) |
+| Tests | `uv run pytest` | `npm run test` (Vitest) |
+
+La **CI** (`.github/workflows/ci.yml`) rejoue tout ça sur chaque push/PR. Hooks
+pré-commit optionnels : `pip install pre-commit && pre-commit install`.
+
+> ⚠️ À ce stade le projet est un **squelette** : structure, tooling, design system et
+> qualité/CI sont en place, la logique métier est implémentée **story par story** au fil des epics.
 
 ## Règles produit non négociables
 

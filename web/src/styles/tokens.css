@@ -6,40 +6,45 @@
 
 :root {
   /* Surfaces & texte (clair) */
-  --bg: #FBF4E6;
+  --bg: #fbf4e6;
   --topbar: rgba(251, 244, 230, 0.86);
   --surface: #ffffff;
-  --border: #EBDFC6;
-  --track: #EFE4CE;
-  --ink: #2E2A20;
-  --ink-soft: #6A6354;
-  --ink-mute: #A1977F;
+  --border: #ebdfc6;
+  --track: #efe4ce;
+  --ink: #2e2a20;
+  --ink-soft: #6a6354;
+  --ink-mute: #a1977f;
 
   /* Cases à cocher */
-  --check: #3A5132;
-  --checktx: #9CA386;
+  --check: #3a5132;
+  --checktx: #9ca386;
 
   /* Couleurs de marque (extraites du logo mascotte) */
-  --brand-gold: #EAB64C;
-  --brand-gold-dark: #D89030;
-  --brand-salsa: #C75D43;
-  --brand-terracotta-dark: #C04A30;
-  --brand-avocat: #9DB84E;
-  --brand-green: #3A5132;
-  --brand-teal: #5FA39A;
-  --brand-ink: #2E2A20;
-  --brand-cream: #FBF5E9;
+  --brand-gold: #eab64c;
+  --brand-gold-dark: #d89030;
+  --brand-salsa: #c75d43;
+  --brand-terracotta-dark: #c04a30;
+  --brand-avocat: #9db84e;
+  --brand-green: #3a5132;
+  --brand-teal: #5fa39a;
+  --brand-ink: #2e2a20;
+  --brand-cream: #fbf5e9;
 
   /* Dégradés utilitaires */
-  --grad-primary: linear-gradient(150deg, #EAB64C, #D89030);
-  --grad-danger: linear-gradient(150deg, #D86A50, #C04A30);
+  --grad-primary: linear-gradient(150deg, #eab64c, #d89030);
+  --grad-danger: linear-gradient(150deg, #d86a50, #c04a30);
 
   /* 5 teintes de cartes (dégradé + bordure) — clair */
-  --c-gold: linear-gradient(160deg, #FCEFCF, #F7E2AE);   --c-gold-bd: #EFD79E;
-  --c-avo: linear-gradient(160deg, #EEF3D2, #DFEAAE);    --c-avo-bd: #D4E0A2;
-  --c-salsa: linear-gradient(160deg, #FAE0D6, #F2C7B5);  --c-salsa-bd: #EDC0AC;
-  --c-clay: linear-gradient(160deg, #F6E9D8, #ECD8BC);   --c-clay-bd: #E6CDA9;
-  --c-teal: linear-gradient(160deg, #DFEDE8, #C7DED5);   --c-teal-bd: #BAD7CD;
+  --c-gold: linear-gradient(160deg, #fcefcf, #f7e2ae);
+  --c-gold-bd: #efd79e;
+  --c-avo: linear-gradient(160deg, #eef3d2, #dfeaae);
+  --c-avo-bd: #d4e0a2;
+  --c-salsa: linear-gradient(160deg, #fae0d6, #f2c7b5);
+  --c-salsa-bd: #edc0ac;
+  --c-clay: linear-gradient(160deg, #f6e9d8, #ecd8bc);
+  --c-clay-bd: #e6cda9;
+  --c-teal: linear-gradient(160deg, #dfede8, #c7ded5);
+  --c-teal-bd: #bad7cd;
 
   /* Rayons (handoff §1) */
   --r-card: 18px;
@@ -60,23 +65,28 @@
   --font-mono: 'IBM Plex Mono', monospace;
 }
 
-[data-theme="dark"] {
-  --bg: #211D16;
+[data-theme='dark'] {
+  --bg: #211d16;
   --topbar: rgba(38, 33, 25, 0.92);
-  --surface: #2C2719;
-  --border: #43391F;
-  --track: #2C2719;
-  --ink: #F3ECDD;
-  --ink-soft: #C9BFA3;
-  --ink-mute: #8E8161;
+  --surface: #2c2719;
+  --border: #43391f;
+  --track: #2c2719;
+  --ink: #f3ecdd;
+  --ink-soft: #c9bfa3;
+  --ink-mute: #8e8161;
 
-  --check: #9DB84E;
-  --checktx: #7E8A5F;
+  --check: #9db84e;
+  --checktx: #7e8a5f;
 
   /* 5 teintes de cartes — sombre */
-  --c-gold: linear-gradient(160deg, #3A3320, #2E2A18);   --c-gold-bd: #4A4026;
-  --c-avo: linear-gradient(160deg, #2F3A22, #26301B);    --c-avo-bd: #3F4A2A;
-  --c-salsa: linear-gradient(160deg, #3A2A22, #2E211B);  --c-salsa-bd: #4A3328;
-  --c-clay: linear-gradient(160deg, #352D1C, #2A2416);   --c-clay-bd: #46391F;
-  --c-teal: linear-gradient(160deg, #1F332E, #1A2A26);   --c-teal-bd: #2C443D;
+  --c-gold: linear-gradient(160deg, #3a3320, #2e2a18);
+  --c-gold-bd: #4a4026;
+  --c-avo: linear-gradient(160deg, #2f3a22, #26301b);
+  --c-avo-bd: #3f4a2a;
+  --c-salsa: linear-gradient(160deg, #3a2a22, #2e211b);
+  --c-salsa-bd: #4a3328;
+  --c-clay: linear-gradient(160deg, #352d1c, #2a2416);
+  --c-clay-bd: #46391f;
+  --c-teal: linear-gradient(160deg, #1f332e, #1a2a26);
+  --c-teal-bd: #2c443d;
 }

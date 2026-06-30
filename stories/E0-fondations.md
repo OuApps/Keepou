@@ -137,21 +137,24 @@
 
 ---
 
-## E0-S8 — Qualité : lint, format & CI de base · `à faire` · M
+## E0-S8 — Qualité : lint, format, types, tests & CI · `posé` · M
 
 **Objectif.** Garde-fous automatiques dès le départ (avant que le code grossisse).
 
 **Tâches**
-- Front : `tsc --noEmit` (déjà en script `lint`), ajouter ESLint + Prettier (config légère).
-- Back : Ruff (config posée dans `pyproject.toml`), ajouter format check ; éventuellement `mypy` léger.
-- **CI** (GitHub Actions) : job front (install + lint + build) + job back (install + ruff + import smoke test).
+- Back géré par **uv** (`pyproject.toml` + `uv.lock`) ; `requirements.txt` **généré** (`uv export`).
+  - **Ruff** (lint `E/W/F/I/UP/B/SIM/C4` + format), **ty** (types, Astral), **pytest** (+ httpx pour `TestClient`).
+- Front : **ESLint** (flat config + typescript-eslint + react-hooks/refresh), **Prettier**, **tsc --noEmit**, **Vitest** (+ Testing Library, jsdom).
+- **CI** GitHub Actions (`.github/workflows/ci.yml`) : job `api` (ruff · ty · pytest) + job `web` (tsc · eslint · prettier · vitest · build).
+- Transverse : `.editorconfig`, `.pre-commit-config.yaml` (ruff + prettier).
 
 **Critères d'acceptation**
-- [ ] `npm run lint` (front) et `ruff check` (back) passent.
-- [ ] Un workflow CI tourne sur push/PR et bloque si lint/build échoue.
-- [ ] Smoke test back : import de `app.main` + `GET /api/health` (via httpx/TestClient).
+- [x] Back : `uv run ruff check .`, `uv run ruff format --check .`, `uv run ty check`, `uv run pytest` passent.
+- [x] Front : `npm run typecheck`, `lint`, `format`, `test`, `build` passent.
+- [x] Smoke test back : `GET /api/health` + roundtrip hash mot de passe (`tests/test_health.py`).
+- [x] Workflow CI déclenché sur push/PR, bloque si une étape échoue.
 
-**Notes.** Ruff est déjà configuré (`api/pyproject.toml`). La CI pourra être complétée par le déploiement en **E1**.
+**Notes.** En place et vérifié localement. Le **CD** (déploiement) est ajouté en **E1** (Railway).
 
 ---
 

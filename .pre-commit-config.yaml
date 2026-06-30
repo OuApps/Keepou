@@ -1,0 +1,29 @@
+# Hooks pré-commit (optionnel mais recommandé) : `pip install pre-commit && pre-commit install`.
+# Reflète la CI : ruff (back) + prettier (front).
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-merge-conflict
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: ^api/
+      - id: ruff-format
+        files: ^api/
+
+  # Prettier via hook local (utilise la version installée dans web/).
+  - repo: local
+    hooks:
+      - id: prettier-web
+        name: prettier (web)
+        entry: bash -c 'cd web && npx --no-install prettier --write "$@"' --
+        language: system
+        files: ^web/.*\.(ts|tsx|js|jsx|json|css|html|md)$
+        exclude: ^web/(dist|node_modules)/
