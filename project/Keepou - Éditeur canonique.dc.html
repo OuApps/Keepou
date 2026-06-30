@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="design_doc_mode" content="canvas">
+<style>*{box-sizing:border-box}body{margin:0}</style>
+</helmet>
+
+<!-- ===== INTRO ===== -->
+<div style="position:absolute;left:80px;top:36px;width:1200px">
+  <div data-drags-parent="1" style="display:flex;align-items:center;gap:14px">
+    <img src="assets/keepou-mascot.png" alt="Keepou" style="width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 4px 8px rgba(46,42,32,.18))">
+    <div>
+      <div style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:25px;color:#2E2A20">Éditeur — version retenue</div>
+      <div style="font-family:'Nunito Sans',sans-serif;font-size:14px;color:#6B6456;margin-top:2px">Modale sur desktop · plein écran sur mobile · texte + cases à cocher · sauvegarde en Markdown. <b style="color:#3A5132">Coche, édite, insère</b> — le panneau Markdown se met à jour en direct.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DESKTOP · MODALE ===== -->
+<div style="position:absolute;left:80px;top:140px;width:1180px">
+  <div data-drags-parent="1" style="font-family:'Nunito Sans',sans-serif;margin-bottom:12px"><span style="font-weight:700;font-size:15px;color:#2E2A20">Desktop · Modale</span><span style="font-size:13px;color:#7A7263"> — ouvre par-dessus le board, le contexte reste visible.</span></div>
+  <div style="position:relative;width:1180px;height:780px;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08),0 30px 60px -40px rgba(46,42,32,.5)">
+    <!-- dimmed board -->
+    <div style="position:absolute;inset:0;background:#FBF4E6">
+      <div style="display:flex;align-items:center;gap:16px;padding:15px 24px;border-bottom:1px solid #EBDFC6">
+        <img src="assets/keepou-mascot.png" style="width:34px;height:34px;object-fit:contain"><span style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:21px;color:#2E2A20">Keepou</span>
+        <div style="flex:1"></div>
+        <div style="width:280px;height:38px;border-radius:999px;background:#fff;border:1px solid #EBDFC6"></div>
+      </div>
+      <div style="padding:22px 24px;column-count:4;column-gap:16px;opacity:.5">
+        <div style="break-inside:avoid;margin-bottom:16px;height:120px;border-radius:18px;background:linear-gradient(160deg,#FCEFCF,#F7E2AE);border:1px solid #EFD79E"></div>
+        <div style="break-inside:avoid;margin-bottom:16px;height:90px;border-radius:18px;background:linear-gradient(160deg,#FAE0D6,#F2C7B5);border:1px solid #EDC0AC"></div>
+        <div style="break-inside:avoid;margin-bottom:16px;height:150px;border-radius:18px;background:linear-gradient(160deg,#DFEDE8,#C7DED5);border:1px solid #BAD7CD"></div>
+        <div style="break-inside:avoid;margin-bottom:16px;height:110px;border-radius:18px;background:linear-gradient(160deg,#FBE9BE,#F5D793);border:1px solid #ECCB84"></div>
+      </div>
+    </div>
+    <div style="position:absolute;inset:0;background:rgba(46,42,32,.42);backdrop-filter:blur(1.5px)"></div>
+    <!-- modal -->
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:580px;background:linear-gradient(165deg,#EEF3D2,#E4ECBB);border:1px solid #D4E0A2;border-radius:20px;box-shadow:0 40px 80px -30px rgba(46,42,32,.6);overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px;background:rgba(58,81,50,.10);border-bottom:1px solid rgba(58,81,50,.16)">
+        <div style="display:flex;align-items:center;gap:8px;font-family:'Nunito Sans',sans-serif;font-size:12.5px;color:#3A5132;font-weight:700"><span style="width:8px;height:8px;border-radius:999px;background:#3A5132;box-shadow:0 0 0 3px rgba(58,81,50,.18)"></span>Tu modifies cette note</div>
+        <div style="font-family:'Nunito Sans',sans-serif;font-size:12px;color:#6E7A52;display:flex;align-items:center;gap:6px" data-comment-anchor="e582757d07-div"><svg width="13" height="13" viewBox="0 0 16 16"><path d="M3 8.5 L6.5 12 L13 4.5" fill="none" stroke="#6E7A52" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path></svg>Enregistré · à l'instant</div>
+      </div>
+      <div style="padding:18px 22px 8px">
+        <input value="{{ title }}" onBlur="{{ editTitle }}" style="width:100%;border:none;background:transparent;font-family:'Fredoka',sans-serif;font-weight:600;font-size:21px;color:#2E2A20;outline:none;padding:0;margin-bottom:5px">
+        <div style="font-family:'Nunito Sans',sans-serif;font-size:12px;color:#9AA07E;margin-bottom:16px">Dernière version enregistrée par <b style="color:#6E7A52">Léa</b> · hier à 18:42</div>
+        <div style="display:flex;flex-direction:column;gap:11px">
+          <sc-for list="{{ blocks }}" as="b" hint-placeholder-count="5">
+            <sc-if value="{{ b.isText }}" hint-placeholder-val="{{ true }}">
+              <div style="font-family:'Nunito Sans',sans-serif;font-size:14.5px;line-height:1.6;color:#4A4636">{{ b.text }}</div>
+            </sc-if>
+            <sc-if value="{{ b.isCheck }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:10px">
+                <span onClick="{{ b.onToggle }}" style="{{ b.boxStyle }}">
+                  <sc-if value="{{ b.done }}" hint-placeholder-val="{{ false }}"><svg width="11" height="11" viewBox="0 0 10 10"><path d="M2 5.2 L4 7.2 L8 2.6" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if>
+                </span>
+                <input value="{{ b.text }}" onChange="{{ b.onEdit }}" style="{{ b.inputStyle }}">
+              </div>
+            </sc-if>
+          </sc-for>
+        </div>
+        <div onClick="{{ addCheck }}" style="margin-top:13px;display:inline-flex;align-items:center;gap:7px;font-family:'Nunito Sans',sans-serif;font-size:13px;color:#3A5132;font-weight:700;cursor:pointer;padding:5px 0">
+          <span style="width:18px;height:18px;border-radius:5px;border:1.7px dashed #9DAE6C;display:inline-flex;align-items:center;justify-content:center;font-size:13px;line-height:1">+</span>Insérer une case à cocher
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-top:1px solid rgba(58,81,50,.16)">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="display:flex;align-items:center;gap:7px">
+            <span style="width:22px;height:22px;border-radius:999px;background:#F7E2AE;border:1px solid #EFD79E"></span>
+            <span style="width:22px;height:22px;border-radius:999px;background:#DFEAAE;border:2px solid #3A5132"></span>
+            <span style="width:22px;height:22px;border-radius:999px;background:#F2C7B5;border:1px solid #EDC0AC"></span>
+            <span style="width:22px;height:22px;border-radius:999px;background:#C7DED5;border:1px solid #BAD7CD"></span>
+          </div>
+          <span style="width:1px;height:20px;background:rgba(58,81,50,.2)"></span>
+          <span style="display:flex;align-items:center;gap:7px;font-family:'Nunito Sans',sans-serif;font-size:12.5px;color:#3A5132;font-weight:700"><span style="width:32px;height:19px;border-radius:999px;background:#3A5132;position:relative"><span style="position:absolute;top:2px;right:2px;width:15px;height:15px;border-radius:999px;background:#fff"></span></span>Public</span>
+        </div>
+        <span style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:14px;color:#fff;background:#3A5132;padding:9px 20px;border-radius:999px">Terminé</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MOBILE · PLEIN ÉCRAN ===== -->
+<div style="position:absolute;left:1320px;top:140px;width:392px">
+  <div data-drags-parent="1" style="font-family:'Nunito Sans',sans-serif;margin-bottom:12px"><span style="font-weight:700;font-size:15px;color:#2E2A20">Mobile · Plein écran</span></div>
+  <div style="width:392px;height:780px;border-radius:34px;overflow:hidden;border:8px solid #2E2A20;box-shadow:0 1px 3px rgba(0,0,0,.08),0 26px 50px -34px rgba(46,42,32,.55);background:linear-gradient(170deg,#EEF3D2,#E4ECBB);display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid rgba(58,81,50,.2)">
+      <svg width="18" height="18" viewBox="0 0 20 20"><path d="M12.5 4 L6 10.5 L12.5 17" fill="none" stroke="#3A5132" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      <div style="display:flex;align-items:center;gap:7px;font-family:'Nunito Sans',sans-serif;font-size:11.5px;color:#3A5132;font-weight:700;background:rgba(58,81,50,.12);padding:5px 11px;border-radius:999px"><span style="width:7px;height:7px;border-radius:999px;background:#3A5132"></span>Tu modifies</div>
+      <span style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:13px;color:#3A5132">OK</span>
+    </div>
+    <div style="flex:1;padding:20px 20px;overflow:hidden;display:flex;flex-direction:column">
+      <input value="{{ title }}" onBlur="{{ editTitle }}" style="width:100%;border:none;background:transparent;font-family:'Fredoka',sans-serif;font-weight:600;font-size:22px;color:#2E2A20;outline:none;padding:0;margin-bottom:5px">
+      <div style="font-family:'Nunito Sans',sans-serif;font-size:12px;color:#9AA07E;margin-bottom:16px">Dernière version enregistrée par <b style="color:#6E7A52">Léa</b> · hier à 18:42</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <sc-for list="{{ blocks }}" as="b" hint-placeholder-count="5">
+          <sc-if value="{{ b.isText }}" hint-placeholder-val="{{ true }}">
+            <div style="font-family:'Nunito Sans',sans-serif;font-size:15px;line-height:1.6;color:#4A4636">{{ b.text }}</div>
+          </sc-if>
+          <sc-if value="{{ b.isCheck }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:11px">
+              <span onClick="{{ b.onToggle }}" style="{{ b.boxStyleLg }}">
+                <sc-if value="{{ b.done }}" hint-placeholder-val="{{ false }}"><svg width="12" height="12" viewBox="0 0 10 10"><path d="M2 5.2 L4 7.2 L8 2.6" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if>
+              </span>
+              <input value="{{ b.text }}" onChange="{{ b.onEdit }}" style="{{ b.inputStyleLg }}">
+            </div>
+          </sc-if>
+        </sc-for>
+      </div>
+      <div onClick="{{ addCheck }}" style="margin-top:auto;padding-top:16px;display:inline-flex;align-self:flex-start;align-items:center;gap:8px;font-family:'Nunito Sans',sans-serif;font-size:14px;color:#3A5132;font-weight:700;cursor:pointer">
+        <span style="width:20px;height:20px;border-radius:5px;border:1.7px dashed #9DAE6C;display:inline-flex;align-items:center;justify-content:center;font-size:14px;line-height:1" data-comment-anchor="3953ef4bce-span">+</span>Insérer une case à cocher
+      </div>
+    </div>
+    <div style="padding:14px 18px;border-top:1px solid rgba(58,81,50,.2);display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;gap:8px"><span style="width:26px;height:26px;border-radius:999px;background:#F7E2AE"></span><span style="width:26px;height:26px;border-radius:999px;background:#DFEAAE;border:2px solid #3A5132"></span><span style="width:26px;height:26px;border-radius:999px;background:#F2C7B5"></span><span style="width:26px;height:26px;border-radius:999px;background:#C7DED5"></span></div>
+      <span style="display:flex;align-items:center;gap:6px;font-family:'Nunito Sans',sans-serif;font-size:12px;color:#3A5132;font-weight:700"><span style="width:30px;height:18px;border-radius:999px;background:#3A5132;position:relative"><span style="position:absolute;top:2px;right:2px;width:14px;height:14px;border-radius:999px;background:#fff"></span></span>Public</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PANNEAU MARKDOWN ===== -->
+<div style="position:absolute;left:1800px;top:140px;width:480px">
+  <div data-drags-parent="1" style="font-family:'Nunito Sans',sans-serif;margin-bottom:12px"><span style="font-weight:700;font-size:15px;color:#2E2A20">Stocké côté serveur</span><span style="font-size:13px;color:#7A7263"> — le corps est sérialisé en Markdown.</span></div>
+  <div style="border-radius:16px;overflow:hidden;background:#2E2A20;box-shadow:0 1px 3px rgba(0,0,0,.08),0 30px 60px -40px rgba(46,42,32,.5)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid #463F2E">
+      <div style="display:flex;align-items:center;gap:9px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#EAB64C;font-weight:600"><span style="width:9px;height:9px;border-radius:2px;background:#EAB64C"></span>note.md</div>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#9A8C6E">live</span>
+    </div>
+    <pre style="margin:0;padding:18px 20px;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.7;color:#E8DCC0;white-space:pre-wrap;word-break:break-word;min-height:300px">{{ md }}</pre>
+    <div style="padding:13px 20px;border-top:1px solid #463F2E;font-family:'Nunito Sans',sans-serif;font-size:12px;color:#A99B78;line-height:1.5">Cases à cocher = <b style="color:#C7DE8E">- [ ]</b> / <b style="color:#C7DE8E">- [x]</b> (GitHub-flavored task list). Le titre est stocké à part ; ici en <b style="color:#C7DE8E"># H1</b> pour l'aperçu.</div>
+  </div>
+</div>
+
+<!-- ===== NOTE HANDOFF ===== -->
+<div style="position:absolute;left:1800px;top:660px;width:480px">
+  <div data-drags-parent="1" style="font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:13px;color:#5C5648;margin-bottom:10px">Notes pour le handoff</div>
+  <div style="background:#fff;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:20px 22px;font-family:'Nunito Sans',sans-serif">
+    <div style="display:flex;flex-direction:column;gap:11px;font-size:13px;color:#5C5648;line-height:1.5">
+      <div style="display:flex;gap:9px"><span style="color:#3A5132;font-weight:800">·</span><span>Un seul format d'éditeur, rendu en <b>modale</b> ≥ tablette et en <b>plein écran</b> sous ~640px.</span></div>
+      <div style="display:flex;gap:9px"><span style="color:#3A5132;font-weight:800">·</span><span>Le corps mélange <b>paragraphes</b> et <b>cases à cocher</b> dans un même flux ordonné.</span></div>
+      <div style="display:flex;gap:9px"><span style="color:#3A5132;font-weight:800">·</span><span>Persistance en <b>Markdown</b> dès le MVP : paragraphes en texte, cases en <code style="font-family:'IBM Plex Mono',monospace;font-size:12px;background:#F1EADB;padding:1px 5px;border-radius:4px">- [ ]</code> / <code style="font-family:'IBM Plex Mono',monospace;font-size:12px;background:#F1EADB;padding:1px 5px;border-radius:4px">- [x]</code>. Rendu riche possible plus tard sans migration.</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SAUVEGARDE AUTOMATIQUE ===== -->
+<div style="position:absolute;left:1800px;top:980px;width:480px">
+  <div data-drags-parent="1" style="font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:13px;color:#5C5648;margin-bottom:10px">Sauvegarde & états (réponse aux retours)</div>
+  <div style="background:#fff;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:20px 22px;font-family:'Nunito Sans',sans-serif">
+    <div style="font-size:12.5px;color:#857C6A;line-height:1.5;margin-bottom:14px">Deux infos distinctes, donc <b style="color:#2E2A20">pas de conflit</b> :</div>
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;color:#5C5648;line-height:1.5">
+      <div style="display:flex;gap:10px"><span style="font-family:'IBM Plex Mono',monospace;color:#3A5132;font-size:11px;font-weight:600;white-space:nowrap">en-tête</span><span><b>État de session</b> — « Enregistré · à l'instant » / « Enregistrement… ». Reflète ta saisie en cours.</span></div>
+      <div style="display:flex;gap:10px"><span style="font-family:'IBM Plex Mono',monospace;color:#9AA07E;font-size:11px;font-weight:600;white-space:nowrap">sous-titre</span><span><b>Dernière version enregistrée</b> — auteur + horodatage de la dernière version persistée. Ne change qu'après une sauvegarde réussie.</span></div>
+    </div>
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid #ECE4D5;display:flex;flex-direction:column;gap:9px;font-size:12.5px;color:#5C5648;line-height:1.5">
+      <div style="display:flex;align-items:center;gap:8px"><span style="width:9px;height:9px;border-radius:999px;background:#EAB64C;flex:none"></span><b>Modifié</b> — saisie non encore envoyée</div>
+      <div style="display:flex;align-items:center;gap:8px"><span style="width:9px;height:9px;border-radius:999px;background:#9DAE6C;flex:none"></span><b>Enregistrement…</b> — requête en cours</div>
+      <div style="display:flex;align-items:center;gap:8px"><span style="width:9px;height:9px;border-radius:999px;background:#3A5132;flex:none"></span><b>Enregistré</b> — confirmé, « Dernière version » mise à jour</div>
+    </div>
+    <div style="margin-top:14px;padding:11px 13px;background:#FBF4E6;border:1px solid #EBDFC6;border-radius:11px;font-size:12px;color:#857C6A;line-height:1.5"><b style="color:#2E2A20">Délai (debounce) :</b> autosave ~1,5 s après la dernière frappe, et immédiat à la fermeture / au blur. Le heartbeat du verrou (~20 s) est indépendant de la sauvegarde du contenu.</div>
+  </div>
+</div></x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    title: "Repas de quartier",
+    blocks: [
+      { type: 'text', text: "Pour le repas de quartier on se répartit les tâches. RDV samedi 10h sur la place pour installer." },
+      { type: 'check', done: true,  text: "Réserver la salle" },
+      { type: 'check', done: false, text: "Liste des plats par famille" },
+      { type: 'check', done: false, text: "Tables & chaises" },
+      { type: 'text', text: "Penser à ramener une rallonge et des gobelets réutilisables." }
+    ]
+  };
+  toggle(i){ this.setState(s => { const b = s.blocks.slice(); b[i] = { ...b[i], done: !b[i].done }; return { blocks: b }; }); }
+  edit(i, e){ const t = e.target.value; this.setState(s => { const b = s.blocks.slice(); b[i] = { ...b[i], text: t }; return { blocks: b }; }); }
+  addCheck(){ this.setState(s => ({ blocks: [...s.blocks, { type: 'check', done: false, text: "Nouvel élément" }] })); }
+  editTitle(e){ const t = e.target.value; this.setState({ title: t }); }
+  buildMd(){
+    const lines = ["# " + this.state.title, ""];
+    let prevCheck = false;
+    this.state.blocks.forEach((b, i) => {
+      if (b.type === 'check') {
+        if (i > 0 && !prevCheck) lines.push("");
+        lines.push((b.done ? "- [x] " : "- [ ] ") + b.text);
+        prevCheck = true;
+      } else {
+        lines.push("");
+        lines.push(b.text);
+        prevCheck = false;
+      }
+    });
+    return lines.join("\n").replace(/\n{3,}/g, "\n\n");
+  }
+  renderVals(){
+    const boxOn  = "width:18px;height:18px;border-radius:5px;background:#3A5132;display:inline-flex;align-items:center;justify-content:center;flex:none;cursor:pointer";
+    const boxOff = "width:18px;height:18px;border-radius:5px;border:1.7px solid #9DAE6C;display:inline-flex;align-items:center;justify-content:center;flex:none;cursor:pointer";
+    const boxOnLg  = "width:22px;height:22px;border-radius:6px;background:#3A5132;display:inline-flex;align-items:center;justify-content:center;flex:none;cursor:pointer";
+    const boxOffLg = "width:22px;height:22px;border-radius:6px;border:1.7px solid #9DAE6C;display:inline-flex;align-items:center;justify-content:center;flex:none;cursor:pointer";
+    const inBase = "border:none;background:transparent;outline:none;font-family:'Nunito Sans',sans-serif;width:100%;padding:0;";
+    const blocks = this.state.blocks.map((b, i) => ({
+      idx: i,
+      text: b.text,
+      done: !!b.done,
+      isText: b.type === 'text',
+      isCheck: b.type === 'check',
+      boxStyle: b.done ? boxOn : boxOff,
+      boxStyleLg: b.done ? boxOnLg : boxOffLg,
+      inputStyle: inBase + "font-size:14.5px;" + (b.done ? "text-decoration:line-through;color:#8C9270;" : "color:#4A4636;"),
+      inputStyleLg: inBase + "font-size:15px;" + (b.done ? "text-decoration:line-through;color:#8C9270;" : "color:#4A4636;"),
+      onToggle: () => this.toggle(i),
+      onEdit: (e) => this.edit(i, e)
+    }));
+    return {
+      title: this.state.title,
+      blocks,
+      md: this.buildMd(),
+      addCheck: () => this.addCheck(),
+      editTitle: (e) => this.editTitle(e)
+    };
+  }
+}
+</script>
+</body>
+</html>

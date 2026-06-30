@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<meta name="design_doc_mode" content="canvas">
+<style>*{box-sizing:border-box}body{margin:0}</style>
+</helmet>
+
+<!-- ===== INTRO ===== -->
+<div style="position:absolute;left:80px;top:36px;width:1200px">
+  <div data-drags-parent="1" style="display:flex;align-items:center;gap:14px">
+    <img src="assets/keepou-mascot.png" alt="Keepou" style="width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 4px 8px rgba(46,42,32,.18))">
+    <div>
+      <div style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:25px;color:#2E2A20">Éditeur de note & verrou mono-éditeur</div>
+      <div style="font-family:'Nunito Sans',sans-serif;font-size:14px;color:#6B6456;margin-top:2px">Deux formats (modale &amp; plein écran) · les 4 états du verrou · couleurs, checklist, privé/public</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FORMAT A · MODALE SUR LE BOARD ===== -->
+<div style="position:absolute;left:80px;top:140px;width:1180px">
+  <div data-drags-parent="1" style="font-family:'Nunito Sans',sans-serif;margin-bottom:12px"><span style="font-weight:700;font-size:15px;color:#2E2A20">Format 1 · Modale</span><span style="font-size:13px;color:#7A7263"> — ouvre par-dessus le board, façon Keep. Rapide, le contexte reste visible.</span></div>
+  <div style="position:relative;width:1180px;height:760px;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08),0 30px 60px -40px rgba(46,42,32,.5)">
+    <!-- dimmed board behind -->
+    <div style="position:absolute;inset:0;background:#FBF4E6">
+      <div style="display:flex;align-items:center;gap:16px;padding:15px 24px;border-bottom:1px solid #EBDFC6">
+        <img src="assets/keepou-mascot.png" style="width:34px;height:34px;object-fit:contain"><span style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:21px;color:#2E2A20">Keepou</span>
+        <div style="flex:1"></div>
+        <div style="width:280px;height:38px;border-radius:999px;background:#fff;border:1px solid #EBDFC6"></div>
+      </div>
+      <div style="padding:22px 24px;column-count:4;column-gap:16px;opacity:.55">
+        <div style="break-inside:avoid;margin-bottom:16px;height:120px;border-radius:18px;background:linear-gradient(160deg,#FCEFCF,#F7E2AE);border:1px solid #EFD79E"></div>
+        <div style="break-inside:avoid;margin-bottom:16px;height:90px;border-radius:18px;background:linear-gradient(160deg,#FAE0D6,#F2C7B5);border:1px solid #EDC0AC"></div>
+        <div style="break-inside:avoid;margin-bottom:16px;height:150px;border-radius:18px;background:linear-gradient(160deg,#DFEDE8,#C7DED5);border:1px solid #BAD7CD"></div>
+        <div style="break-inside:avoid;margin-bottom:16px;height:110px;border-radius:18px;background:linear-gradient(160deg,#FBE9BE,#F5D793);border:1px solid #ECCB84"></div>
+        <div style="break-inside:avoid;margin-bottom:16px;height:80px;border-radius:18px;background:linear-gradient(160deg,#EEF3D2,#DFEAAE);border:1px solid #D4E0A2"></div>
+      </div>
+    </div>
+    <!-- scrim -->
+    <div style="position:absolute;inset:0;background:rgba(46,42,32,.42);backdrop-filter:blur(1.5px)"></div>
+    <!-- modal -->
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:560px;background:linear-gradient(165deg,#EEF3D2,#E4ECBB);border:1px solid #D4E0A2;border-radius:20px;box-shadow:0 40px 80px -30px rgba(46,42,32,.6);overflow:hidden">
+      <!-- status bar: you hold the lock -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px;background:rgba(58,81,50,.10);border-bottom:1px solid rgba(58,81,50,.16)">
+        <div style="display:flex;align-items:center;gap:8px;font-family:'Nunito Sans',sans-serif;font-size:12.5px;color:#3A5132;font-weight:700" data-comment-anchor="e4acff6577-div"><span style="width:8px;height:8px;border-radius:999px;background:#3A5132;box-shadow:0 0 0 3px rgba(58,81,50,.18)"></span>Tu modifies cette note</div>
+        <div style="font-family:'Nunito Sans',sans-serif;font-size:12px;color:#6E7A52;display:flex;align-items:center;gap:6px"><svg width="13" height="13" viewBox="0 0 16 16"><path d="M3 8.5 L6.5 12 L13 4.5" fill="none" stroke="#6E7A52" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path></svg>Enregistré</div>
+      </div>
+      <div style="padding:20px 22px">
+        <input value="Repas de quartier 🌮" style="width:100%;border:none;background:transparent;font-family:'Fredoka',sans-serif;font-weight:600;font-size:21px;color:#2E2A20;outline:none;padding:0;margin-bottom:5px">
+        <div style="font-family:'Nunito Sans',sans-serif;font-size:12px;color:#9AA07E;margin-bottom:15px">Dernière édition par <b style="color:#6E7A52">Léa</b> · hier à 18:42</div>
+        <div style="display:flex;flex-direction:column;gap:10px;font-family:'Nunito Sans',sans-serif;font-size:14.5px;color:#4A4636">
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:18px;height:18px;border-radius:5px;background:#3A5132;display:inline-flex;align-items:center;justify-content:center;flex:none"><svg width="11" height="11" viewBox="0 0 10 10"><path d="M2 5.2 L4 7.2 L8 2.6" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span style="text-decoration:line-through;color:#8C9270">Réserver la salle</span></div>
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:18px;height:18px;border-radius:5px;border:1.7px solid #9DAE6C;flex:none"></span>Liste des plats par famille</div>
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:18px;height:18px;border-radius:5px;border:1.7px solid #9DAE6C;flex:none"></span>Tables &amp; chaises</div>
+          <div style="display:flex;align-items:center;gap:10px;color:#9AA07E"><span style="width:18px;height:18px;border-radius:5px;border:1.7px dashed #BCC596;flex:none;display:inline-flex;align-items:center;justify-content:center;font-size:13px">+</span>Ajouter un élément</div>
+        </div>
+      </div>
+      <!-- toolbar -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-top:1px solid rgba(58,81,50,.16)">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="display:flex;align-items:center;gap:7px">
+            <span style="width:22px;height:22px;border-radius:999px;background:#F7E2AE;border:1px solid #EFD79E"></span>
+            <span style="width:22px;height:22px;border-radius:999px;background:#DFEAAE;border:2px solid #3A5132"></span>
+            <span style="width:22px;height:22px;border-radius:999px;background:#F2C7B5;border:1px solid #EDC0AC"></span>
+            <span style="width:22px;height:22px;border-radius:999px;background:#C7DED5;border:1px solid #BAD7CD"></span>
+          </div>
+          <span style="width:1px;height:20px;background:rgba(58,81,50,.2)"></span>
+          <span style="display:flex;align-items:center;gap:7px;font-family:'Nunito Sans',sans-serif;font-size:12.5px;color:#3A5132;font-weight:700"><span style="width:32px;height:19px;border-radius:999px;background:#3A5132;position:relative"><span style="position:absolute;top:2px;right:2px;width:15px;height:15px;border-radius:999px;background:#fff"></span></span>Public</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-family:'Nunito Sans',sans-serif;font-size:13px;color:#6E7A52;font-weight:600;padding:8px 10px">Historique</span>
+          <span style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:14px;color:#fff;background:#3A5132;padding:9px 20px;border-radius:999px">Terminé</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FORMAT B · PLEIN ÉCRAN ===== -->
+<div style="position:absolute;left:1340px;top:140px;width:960px">
+  <div data-drags-parent="1" style="font-family:'Nunito Sans',sans-serif;margin-bottom:12px"><span style="font-weight:700;font-size:15px;color:#2E2A20">Format 2 · Plein écran</span><span style="font-size:13px;color:#7A7263"> — page dédiée. Plus d'espace pour notes longues &amp; historique.</span></div>
+  <div style="width:960px;height:760px;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08),0 30px 60px -40px rgba(46,42,32,.5);background:linear-gradient(170deg,#FCEFCF,#F6DFA6);display:flex;flex-direction:column">
+    <!-- top -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 22px;background:rgba(251,244,230,.5);border-bottom:1px solid #EFD79E">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="width:36px;height:36px;border-radius:999px;background:#fff;border:1px solid #EFD79E;display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 20 20"><path d="M12.5 4 L6 10.5 L12.5 17" fill="none" stroke="#8A7F69" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+        <span style="font-family:'Nunito Sans',sans-serif;font-size:13px;color:#8A7F69;font-weight:600">Retour au board</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;font-family:'Nunito Sans',sans-serif;font-size:12.5px;color:#3A5132;font-weight:700;background:rgba(58,81,50,.10);padding:6px 12px;border-radius:999px"><span style="width:8px;height:8px;border-radius:999px;background:#3A5132;box-shadow:0 0 0 3px rgba(58,81,50,.18)"></span>Tu modifies · enregistré à 14:32</div>
+    </div>
+    <!-- editor body -->
+    <div style="flex:1;padding:34px 60px;overflow:hidden" data-comment-anchor="61097e35f5-div">
+      <div style="max-width:620px;margin:0 auto">
+        <input value="Courses du week-end" style="width:100%;border:none;background:transparent;font-family:'Fredoka',sans-serif;font-weight:600;font-size:30px;color:#2E2A20;outline:none;padding:0;margin-bottom:6px">
+        <div style="font-family:'Nunito Sans',sans-serif;font-size:12.5px;color:#A1977F;margin-bottom:22px">Créé par toi · dernière édition par <b style="color:#8A7F69">Léa</b> · 14 juin à 18:42</div>
+        <div style="font-family:'Nunito Sans',sans-serif;font-size:16px;line-height:1.7;color:#4A4636">Tortillas de maïs, coriandre fraîche, citron vert, avocats bien mûrs, crème épaisse.<br><br>Penser au fromage à râper et aux haricots noirs en conserve. Vérifier s'il reste du piment chipotle dans le placard.<span style="display:inline-block;width:2px;height:20px;background:#D89030;margin-left:2px;vertical-align:-4px"></span></div>
+      </div>
+    </div>
+    <!-- toolbar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 22px;background:rgba(251,244,230,.5);border-top:1px solid #EFD79E">
+      <div style="display:flex;align-items:center;gap:14px">
+        <span style="display:flex;align-items:center;gap:7px;font-family:'Nunito Sans',sans-serif;font-size:12.5px;color:#8A7F69;font-weight:700;background:#fff;border:1px solid #EFD79E;padding:7px 12px;border-radius:999px"><svg width="15" height="15" viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="3" fill="none" stroke="#8A7F69" stroke-width="1.4"></rect><path d="M5 8 L7.2 10 L11 5.5" fill="none" stroke="#8A7F69" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>Cases à cocher</span>
+        <span style="width:1px;height:22px;background:#E6CDA9"></span>
+        <div style="display:flex;align-items:center;gap:7px">
+          <span style="width:24px;height:24px;border-radius:999px;background:#F7E2AE;border:2px solid #D89030"></span>
+          <span style="width:24px;height:24px;border-radius:999px;background:#DFEAAE;border:1px solid #D4E0A2"></span>
+          <span style="width:24px;height:24px;border-radius:999px;background:#F2C7B5;border:1px solid #EDC0AC"></span>
+          <span style="width:24px;height:24px;border-radius:999px;background:#C7DED5;border:1px solid #BAD7CD"></span>
+        </div>
+        <span style="width:1px;height:22px;background:#E6CDA9"></span>
+        <span style="display:flex;align-items:center;gap:7px;font-family:'Nunito Sans',sans-serif;font-size:13px;color:#9A8C6E;font-weight:700"><span style="width:32px;height:19px;border-radius:999px;background:#D8C9A8;position:relative"><span style="position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:999px;background:#fff"></span></span>Privé</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-family:'Nunito Sans',sans-serif;font-size:13px;color:#8A7F69;font-weight:600;padding:8px 12px">Historique</span>
+        <span style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:14px;color:#fff;background:linear-gradient(150deg,#EAB64C,#D89030);padding:10px 22px;border-radius:999px">Terminé</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ÉTATS DU VERROU ===== -->
+<div style="position:absolute;left:80px;top:980px;width:600px">
+  <div data-drags-parent="1" style="font-family:'Nunito Sans',sans-serif;margin-bottom:2px"><span style="font-weight:700;font-size:16px;color:#2E2A20">Les 4 états du verrou</span></div>
+  <div style="font-family:'Nunito Sans',sans-serif;font-size:13px;color:#7A7263">Une seule personne édite à la fois. Le bandeau en haut de l'éditeur change selon qui détient le verrou.</div>
+</div>
+
+<!-- état 1 : édition libre -->
+<div style="position:absolute;left:80px;top:1052px;width:520px">
+  <div data-drags-parent="1" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#3A5132;margin-bottom:10px">1 · Verrou à toi — édition libre</div>
+  <div style="border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08),0 16px 32px -24px rgba(46,42,32,.5)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;background:rgba(58,81,50,.10);border-bottom:1px solid rgba(58,81,50,.16)">
+      <div style="display:flex;align-items:center;gap:8px;font-family:'Nunito Sans',sans-serif;font-size:12.5px;color:#3A5132;font-weight:700"><span style="width:8px;height:8px;border-radius:999px;background:#3A5132;box-shadow:0 0 0 3px rgba(58,81,50,.18)"></span>Tu modifies cette note</div>
+      <div style="font-family:'Nunito Sans',sans-serif;font-size:11.5px;color:#6E7A52;display:flex;align-items:center;gap:5px"><svg width="12" height="12" viewBox="0 0 16 16"><path d="M3 8.5 L6.5 12 L13 4.5" fill="none" stroke="#6E7A52" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path></svg>Enregistré</div>
+    </div>
+    <div style="padding:16px">
+      <div style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:17px;color:#2E2A20;margin-bottom:8px">Liste apéro 🍹</div>
+      <div style="font-family:'Nunito Sans',sans-serif;font-size:13.5px;line-height:1.55;color:#4A4636">Guacamole, chips de maïs, citron vert, bière fraîche.<span style="display:inline-block;width:2px;height:16px;background:#D89030;margin-left:1px;vertical-align:-3px"></span></div>
+    </div>
+  </div>
+</div>
+
+<!-- état 2 : lecture seule, édité par Bob -->
+<div style="position:absolute;left:680px;top:1052px;width:520px">
+  <div data-drags-parent="1" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#C75D43;margin-bottom:10px">2 · Quelqu'un édite — lecture seule</div>
+  <div style="border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08),0 16px 32px -24px rgba(46,42,32,.5)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;background:rgba(199,93,67,.12);border-bottom:1px solid rgba(199,93,67,.25)">
+      <div style="display:flex;align-items:center;gap:8px;font-family:'Nunito Sans',sans-serif;font-size:12.5px;color:#C75D43;font-weight:700" data-comment-anchor="db89a89634-div">🔒 Bob est en cours d'édition — lecture seule</div>
+      <div style="font-family:'Nunito Sans',sans-serif;font-size:11.5px;color:#B06A55;display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:999px;background:#C75D43"></span>en direct</div>
+    </div>
+    <div style="padding:16px;opacity:.62;position:relative">
+      <div style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:17px;color:#2E2A20;margin-bottom:8px">Liste apéro 🍹</div>
+      <div style="font-family:'Nunito Sans',sans-serif;font-size:13.5px;line-height:1.55;color:#4A4636">Guacamole, chips de maïs, citron vert, bière fraîche.</div>
+    </div>
+    <div style="padding:0 16px 14px"><div style="font-family:'Nunito Sans',sans-serif;font-size:11.5px;color:#A1977F;background:#F6EFE2;border-radius:9px;padding:8px 11px" data-comment-anchor="942b73290c-div">Édition indisponible tant que Bob modifie la note. L'affichage se met à jour en temps réel.</div></div>
+  </div>
+</div>
+
+<!-- état 3 : verrou expiré, reprendre -->
+<div style="position:absolute;left:80px;top:1330px;width:520px">
+  <div data-drags-parent="1" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#B58A2E;margin-bottom:10px">3 · Verrou expiré (éditeur inactif)</div>
+  <div style="border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08),0 16px 32px -24px rgba(46,42,32,.5)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;background:rgba(234,182,76,.18);border-bottom:1px solid rgba(234,182,76,.4)">
+      <div style="display:flex;align-items:center;gap:8px;font-family:'Nunito Sans',sans-serif;font-size:12.5px;color:#9A7420;font-weight:700" data-comment-anchor="d60e82e83e-div">Bob a fini de modifier — note disponible</div>
+    </div>
+    <div style="padding:16px;opacity:.62">
+      <div style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:17px;color:#2E2A20;margin-bottom:8px">Liste apéro 🍹</div>
+      <div style="font-family:'Nunito Sans',sans-serif;font-size:13.5px;line-height:1.55;color:#4A4636">Guacamole, chips de maïs, citron vert, bière fraîche.</div>
+    </div>
+    <div style="padding:0 16px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <span style="font-family:'Nunito Sans',sans-serif;font-size:11.5px;color:#A1977F">Bob est inactif depuis 2 min</span>
+      <span style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:13.5px;color:#fff;background:linear-gradient(150deg,#EAB64C,#D89030);padding:9px 18px;border-radius:999px;white-space:nowrap" data-comment-anchor="c55e0e8c68-span">Modifier la note</span>
+    </div>
+  </div>
+</div>
+
+<!-- état 4 : conflit / quelqu'un a repris -->
+<div style="position:absolute;left:680px;top:1330px;width:520px">
+  <div data-drags-parent="1" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#8C8473;margin-bottom:10px">4 · Conflit — repris pendant ton absence</div>
+  <div style="border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08),0 16px 32px -24px rgba(46,42,32,.5)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;background:#F1EADB;border-bottom:1px solid #E3D9C4">
+      <div style="display:flex;align-items:center;gap:8px;font-family:'Nunito Sans',sans-serif;font-size:12.5px;color:#6A6354;font-weight:700" data-comment-anchor="1fb753bfc1-div">Léa modifie cette note</div>
+    </div>
+    <div style="padding:18px 16px;text-align:center">
+      <div style="font-family:'Nunito Sans',sans-serif;font-size:13px;line-height:1.55;color:#6A6354;margin-bottom:14px">Léa a commencé à modifier cette note pendant ton absence. Tes dernières modifications n'ont pas pu être enregistrées.</div>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <span style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:13px;color:#fff;background:#2E2A20;padding:9px 22px;border-radius:999px">Passer en lecture seule</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== NOTE TECHNIQUE ===== -->
+<div style="position:absolute;left:1340px;top:980px;width:600px">
+  <div data-drags-parent="1" style="font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:13px;color:#5C5648;margin-bottom:10px">Logique du verrou (pour le handoff)</div>
+  <div style="background:#fff;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:22px 24px;font-family:'Nunito Sans',sans-serif">
+    <div style="display:flex;flex-direction:column;gap:13px;font-size:13px;color:#5C5648;line-height:1.5">
+      <div style="display:flex;gap:10px"><span style="font-family:'IBM Plex Mono',monospace;color:#3A5132;font-size:12px">①</span><span>À l'ouverture en édition, le client <b>acquiert le verrou</b> (note.lockedBy = moi, lockedAt = now).</span></div>
+      <div style="display:flex;gap:10px"><span style="font-family:'IBM Plex Mono',monospace;color:#3A5132;font-size:12px">②</span><span>Un <b>heartbeat</b> régulier (~20 s) prolonge le verrou tant que l'éditeur est actif.</span></div>
+      <div style="display:flex;gap:10px"><span style="font-family:'IBM Plex Mono',monospace;color:#C75D43;font-size:12px">③</span><span>Les autres voient l'état <b>lecture seule</b> + « édité par X » et reçoivent les màj en direct.</span></div>
+      <div style="display:flex;gap:10px"><span style="font-family:'IBM Plex Mono',monospace;color:#B58A2E;font-size:12px">④</span><span>Sans heartbeat pendant un délai (ex. 60 s), le verrou <b>expire</b> et un autre peut le <b>reprendre</b>.</span></div>
+      <div style="display:flex;gap:10px"><span style="font-family:'IBM Plex Mono',monospace;color:#8C8473;font-size:12px">⑤</span><span>Si deux personnes reviennent en même temps, le serveur tranche : le perdant passe en <b>lecture seule</b> (aucune perte de données côté serveur).</span></div>
+      <div style="display:flex;gap:10px"><span style="font-family:'IBM Plex Mono',monospace;color:#6E7A52;font-size:12px">⑥</span><span>La <b>date de dernière édition</b> affichée = fin du dernier verrou (lockReleasedAt), avec l'auteur s'il diffère de toi.</span></div>
+    </div>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid #ECE4D5;font-size:12px;color:#857C6A;line-height:1.5">Couleurs des bandeaux : vert avocat = à toi · terracotta = verrouillé par un autre · or = expiré/reprise · sable = conflit. Cohérent avec la palette du logo.</div>
+  </div>
+</div>
+
+<!-- ===== MOBILE ===== -->
+<div style="position:absolute;left:2000px;top:980px;width:392px">
+  <div data-drags-parent="1" style="font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:13px;color:#5C5648;margin-bottom:10px">Éditeur — mobile (plein écran)</div>
+  <div style="width:392px;height:740px;border-radius:34px;overflow:hidden;border:8px solid #2E2A20;box-shadow:0 1px 3px rgba(0,0,0,.08),0 26px 50px -34px rgba(46,42,32,.55);background:linear-gradient(170deg,#EEF3D2,#E4ECBB);display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid rgba(58,81,50,.2)" data-comment-anchor="438183151b-div">
+      <svg width="18" height="18" viewBox="0 0 20 20"><path d="M12.5 4 L6 10.5 L12.5 17" fill="none" stroke="#3A5132" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      <div style="display:flex;align-items:center;gap:7px;font-family:'Nunito Sans',sans-serif;font-size:11.5px;color:#3A5132;font-weight:700;background:rgba(58,81,50,.12);padding:5px 11px;border-radius:999px"><span style="width:7px;height:7px;border-radius:999px;background:#3A5132"></span>Tu modifies</div>
+      <span style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:13px;color:#3A5132">OK</span>
+    </div>
+    <div style="flex:1;padding:22px 20px">
+      <div style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:23px;color:#2E2A20;margin-bottom:5px">Repas de quartier 🌮</div>
+      <div style="font-family:'Nunito Sans',sans-serif;font-size:12px;color:#9AA07E;margin-bottom:18px">Dernière édition par <b style="color:#6E7A52">Léa</b> · hier à 18:42</div>
+      <div style="display:flex;flex-direction:column;gap:12px;font-family:'Nunito Sans',sans-serif;font-size:15px;color:#4A4636">
+        <div style="display:flex;align-items:center;gap:11px"><span style="width:20px;height:20px;border-radius:5px;background:#3A5132;display:inline-flex;align-items:center;justify-content:center;flex:none"><svg width="12" height="12" viewBox="0 0 10 10"><path d="M2 5.2 L4 7.2 L8 2.6" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span style="text-decoration:line-through;color:#8C9270">Réserver la salle</span></div>
+        <div style="display:flex;align-items:center;gap:11px"><span style="width:20px;height:20px;border-radius:5px;border:1.7px solid #9DAE6C;flex:none"></span>Liste des plats</div>
+        <div style="display:flex;align-items:center;gap:11px"><span style="width:20px;height:20px;border-radius:5px;border:1.7px solid #9DAE6C;flex:none"></span>Tables &amp; chaises</div>
+        <div style="display:flex;align-items:center;gap:11px;color:#9AA07E"><span style="width:20px;height:20px;border-radius:5px;border:1.7px dashed #BCC596;flex:none;display:inline-flex;align-items:center;justify-content:center">+</span>Ajouter</div>
+      </div>
+    </div>
+    <div style="padding:14px 18px;border-top:1px solid rgba(58,81,50,.2);display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;gap:8px"><span style="width:26px;height:26px;border-radius:999px;background:#F7E2AE"></span><span style="width:26px;height:26px;border-radius:999px;background:#DFEAAE;border:2px solid #3A5132"></span><span style="width:26px;height:26px;border-radius:999px;background:#F2C7B5"></span><span style="width:26px;height:26px;border-radius:999px;background:#C7DED5"></span></div>
+      <span style="display:flex;align-items:center;gap:6px;font-family:'Nunito Sans',sans-serif;font-size:12px;color:#3A5132;font-weight:700"><span style="width:30px;height:18px;border-radius:999px;background:#3A5132;position:relative"><span style="position:absolute;top:2px;right:2px;width:14px;height:14px;border-radius:999px;background:#fff" data-comment-anchor="70f53aedd3-span"></span></span>Public</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PRIVÉ / PUBLIC RÉVERSIBLE ===== -->
+<div style="position:absolute;left:1340px;top:1440px;width:600px">
+  <div data-drags-parent="1" style="font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:13px;color:#5C5648;margin-bottom:10px">Privé ⇄ Public — réversible</div>
+  <div style="background:#fff;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:22px 24px;font-family:'Nunito Sans',sans-serif">
+    <div style="font-size:13.5px;color:#5C5648;line-height:1.6">Oui — l'interrupteur fonctionne dans les deux sens. Une note publique peut <b style="color:#2E2A20">repasser en privé</b> à tout moment.</div>
+    <div style="margin-top:14px;background:#FBF4E6;border:1px solid #EBDFC6;border-radius:11px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start">
+      <span style="font-size:15px">⚠️</span>
+      <div style="font-size:12.5px;color:#857C6A;line-height:1.5">En repassant en privé, la note <b>disparaît du board public</b> des autres membres. On affiche donc une confirmation : « Cette note ne sera plus visible par les autres. »</div>
+    </div>
+  </div>
+</div>
+<!-- ===== AJOUTER DES CASES À COCHER ===== -->
+<div style="position:absolute;left:2000px;top:1780px;width:520px">
+  <div data-drags-parent="1" style="font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:13px;color:#5C5648;margin-bottom:10px">Ajouter des cases à cocher</div>
+  <div style="background:#fff;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:22px 24px;font-family:'Nunito Sans',sans-serif">
+    <div style="display:flex;flex-direction:column;gap:12px;font-size:13px;color:#5C5648;line-height:1.5">
+      <div style="display:flex;gap:10px"><span style="font-family:'IBM Plex Mono',monospace;color:#3A5132;font-size:12px">1</span><span>Bouton <b>Cases à cocher</b> dans la barre d'outils : convertit chaque ligne du texte en élément cochable.</span></div>
+      <div style="display:flex;gap:10px"><span style="font-family:'IBM Plex Mono',monospace;color:#3A5132;font-size:12px">2</span><span><b>Entrée</b> crée une nouvelle case ; <b>Entrée sur une case vide</b> ressort de la liste.</span></div>
+      <div style="display:flex;gap:10px"><span style="font-family:'IBM Plex Mono',monospace;color:#3A5132;font-size:12px">3</span><span>Au survol d'un élément : poignée pour <b>réordonner</b>, croix pour <b>supprimer</b>.</span></div>
+    </div>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid #ECE4D5;font-size:12px;color:#857C6A;line-height:1.5">Une note peut mélanger texte libre et cases à cocher. Le même bouton retire les cases pour revenir au texte simple.</div>
+  </div>
+</div></x-dc>
+</body>
+</html>
