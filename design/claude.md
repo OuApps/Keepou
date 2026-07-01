@@ -13,7 +13,7 @@ Keepou is a **self-hosted Google Keep**, private, for a small community (family,
 ## Target stack
 - **Back: Python + FastAPI** (REST API), **SQLModel** (SQLAlchemy + Pydantic) on a relational database, **Alembic** migrations
 - **Front: React + TypeScript** (Vite SPA), decoupled, consumes the FastAPI API
-- Session/cookie auth (email + password, hashed with **passlib/bcrypt**), allowlist check **server-side**
+- **JWT bearer** auth (email + password, hashed with **passlib/bcrypt**; access + refresh tokens in `localStorage`), allowlist check **server-side** — a httpOnly-cookie session is a documented later upgrade
 - Note bodies stored as **Markdown** (GFM task lists `- [ ]` / `- [x]`)
 
 ## Non-negotiable rules (from the validated design)

@@ -90,7 +90,7 @@ on push — so each following epic reaches prod with no manual effort.
 - **Front** service (Vite): static build served, `VITE_API_URL` → API public URL.
 - **Alembic migrations** run automatically at deploy (pre-deploy command).
 - **CD**: auto deploy on push (GitHub integration), preview per PR.
-- **Prod security**: front-origin CORS, `secure`/`SameSite` cookies, HTTPS.
+- **Prod security**: front-origin CORS, JWT bearer auth (short access TTL), HTTPS.
 
 **Scope — Code**
 - **PostgreSQL** driver (psycopg) added; normalization of the Railway URL scheme.
@@ -99,7 +99,7 @@ on push — so each following epic reaches prod with no manual effort.
 
 **Mockups.** — (infra epic, no screen).
 
-**Related rules.** Server auth (secure cookies in prod) · server allowlist/lock remain the reference.
+**Related rules.** Server auth (JWT bearer, server-checked) · server allowlist/lock remain the reference.
 
 **Done when.** API + front reachable via Railway URLs, Postgres connected, migrations
 auto at deploy, push to the branch → deployment, prod security checklist ticked.
@@ -118,7 +118,7 @@ with all the error states from the mockups. The allowlist is checked **server-si
 - `POST /api/auth/register` → **403** if e-mail not in allowlist, **201** otherwise (passlib/bcrypt hash).
 - `POST /api/auth/login` → **401** credentials, **403** if `status=DISABLED`.
 - `POST /api/auth/logout`, `GET /api/auth/me` (current session + role).
-- Signed-cookie sessions (or httpOnly JWT), `get_current_user` dependency.
+- **JWT bearer** sessions (access + refresh tokens), `get_current_user` dependency.
 
 **Scope — Front**
 - **Login** and **Create account** screens.
@@ -272,14 +272,14 @@ vs pending), roles, **enable/disable** — **never delete**.
 
 **Scope**
 - **PWA**: manifest (icon = mascot), favicon, responsive.
-- **Archive**: archive / unarchive a note (hide from the board without deleting) + `?archived=` board filter (FR-N8). Backend `Note.archived` field + a small UI affordance (**no mockup yet — to design**).
+- **Archive** (FR-N8): **starts with a design phase** — there is no mockup yet, so first **design the archive UI** (per the design-driven workflow in `design/claude.md` / `HANDOFF.md`), then implement archive / unarchive (hide from the board without deleting) + the `?archived=` board filter + the `Note.archived` field.
 - **A11y**: real `<input type=checkbox>` + labels, labeled fields, `role="status"`/aria-live lock banners, contrasts OK, mobile hit targets ≥ 44px.
 - **i18n**: centralize the FR copy (HANDOFF §7).
 - **Quality**: back tests (allowlist, atomic lock, versioning), key front tests, CI lint/build/test.
 
 **Mockups.** All (state & responsive verification).
 
-**Done when.** App installable, archive works (hide/restore + filter), a11y verified, strings centralized, test suite green in CI.
+**Done when.** App installable, archive **designed then built** (hide/restore + filter), a11y verified, strings centralized, test suite green in CI.
 
 ---
 

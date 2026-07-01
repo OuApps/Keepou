@@ -137,15 +137,16 @@
 
 ## E0-S7 — API client & typed error handling · `to complete` · S
 
-**Goal.** A single fetch wrapper, session cookies, errors usable by the UI.
+**Goal.** A single fetch wrapper (auth header + typed errors) usable by the UI.
 
 **Tasks**
-- `api/client.ts`: `get/post/patch/delete`, `credentials:'include'`, `ApiError(status, message, payload)` — `in place`.
-- **To complete**: UI error-mapping helpers (401 → login redirect, 403 → message, 409 → lock conflict) as the epics progress.
+- `api/client.ts`: `get/post/patch/delete`, `ApiError(status, message, payload)` — `in place`.
+- **To complete**: attach the **`Authorization: Bearer`** token from `localStorage` (wired in E2 — the scaffold currently sets `credentials:'include'`, to be dropped), and UI error-mapping helpers (401 → login redirect, 403 → message, 409 → lock conflict) as the epics progress.
 
 **Acceptance criteria**
-- [x] Every request goes through the wrapper and sends cookies.
+- [x] Every request goes through the wrapper.
 - [x] Non-2xx responses raise `ApiError` with `status` + `payload`.
+- [ ] The wrapper attaches the `Authorization: Bearer` token from `localStorage` (E2).
 - [ ] 401/403/409 handling convention documented and applied (E2/E5).
 
 **Notes.** Base in place; the fine-grained handling of the codes happens in the relevant epics.

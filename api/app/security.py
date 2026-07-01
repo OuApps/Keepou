@@ -1,10 +1,10 @@
 """
-Security: password hash, sessions, authz dependencies.
+Security: password hash, JWT bearer tokens, authz dependencies.
 
-Scaffold (implemented in E1/E6):
+Scaffold (implemented in E2):
 - `hash_password` / `verify_password` via passlib (bcrypt);
-- session via signed cookie (itsdangerous);
-- `get_current_user` (401 if not authenticated);
+- signed JWT access + refresh tokens (Authorization: Bearer);
+- `get_current_user` (401 if not authenticated; re-checks user status);
 - `require_admin` (403 if not admin) — real guard for /admin (handoff rule 6).
 """
 
