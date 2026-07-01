@@ -307,13 +307,13 @@ src/
 ### Back (`api/`, FastAPI + SQLModel)
 ```
 app/
-  main.py                    // FastAPI(), router mounting, CORS, session middleware
+  main.py                    // FastAPI(), router mounting, CORS
   db.py                      // engine, get_session
   models.py                  // SQLModel (cf. §4)
   schemas.py                 // Pydantic in/out
-  security.py                // passlib hash, session, get_current_user, require_admin
+  security.py                // passlib hash, JWT, get_current_user, require_admin
   routers/
-    auth.py                  // register (check allowlist), login, logout, me
+    auth.py                  // register (check allowlist), login, refresh, me
     notes.py                 // CRUD + lock/unlock + versions + restore
     admin.py                 // members, allowlist, users (role/status)
   services/

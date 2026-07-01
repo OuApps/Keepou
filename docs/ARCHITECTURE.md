@@ -248,10 +248,10 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
 | POST | `/api/auth/login` | Sign in | Returns `{access, refresh}`; `401` bad creds, `403` if `DISABLED` |
 | POST | `/api/auth/refresh` | Renew the access token | Takes the refresh token; `401` if invalid/expired |
 | GET | `/api/auth/me` | Current user + role | Bearer-authenticated; drives client route guards |
-| GET | `/api/notes?tab=mine\|public` | List notes | `mine` = own; `public` = all members' public (with author); `?archived=` filter |
+| GET | `/api/notes?tab=mine\|public` | List notes | `mine` = own; `public` = all members' public (with author); `?archived=` filter (E8) |
 | POST | `/api/notes` | Create note | |
 | GET | `/api/notes/:id` | Read a note | Visibility-checked |
-| PATCH | `/api/notes/:id` | Update note | `title`, `body`, `color`, `visibility`, `archived`; lock-checked for public |
+| PATCH | `/api/notes/:id` | Update note | `title`, `body`, `color`, `visibility`, `archived` (E8); lock-checked for public |
 | DELETE | `/api/notes/:id` | Delete note | Owner or admin |
 | POST | `/api/notes/:id/lock` | Acquire / heartbeat lock | `409` if held by another |
 | DELETE | `/api/notes/:id/lock` | Release lock | Ends the session → writes a version |
@@ -269,8 +269,8 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
 
 - Passwords hashed with **bcrypt** via **passlib** — never stored in plaintext.
 - Auth is a **stateless JWT** flow: login/register return a short-lived **access
-  token** and a longer-lived **refresh token**, both **signed** with a server
-  secret. No session table.
+  token** (indicative ~15 min) and a longer-lived **refresh token** (indicative
+  ~30 days), both **signed** with a server secret. No session table.
 - The client stores the tokens in **`localStorage`** and sends the access token on
   every request as **`Authorization: Bearer <token>`**. `POST /api/auth/refresh`
   swaps a valid refresh token for a fresh access token. **Logout is client-side**
