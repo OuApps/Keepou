@@ -7,17 +7,20 @@
 > Estimation convention: **S** (≤ ½ day), **M** (1–2 days), **L** (3+ days).
 > All these stories are `to do` (nothing is deployed yet).
 
-**Target topology on Railway (1 project, 3 services):**
+**Target topology on Railway (1 project, 3 services), single public domain:**
 
 ```
-Railway project "Keepou"
-├── Postgres            (managed plugin)  → DATABASE_URL
-├── keepou-api          (root: api/)      → https://keepou-api.up.railway.app
-└── keepou-web          (root: web/)      → https://keepou.up.railway.app
+Railway project "Keepou"  ·  prod behind ONE custom domain
+├── Postgres     (managed plugin)          → DATABASE_URL
+├── keepou-api   (root: api/, internal)    → reached via the web /api proxy · /api/health
+└── keepou-web   (root: web/, PUBLIC)      → https://keepou.<tld>
+                                              serves the SPA + proxies /api/* → keepou-api
 ```
 
 > Monorepo: each Railway service points to a **Root Directory** (`api/` or `web/`).
 > Railway injects `$PORT` — both services **must listen on `$PORT`**.
+> In production the **web** service is the only public entry and reverse-proxies
+> `/api/*` to the API, so the session cookie is first-party (`SameSite=Lax`, see S6).
 
 ---
 
@@ -82,10 +85,10 @@ Railway project "Keepou"
 - **Start command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
 - `api/railway.json` (or `railway.toml`) file: builder, `startCommand`, `healthcheckPath = /api/health`, restart policy.
 - Variables: `DATABASE_URL` (Postgres reference), `SESSION_SECRET` (generated), `CORS_ORIGINS` (frontend URL, see S6).
-- Generate a **public domain** for the API service.
+- A public domain is **optional** in prod: the API is reached via the web `/api` proxy (S5). Keep one only if handy for the healthcheck/previews.
 
 **Acceptance criteria**
-- [ ] `GET https://<api>/api/health` → 200 `{"status":"ok"}`.
+- [ ] `GET /api/health` → 200 `{"status":"ok"}` (directly or via the web `/api` proxy).
 - [ ] The service reads its env variables (DB, secret, CORS).
 - [ ] Railway healthcheck green; automatic restart on crash.
 
@@ -118,18 +121,17 @@ Railway project "Keepou"
 
 **Tasks**
 - **keepou-web** service, **Root Directory = `web/`**, build `npm ci && npm run build` → `dist/`.
-- Serve `dist/` statically **with SPA fallback** on `$PORT`:
-  - simple option: start `npx serve -s dist -l $PORT` (add `serve` as a devDep or via `npx`),
-  - or a small static server (Caddy/Nginx) depending on ops preference.
-- Build variable **`VITE_API_URL`** = public URL of the API (S3). ⚠️ injected **at build time** (Vite inlines `import.meta.env` at compilation) → rebuild if the URL changes.
-- Generate the frontend **public domain**.
+- Serve `dist/` **with SPA fallback** on `$PORT` **and reverse-proxy `/api/*`** to the API service (Railway private networking) — a static server that also proxies, e.g. **Caddy** or **Nginx** (`npx serve` alone can't proxy). This is what makes the app single-origin (see S6/§8).
+- Attach the **custom domain** to this service (it is the single public entry).
+- Build variable **`VITE_API_URL` = `/api`** (same-origin). ⚠️ injected **at build time** (Vite inlines `import.meta.env`) → rebuild if it changes.
 
 **Acceptance criteria**
-- [ ] The frontend is served over HTTPS and loads with no console error.
-- [ ] `fetch` calls target the prod API (`VITE_API_URL`), not localhost.
+- [ ] The frontend is served over HTTPS on the custom domain and loads with no console error.
+- [ ] `GET /api/health` **through the web domain** reaches the API (the `/api` proxy works).
+- [ ] `fetch` calls hit **same-origin `/api`** (no cross-origin request in prod).
 - [ ] SPA routing works on deep-link (fallback to `index.html`).
 
-**Notes.** In dev, the Vite `/api` proxy is enough; in prod, `VITE_API_URL` + CORS (S6) connect the two services.
+**Notes.** In dev the Vite `/api` proxy fills this role; in prod the web server's `/api` proxy does — so the session cookie stays first-party (no CORS). The cross-site + CORS path is only the `*.up.railway.app` preview fallback (S6).
 
 ---
 
