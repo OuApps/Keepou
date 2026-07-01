@@ -23,6 +23,6 @@ export default tseslint.config(
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
   },
-  // Désactive les règles de mise en forme qui entrent en conflit avec Prettier.
+  // Disable formatting rules that conflict with Prettier.
   prettier,
 )

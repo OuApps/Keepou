@@ -1,11 +1,11 @@
 """
-Admin — gestion des accès (dépendance require_admin).
+Admin — access management (require_admin dependency).
 
-Endpoints prévus (handoff §5), implémentés en E6 :
-  GET    /api/admin/members              (Users + Allowlist en LEFT JOIN)
+Planned endpoints (handoff §5), implemented in E6:
+  GET    /api/admin/members              (Users + Allowlist via LEFT JOIN)
   POST   /api/admin/allowlist            {email}
-  DELETE /api/admin/allowlist/{id}       (uniquement entrées "en attente")
-  PATCH  /api/admin/users/{id}           {role|status}  # jamais de suppression
+  DELETE /api/admin/allowlist/{id}       (only "pending" entries)
+  PATCH  /api/admin/users/{id}           {role|status}  # never delete
 """
 
 from fastapi import APIRouter

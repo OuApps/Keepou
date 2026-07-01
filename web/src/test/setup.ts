@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom/vitest'
 import { vi } from 'vitest'
 
-// jsdom n'implémente pas matchMedia — requis par useTheme (prefers-color-scheme).
+// jsdom doesn't implement matchMedia — required by useTheme (prefers-color-scheme).
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: (query: string) => ({

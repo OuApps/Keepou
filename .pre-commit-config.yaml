@@ -1,5 +1,5 @@
-# Hooks pré-commit (optionnel mais recommandé) : `pip install pre-commit && pre-commit install`.
-# Reflète la CI : ruff (back) + prettier (front).
+# Pre-commit hooks (optional but recommended): `pip install pre-commit && pre-commit install`.
+# Mirrors CI: ruff (back) + prettier (front).
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -18,7 +18,7 @@ repos:
       - id: ruff-format
         files: ^api/
 
-  # Prettier via hook local (utilise la version installée dans web/).
+  # Prettier via local hook (uses the version installed in web/).
   - repo: local
     hooks:
       - id: prettier-web

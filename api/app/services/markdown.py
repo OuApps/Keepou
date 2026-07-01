@@ -1,11 +1,11 @@
 """
-Markdown (GFM task lists) — validation/normalisation côté serveur (optionnel).
+Markdown (GFM task lists) — server-side validation/normalization (optional).
 
-Le corps des notes est stocké en Markdown dès le MVP (handoff §3.3) :
-- paragraphe → texte ;
-- case → `- [ ] libellé` (non cochée) / `- [x] libellé` (cochée) ;
-- titre stocké à part (champ dédié), pas dans le Markdown.
+Note bodies are stored as Markdown from the MVP onward (handoff §3.3):
+- paragraph → text;
+- checkbox → `- [ ] libellé` (unchecked) / `- [x] libellé` (checked);
+- title stored separately (dedicated field), not in the Markdown.
 
-La sérialisation de référence est `buildMd` dans `design/Keepou - Éditeur canonique.dc.html` ;
-`web/src/lib/markdown.ts` en est le miroir côté front. Squelette : implémenté en E3.
+The reference serialization is `buildMd` in `design/Keepou - Éditeur canonique.dc.html`;
+`web/src/lib/markdown.ts` is its front-end mirror. Scaffold: implemented in E3.
 """

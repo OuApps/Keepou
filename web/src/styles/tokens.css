@@ -1,11 +1,11 @@
 /*
  * Keepou — Design tokens
- * Repris EXACTEMENT des maquettes (`design/Keepou - Board.dc.html`) et du handoff §1.
- * Ne pas réinventer la palette : ces valeurs sont la source de vérité.
+ * Taken EXACTLY from the mockups (`design/Keepou - Board.dc.html`) and handoff §1.
+ * Don't reinvent the palette: these values are the source of truth.
  */
 
 :root {
-  /* Surfaces & texte (clair) */
+  /* Surfaces & text (light) */
   --bg: #fbf4e6;
   --topbar: rgba(251, 244, 230, 0.86);
   --surface: #ffffff;
@@ -15,11 +15,11 @@
   --ink-soft: #6a6354;
   --ink-mute: #a1977f;
 
-  /* Cases à cocher */
+  /* Checkboxes */
   --check: #3a5132;
   --checktx: #9ca386;
 
-  /* Couleurs de marque (extraites du logo mascotte) */
+  /* Brand colors (extracted from the mascot logo) */
   --brand-gold: #eab64c;
   --brand-gold-dark: #d89030;
   --brand-salsa: #c75d43;
@@ -30,11 +30,11 @@
   --brand-ink: #2e2a20;
   --brand-cream: #fbf5e9;
 
-  /* Dégradés utilitaires */
+  /* Utility gradients */
   --grad-primary: linear-gradient(150deg, #eab64c, #d89030);
   --grad-danger: linear-gradient(150deg, #d86a50, #c04a30);
 
-  /* 5 teintes de cartes (dégradé + bordure) — clair */
+  /* 5 card shades (gradient + border) — light */
   --c-gold: linear-gradient(160deg, #fcefcf, #f7e2ae);
   --c-gold-bd: #efd79e;
   --c-avo: linear-gradient(160deg, #eef3d2, #dfeaae);
@@ -46,7 +46,7 @@
   --c-teal: linear-gradient(160deg, #dfede8, #c7ded5);
   --c-teal-bd: #bad7cd;
 
-  /* Rayons (handoff §1) */
+  /* Radii (handoff §1) */
   --r-card: 18px;
   --r-panel: 14px;
   --r-modal: 20px;
@@ -54,12 +54,12 @@
   --r-pill: 999px;
   --r-check: 5px;
 
-  /* Ombres (handoff §1) */
+  /* Shadows (handoff §1) */
   --sh-card: 0 8px 16px -13px rgba(46, 42, 32, 0.4);
   --sh-modal: 0 40px 80px -30px rgba(46, 42, 32, 0.6);
   --sh-frame: 0 30px 60px -40px rgba(46, 42, 32, 0.5);
 
-  /* Polices */
+  /* Fonts */
   --font-brand: 'Fredoka', sans-serif;
   --font-ui: 'Nunito Sans', sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
@@ -78,7 +78,7 @@
   --check: #9db84e;
   --checktx: #7e8a5f;
 
-  /* 5 teintes de cartes — sombre */
+  /* 5 card shades — dark */
   --c-gold: linear-gradient(160deg, #3a3320, #2e2a18);
   --c-gold-bd: #4a4026;
   --c-avo: linear-gradient(160deg, #2f3a22, #26301b);

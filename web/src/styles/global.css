@@ -19,7 +19,7 @@ body {
   transition: background 0.25s;
 }
 
-/* Masonry du board (column-count) — les cartes ne se coupent pas. */
+/* Board masonry (column-count) — cards don't break. */
 .kp-card {
   break-inside: avoid;
   -webkit-column-break-inside: avoid;

@@ -16,7 +16,7 @@ venv/
 .mypy_cache/
 .ruff_cache/
 
-# --- Bases de données locales ---
+# --- Local databases ---
 *.db
 *.sqlite
 *.sqlite3
@@ -26,7 +26,7 @@ venv/
 .env.*
 !.env.example
 
-# --- Divers ---
+# --- Miscellaneous ---
 .DS_Store
 *.log
 .idea/

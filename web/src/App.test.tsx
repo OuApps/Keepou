@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import App from './App'
 
 describe('App', () => {
-  it('affiche la marque Keepou', () => {
+  it('renders the Keepou brand', () => {
     render(
       <BrowserRouter>
         <App />
@@ -13,7 +13,7 @@ describe('App', () => {
     expect(screen.getByText('Keepou')).toBeInTheDocument()
   })
 
-  it('applique data-theme sur <html> au montage', () => {
+  it('applies data-theme on <html> on mount', () => {
     render(
       <BrowserRouter>
         <App />

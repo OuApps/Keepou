@@ -1,291 +1,291 @@
-# Keepou — Découpage en EPICS (macro)
+# Keepou — EPICS breakdown (macro)
 
-> **But de ce document.** Proposer un découpage **macro** du développement de Keepou en
-> epics, à partir des maquettes validées et du handoff (`design/HANDOFF.md`,
-> `design/claude.md`). On reste au niveau **epic** ; les **stories détaillées** sont
-> écrites epic par epic dans le dossier [`stories/`](./stories/) au moment de les attaquer.
+> **Purpose of this document.** Propose a **macro** breakdown of Keepou's development into
+> epics, based on the validated mockups and the handoff (`design/HANDOFF.md`,
+> `design/claude.md`). We stay at the **epic** level; the **detailed stories** are
+> written epic by epic in the [`stories/`](./stories/) folder as we start each one.
 >
-> Source de vérité visuelle : les fichiers `design/Keepou - *.dc.html`.
-> Règles produit non négociables : `design/claude.md`.
+> Visual source of truth: the `design/Keepou - *.dc.html` files.
+> Non-negotiable product rules: `design/claude.md`.
 
-**État du détail :**
-- ✅ **E0** détaillée → [`stories/E0-fondations.md`](./stories/E0-fondations.md)
-- ✅ **E1** détaillée → [`stories/E1-deploiement-railway.md`](./stories/E1-deploiement-railway.md)
-- ⏳ E2 → E8 : détaillées plus tard, epic par epic.
+**Detail status:**
+- ✅ **E0** detailed → [`stories/E0-fondations.md`](./stories/E0-fondations.md)
+- ✅ **E1** detailed → [`stories/E1-deploiement-railway.md`](./stories/E1-deploiement-railway.md)
+- ⏳ E2 → E8: detailed later, epic by epic.
 
 ---
 
-## Vue d'ensemble & séquencement
+## Overview & sequencing
 
-| # | Epic | Cœur | Dépend de |
+| # | Epic | Core | Depends on |
 |---|------|------|-----------|
-| **E0** | Fondations & design system | Monorepo, tooling, tokens, thème, layout responsive | — |
-| **E1** | Déploiement Railway (CD-first) | Projet Railway, Postgres, services API + front, migrations au deploy, CI/CD | E0 |
-| **E2** | Authentification & allowlist | Comptes, sessions, allowlist serveur, refus | E0 |
-| **E3** | Board & gestion des notes | CRUD notes, onglets Mes notes/Public, composer, cartes | E0, E2 |
-| **E4** | Éditeur de note | Texte + cases, Markdown GFM, autosave, couleur, visibilité | E3 |
-| **E5** | Verrou mono-éditeur & temps réel | Acquisition atomique, heartbeat, expiration, conflit, lecture seule | E4 |
-| **E6** | Historique & versions | Versionnage (1 session = 1 version), aperçu, restauration | E4, E5 |
-| **E7** | Administration des accès | Allowlist, membres/en attente, rôles, activation/désactivation | E2 |
-| **E8** | Finitions : PWA, a11y, i18n, qualité | Manifest, accessibilité, centralisation copy, tests/CI | tous |
+| **E0** | Foundations & design system | Monorepo, tooling, tokens, theme, responsive layout | — |
+| **E1** | Railway deployment (CD-first) | Railway project, Postgres, API + front services, migrations at deploy, CI/CD | E0 |
+| **E2** | Authentication & allowlist | Accounts, sessions, server allowlist, rejection | E0 |
+| **E3** | Board & note management | Note CRUD, My notes/Public tabs, composer, cards | E0, E2 |
+| **E4** | Note editor | Text + checkboxes, GFM Markdown, autosave, color, visibility | E3 |
+| **E5** | Single-editor lock & real-time | Atomic acquisition, heartbeat, expiration, conflict, read-only | E4 |
+| **E6** | History & versions | Versioning (1 session = 1 version), preview, restore | E4, E5 |
+| **E7** | Access administration | Allowlist, members/pending, roles, enable/disable | E2 |
+| **E8** | Polish: PWA, a11y, i18n, quality | Manifest, accessibility, copy centralization, tests/CI | all |
 
-**Chemin critique conseillé :** `E0 → E1 → E2 → E3 → E4 → E5 → E6`. **E1 (Railway)** est placée
-tôt à dessein : dès que le squelette tourne, on câble le déploiement continu pour que **chaque
-epic suivante parte en prod automatiquement**. **E7** est parallélisable dès la fin de E2.
-**E8** est transverse, durci en fin de parcours. E5 et E6 sont fortement couplés (une version
-naît au relâchement du verrou) : les enchaîner.
+**Recommended critical path:** `E0 → E1 → E2 → E3 → E4 → E5 → E6`. **E1 (Railway)** is placed
+early on purpose: as soon as the scaffold runs, we wire up continuous deployment so **each
+following epic ships to prod automatically**. **E7** can be parallelized as soon as E2 is done.
+**E8** is cross-cutting, hardened at the end. E5 and E6 are strongly coupled (a version
+is born when the lock is released): chain them together.
 
 ```
-E0 ──▶ E1 (deploy continu) ──▶ E2 ──▶ E3 ──▶ E4 ──▶ E5 ──▶ E6
-                               └────────────▶ E7   (en parallèle dès la fin de E2)
-E8 : transversal, durci en fin de parcours
+E0 ──▶ E1 (continuous deploy) ──▶ E2 ──▶ E3 ──▶ E4 ──▶ E5 ──▶ E6
+                               └────────────▶ E7   (in parallel once E2 is done)
+E8: cross-cutting, hardened at the end
 ```
 
 ---
 
-## E0 — Fondations & design system
+## E0 — Foundations & design system
 
-**Objectif.** Poser un monorepo qui démarre (front + back), le tooling, et **traduire les
-tokens des maquettes en design system réutilisable** pour que tous les écrans suivants
-soient « pixel-fidèles » sans réinventer la palette.
+**Goal.** Lay down a monorepo that boots (front + back), the tooling, and **translate the
+mockups' tokens into a reusable design system** so all following screens are
+"pixel-faithful" without reinventing the palette.
 
-**Périmètre — Back (`api/`)**
-- App FastAPI bootable, CORS, route `/api/health`.
-- Connexion DB + `get_session`, configuration via env, squelette Alembic.
-- Conventions : schémas Pydantic in/out, gestion d'erreurs `HTTPException`.
+**Scope — Back (`api/`)**
+- Bootable FastAPI app, CORS, `/api/health` route.
+- DB connection + `get_session`, config via env, Alembic scaffold.
+- Conventions: Pydantic in/out schemas, `HTTPException` error handling.
 
-**Périmètre — Front (`web/`)**
-- App React + Vite + TS bootable, React Router, wrapper `api/client.ts` (cookies/session, erreurs typées).
-- **Design tokens** (CSS variables clair + sombre) repris **exactement** du handoff §1.
-- **Polices** : Fredoka (marque/titres), Nunito Sans (UI/texte), IBM Plex Mono (labels/horodatages).
-- **Thème** : `data-theme="light|dark"`, respect `prefers-color-scheme` + override persistant (localStorage).
-- **Layout/responsive** : conteneurs, topbar (blur), point de bascule ~640px.
+**Scope — Front (`web/`)**
+- Bootable React + Vite + TS app, React Router, `api/client.ts` wrapper (cookies/session, typed errors).
+- **Design tokens** (light + dark CSS variables) taken **exactly** from handoff §1.
+- **Fonts**: Fredoka (brand/titles), Nunito Sans (UI/text), IBM Plex Mono (labels/timestamps).
+- **Theme**: `data-theme="light|dark"`, honor `prefers-color-scheme` + persistent override (localStorage).
+- **Layout/responsive**: containers, topbar (blur), breakpoint ~640px.
 
-**Maquettes.** Toutes (référence transverse) — surtout `Keepou - Board.dc.html`.
+**Mockups.** All (cross-cutting reference) — especially `Keepou - Board.dc.html`.
 
-**Règles liées.** Fidélité visuelle (`claude.md`). Pas de dépendance UI lourde.
+**Related rules.** Visual fidelity (`claude.md`). No heavy UI dependency.
 
-**Fait quand.** Les deux apps démarrent, le front affiche une page de référence aux bons
-tokens/polices, bascule clair/sombre OK, CI lint/build verte.
+**Done when.** Both apps boot, the front shows a reference page with the right
+tokens/fonts, light/dark toggle works, CI lint/build green.
 
-➡️ **Stories détaillées : [`stories/E0-fondations.md`](./stories/E0-fondations.md)**
-
----
-
-## E1 — Déploiement Railway (CD-first)
-
-**Objectif.** Mettre Keepou **en ligne sur Railway dès les fondations**, avec une base
-**PostgreSQL** managée, les **migrations jouées au déploiement**, et un **déploiement
-continu** sur push — pour que chaque epic suivante arrive en prod sans effort manuel.
-
-**Périmètre — Infra / Railway**
-- Projet Railway + **PostgreSQL** managé (`DATABASE_URL`).
-- Service **API** (FastAPI) : build Nixpacks/Dockerfile, `uvicorn` sur `$PORT`, healthcheck `/api/health`, root dir `api/`.
-- Service **Front** (Vite) : build statique servi, `VITE_API_URL` → URL publique de l'API.
-- **Migrations Alembic** jouées automatiquement au déploiement (pre-deploy command).
-- **CD** : déploiement auto sur push (intégration GitHub), preview par PR.
-- **Sécurité prod** : CORS d'origine front, cookies `secure`/`SameSite`, HTTPS.
-
-**Périmètre — Code**
-- Driver **PostgreSQL** (psycopg) ajouté ; normalisation du schéma d'URL Railway.
-- Fichiers de config déploiement (`railway.json`/`nixpacks`, commandes de build/start).
-- Variables d'environnement documentées (back + front).
-
-**Maquettes.** — (epic infra, pas d'écran).
-
-**Règles liées.** Auth serveur (cookies sécurisés en prod) · allowlist/verrou serveur restent la référence.
-
-**Fait quand.** API + front accessibles via URLs Railway, Postgres connecté, migrations
-auto au deploy, push sur la branche → déploiement, checklist sécurité prod cochée.
-
-➡️ **Stories détaillées : [`stories/E1-deploiement-railway.md`](./stories/E1-deploiement-railway.md)**
+➡️ **Detailed stories: [`stories/E0-fondations.md`](./stories/E0-fondations.md)**
 
 ---
 
-## E2 — Authentification & allowlist
+## E1 — Railway deployment (CD-first)
 
-**Objectif.** Permettre de **créer un compte (conditionné à l'allowlist)** et de **se
-connecter**, avec tous les états d'erreur des maquettes. L'allowlist est vérifiée **côté serveur**.
+**Goal.** Get Keepou **online on Railway from the foundations onward**, with a managed
+**PostgreSQL** database, **migrations run at deploy**, and **continuous deployment**
+on push — so each following epic reaches prod with no manual effort.
 
-**Périmètre — Back**
-- Modèle `User` (email, display_name, password_hash, role, status) + `AllowlistEntry`.
-- `POST /api/auth/register` → **403** si e-mail hors allowlist, **201** sinon (hash passlib/bcrypt).
-- `POST /api/auth/login` → **401** identifiants, **403** si `status=DISABLED`.
-- `POST /api/auth/logout`, `GET /api/auth/me` (session courante + rôle).
-- Sessions par cookie signé (ou JWT httpOnly), dépendance `get_current_user`.
+**Scope — Infra / Railway**
+- Railway project + managed **PostgreSQL** (`DATABASE_URL`).
+- **API** service (FastAPI): Nixpacks/Dockerfile build, `uvicorn` on `$PORT`, healthcheck `/api/health`, root dir `api/`.
+- **Front** service (Vite): static build served, `VITE_API_URL` → API public URL.
+- **Alembic migrations** run automatically at deploy (pre-deploy command).
+- **CD**: auto deploy on push (GitHub integration), preview per PR.
+- **Prod security**: front-origin CORS, `secure`/`SameSite` cookies, HTTPS.
 
-**Périmètre — Front**
-- Écrans **Connexion** et **Création de compte**.
-- Messages inline : identifiants erronés (terracotta), **compte désactivé** (or).
-- Écran **Accès non autorisé** (refus allowlist) → bouton **Retour à la connexion**.
-- Garde de routes côté client (redirection si non authentifié).
+**Scope — Code**
+- **PostgreSQL** driver (psycopg) added; normalization of the Railway URL scheme.
+- Deployment config files (`railway.json`/`nixpacks`, build/start commands).
+- Documented environment variables (back + front).
 
-**Maquettes.** `Keepou - Auth.dc.html`.
+**Mockups.** — (infra epic, no screen).
 
-**Règles liées (claude.md).** §4 allowlist serveur · §5 désactivation ≠ suppression. Pas de « demande d'accès » ni contact admin in-app.
+**Related rules.** Server auth (secure cookies in prod) · server allowlist/lock remain the reference.
 
-**Copy figée.** HANDOFF §7 « Auth ».
+**Done when.** API + front reachable via Railway URLs, Postgres connected, migrations
+auto at deploy, push to the branch → deployment, prod security checklist ticked.
 
-**Fait quand.** Inscription bloquée hors allowlist, login OK/KO et compte désactivé gérés, session établie, `/api/auth/me` exploité par le front.
+➡️ **Detailed stories: [`stories/E1-deploiement-railway.md`](./stories/E1-deploiement-railway.md)**
 
 ---
 
-## E3 — Board & gestion des notes
+## E2 — Authentication & allowlist
 
-**Objectif.** Le board principal : lister, créer, et naviguer ses notes ; basculer **Mes
-notes / Public** ; composer rapide ; cartes fidèles (couleur, checklist, méta).
+**Goal.** Allow **creating an account (gated by the allowlist)** and **logging in**,
+with all the error states from the mockups. The allowlist is checked **server-side**.
 
-**Périmètre — Back**
-- Modèle `Note` (title, body Markdown, color, visibility, owner, timestamps).
+**Scope — Back**
+- `User` model (email, display_name, password_hash, role, status) + `AllowlistEntry`.
+- `POST /api/auth/register` → **403** if e-mail not in allowlist, **201** otherwise (passlib/bcrypt hash).
+- `POST /api/auth/login` → **401** credentials, **403** if `status=DISABLED`.
+- `POST /api/auth/logout`, `GET /api/auth/me` (current session + role).
+- Signed-cookie sessions (or httpOnly JWT), `get_current_user` dependency.
+
+**Scope — Front**
+- **Login** and **Create account** screens.
+- Inline messages: wrong credentials (terracotta), **disabled account** (gold).
+- **Unauthorized access** screen (allowlist rejection) → **Retour à la connexion** button.
+- Client-side route guard (redirect if not authenticated).
+
+**Mockups.** `Keepou - Auth.dc.html`.
+
+**Related rules (claude.md).** §4 server allowlist · §5 disable ≠ delete. No "access request" or in-app admin contact.
+
+**Frozen copy.** HANDOFF §7 "Auth".
+
+**Done when.** Registration blocked outside the allowlist, login OK/KO and disabled account handled, session established, `/api/auth/me` used by the front.
+
+---
+
+## E3 — Board & note management
+
+**Goal.** The main board: list, create, and navigate your notes; switch **My
+notes / Public**; quick composer; faithful cards (color, checklist, meta).
+
+**Scope — Back**
+- `Note` model (title, body Markdown, color, visibility, owner, timestamps).
 - `GET /api/notes?tab=mine|public`, `POST /api/notes` (create), `GET /api/notes/{id}`.
-- `PATCH /api/notes/{id}` (base ; l'édition fine arrive en E4).
-- Onglet **Public** = notes `PUBLIC` de tous les membres (auteur + date de dernière modif).
+- `PATCH /api/notes/{id}` (base; fine-grained editing comes in E4).
+- **Public** tab = `PUBLIC` notes from all members (author + last-modified date).
 
-**Périmètre — Front**
-- **Topbar** (logo, recherche, onglets pill, thème, avatar + menu).
-- **TabSwitch** Mes notes / Public · **Composer** (saisie rapide + couleur + toggle public).
-- **NoteCard** (5 teintes, titre Fredoka, checklist en lecture, badge visibilité/auteur).
-- **NoteGrid** masonry `column-count` 4→2 responsive · recherche (filtre client a minima).
+**Scope — Front**
+- **Topbar** (logo, search, pill tabs, theme, avatar + menu).
+- **TabSwitch** My notes / Public · **Composer** (quick input + color + public toggle).
+- **NoteCard** (5 shades, Fredoka title, read-only checklist, visibility/author badge).
+- **NoteGrid** masonry `column-count` 4→2 responsive · search (minimal client-side filter).
 
-**Maquettes.** `Keepou - Board.dc.html`.
+**Mockups.** `Keepou - Board.dc.html`.
 
-**Règles liées.** §7 visibilité réversible (toggle ; confirmation public→privé en E4). Couleur stockée comme identifiant (`gold|avocat|salsa|clay|teal`).
+**Related rules.** §7 reversible visibility (toggle; public→private confirmation in E4). Color stored as an identifier (`gold|avocat|salsa|clay|teal`).
 
-**Fait quand.** On voit/crée des notes, onglets fonctionnels, board fidèle clair + sombre, desktop + mobile.
-
----
-
-## E4 — Éditeur de note (texte + cases + Markdown + autosave)
-
-**Objectif.** L'éditeur canonique : **modale ≥ tablette / plein écran < ~640px**, mélange
-paragraphes + cases à cocher, **persistance Markdown GFM**, **autosave**, sélecteur de
-couleur, bascule privé/public avec confirmation.
-
-**Périmètre — Back**
-- Persistance du corps en **Markdown** (titre stocké à part).
-- `PATCH /api/notes/{id}` consolidé (title, body, color, visibility) + `updated_at`.
-- Confirmation public→privé (la note disparaît du board public des autres).
-
-**Périmètre — Front**
-- **NoteEditor** (shell modale desktop / plein écran mobile) · **BlockList** (paragraphes + cases ; **« Insérer une case » en bas**).
-- **ColorPicker** (5 teintes) · **VisibilityToggle** (+ confirmation public→privé).
-- **SaveStatus** : `Modifié` → `Enregistrement…` → `Enregistré · à l'instant`, **distinct** de « Dernière version enregistrée ».
-- **lib/markdown.ts** (miroir de `buildMd`) · **hook useAutosave** (debounce ~1,5 s + flush au blur).
-
-**Maquettes.** `Keepou - Éditeur canonique.dc.html`, `Keepou - Éditeur & verrou.dc.html`.
-
-**Règles liées (claude.md).** §2 autosave · §3 versionnage (version créée en E6 au relâchement du verrou) · §7 confirmation public→privé · Markdown GFM dès le MVP.
-
-**Copy figée.** HANDOFF §7 « Sauvegarde » et « Visibilité ».
-
-**Fait quand.** Édition texte + cases, insertion de case, Markdown correct, autosave 3 états, toggle visibilité + confirmation. **Sans verrou** encore (ajouté en E5).
+**Done when.** You can see/create notes, tabs work, board faithful light + dark, desktop + mobile.
 
 ---
 
-## E5 — Verrou mono-éditeur & temps réel
+## E4 — Note editor (text + checkboxes + Markdown + autosave)
 
-**Objectif.** Garantir qu'**une seule personne édite une note à la fois**, avec les **4
-états** des maquettes (à toi / verrouillé par un autre / expiré-reprise / conflit), en
-lecture seule pour les autres, mise à jour en quasi temps réel.
+**Goal.** The canonical editor: **modal ≥ tablet / full screen < ~640px**, mix of
+paragraphs + checkboxes, **GFM Markdown persistence**, **autosave**, color
+picker, private/public toggle with confirmation.
 
-**Périmètre — Back**
-- Champs verrou sur `Note` (`locked_by_id`, `locked_at`, `lock_expires_at`).
-- `POST /api/notes/{id}/lock` (acquérir/renouveler) → **409** si tenu par un autre + qui le tient · `DELETE /api/notes/{id}/lock`.
-- **Acquisition atomique** : `UPDATE ... WHERE locked_by_id IS NULL OR lock_expires_at < now` (0 ligne → conflit).
-- Service `locks.py` (acquisition / renouvellement / relâche / expiration / conflit) · diffusion d'état (poll ou SSE).
+**Scope — Back**
+- Body persistence in **Markdown** (title stored separately).
+- Consolidated `PATCH /api/notes/{id}` (title, body, color, visibility) + `updated_at`.
+- Public→private confirmation (the note disappears from others' public board).
 
-**Périmètre — Front**
-- **hook useNoteLock** (heartbeat ~20 s, expiration ~60 s, états) · **LockBanner** (4 états).
-- Mode **lecture seule** + bouton **Modifier la note** (reprise) / **Passer en lecture seule** (conflit).
-- Ligne « Dernière édition par X » (desktop **et** mobile).
+**Scope — Front**
+- **NoteEditor** (desktop modal / mobile full-screen shell) · **BlockList** (paragraphs + checkboxes; **"Insérer une case" at the bottom**).
+- **ColorPicker** (5 shades) · **VisibilityToggle** (+ public→private confirmation).
+- **SaveStatus**: `Modifié` → `Enregistrement…` → `Enregistré · à l'instant`, **distinct** from "last saved version".
+- **lib/markdown.ts** (mirror of `buildMd`) · **useAutosave hook** (debounce ~1.5 s + flush on blur).
 
-**Maquettes.** `Keepou - Éditeur & verrou.dc.html`.
+**Mockups.** `Keepou - Éditeur canonique.dc.html`, `Keepou - Éditeur & verrou.dc.html`.
 
-**Règles liées (claude.md).** §1 verrou mono-éditeur — **jamais d'édition concurrente**, **pas de CRDT/OT**, pas de brouillon persistant.
+**Related rules (claude.md).** §2 autosave · §3 versioning (version created in E6 when the lock is released) · §7 public→private confirmation · GFM Markdown from the MVP.
 
-**Copy figée.** HANDOFF §7 « Verrou ».
+**Frozen copy.** HANDOFF §7 "Save" and "Visibility".
 
-**Fait quand.** Les 4 états reproduits, conflit tranché serveur, lecture seule temps réel, reprise après expiration.
-
----
-
-## E6 — Historique & versions
-
-**Objectif.** Conserver l'historique (**1 session d'édition = 1 version**), permettre
-d'**aperçu en lecture seule** une version et de la **restaurer** (jamais d'écrasement).
-
-**Périmètre — Back**
-- Modèle `NoteVersion` (author, timestamp, snapshot title/body/color/visibility) + index `(note_id, created_at)`.
-- Création d'une version **au relâchement du verrou**.
-- `GET /api/notes/{id}/versions` · `POST /api/notes/{id}/restore/{version_id}` (→ **nouvelle** version).
-
-**Périmètre — Front**
-- **HistoryPanel** desktop (liste + aperçu) · **VersionRow** · **VersionPreview** · **RestoreConfirm**.
-- **Flow mobile 2 écrans** : liste (chevrons) → **aperçu lecture seule** → barre **Fermer / Restaurer**.
-- Pas de diff visuel : on **réaffiche la version telle quelle**.
-
-**Maquettes.** `Keepou - Historique.dc.html`.
-
-**Règles liées (claude.md).** §3 versionnage · **pas de diff visuel**, un seul bouton **Restaurer**.
-
-**Copy figée.** HANDOFF §7 « Historique ».
-
-**Fait quand.** Liste qui/quand, aperçu lecture seule (desktop + mobile), restauration crée une nouvelle version, rien n'est écrasé.
+**Done when.** Text + checkbox editing, checkbox insertion, correct Markdown, 3-state autosave, visibility toggle + confirmation. **Without a lock** yet (added in E5).
 
 ---
 
-## E7 — Administration des accès
+## E5 — Single-editor lock & real-time
 
-**Objectif.** Donner à l'admin la gestion de l'**allowlist** et des **membres** (inscrits
-vs en attente), rôles, **activation/désactivation** — **jamais de suppression**.
+**Goal.** Guarantee that **only one person edits a note at a time**, with the **4
+states** from the mockups (yours / locked by another / expired-takeover / conflict), in
+read-only for the others, updated in near real-time.
 
-**Périmètre — Back**
-- Dépendance `require_admin` ; route `/admin` **protégée serveur**.
-- `GET /api/admin/members` (Users + Allowlist en LEFT JOIN sur email).
-- `POST /api/admin/allowlist {email}` · `DELETE /api/admin/allowlist/{id}` (entrées en attente uniquement).
-- `PATCH /api/admin/users/{id} {role|status}` (ACTIVE|DISABLED, **jamais delete**).
+**Scope — Back**
+- Lock fields on `Note` (`locked_by_id`, `locked_at`, `lock_expires_at`).
+- `POST /api/notes/{id}/lock` (acquire/renew) → **409** if held by another + who holds it · `DELETE /api/notes/{id}/lock`.
+- **Atomic acquisition**: `UPDATE ... WHERE locked_by_id IS NULL OR lock_expires_at < now` (0 rows → conflict).
+- `locks.py` service (acquisition / renewal / release / expiration / conflict) · state broadcast (poll or SSE).
 
-**Périmètre — Front**
-- **AccessManager** (onglets Membres / Invités en attente + compteurs) · **MemberRow** · **PendingRow**.
-- **Ajouter un e-mail** · menu membre **Promouvoir admin** / **Désactiver le compte**.
-- **Point d'entrée** « Administration » dans le menu avatar, **admins uniquement**.
+**Scope — Front**
+- **useNoteLock hook** (heartbeat ~20 s, expiration ~60 s, states) · **LockBanner** (4 states).
+- **Read-only** mode + **Modifier la note** button (takeover) / **Passer en lecture seule** (conflict).
+- "Dernière édition par X" line (desktop **and** mobile).
 
-**Maquettes.** `Keepou - Admin.dc.html`.
+**Mockups.** `Keepou - Éditeur & verrou.dc.html`.
 
-**Règles liées (claude.md).** §5 désactivation jamais suppression · §6 `/admin` protégée serveur.
+**Related rules (claude.md).** §1 single-editor lock — **never concurrent editing**, **no CRDT/OT**, no persistent draft.
 
-**Copy figée.** HANDOFF §7 « Admin ».
+**Frozen copy.** HANDOFF §7 "Lock".
 
-**Fait quand.** Allowlist gérable, statuts/rôles modifiables, désactivation réversible, route admin refusée serveur, entrée masquée aux non-admins.
-
----
-
-## E8 — Finitions : PWA, accessibilité, i18n, qualité
-
-**Objectif.** Durcir et finaliser : installable, accessible, chaînes centralisées, testé.
-
-**Périmètre**
-- **PWA** : manifest (icône = mascotte), favicon, responsive.
-- **A11y** : vrais `<input type=checkbox>` + labels, champs labellisés, bandeaux verrou `role="status"`/aria-live, contrastes OK, hit targets mobile ≥ 44px.
-- **i18n** : centraliser la copy FR (HANDOFF §7).
-- **Qualité** : tests back (allowlist, verrou atomique, versionnage), tests front clés, CI lint/build/test.
-
-**Maquettes.** Toutes (vérification d'états & responsive).
-
-**Fait quand.** App installable, a11y vérifiée, chaînes centralisées, suite de tests verte en CI.
+**Done when.** The 4 states reproduced, conflict decided server-side, real-time read-only, takeover after expiration.
 
 ---
 
-## Transversal (présent dans chaque epic)
+## E6 — History & versions
 
-- **Fidélité visuelle** : tokens exacts ; clair **et** sombre ; desktop **et** mobile.
-- **Sécurité serveur** : allowlist, rôle admin, verrou — **toujours** côté serveur.
-- **Markdown** : corps des notes en GFM dès le MVP (pas de migration future).
-- **Tests** au fil de l'eau sur les règles métier critiques.
+**Goal.** Keep history (**1 editing session = 1 version**), let you **preview a version
+read-only** and **restore** it (never overwrite).
+
+**Scope — Back**
+- `NoteVersion` model (author, timestamp, snapshot title/body/color/visibility) + `(note_id, created_at)` index.
+- Version created **when the lock is released**.
+- `GET /api/notes/{id}/versions` · `POST /api/notes/{id}/restore/{version_id}` (→ **new** version).
+
+**Scope — Front**
+- **HistoryPanel** desktop (list + preview) · **VersionRow** · **VersionPreview** · **RestoreConfirm**.
+- **2-screen mobile flow**: list (chevrons) → **read-only preview** → **Fermer / Restaurer** bar.
+- No visual diff: we **re-render the version as-is**.
+
+**Mockups.** `Keepou - Historique.dc.html`.
+
+**Related rules (claude.md).** §3 versioning · **no visual diff**, a single **Restaurer** button.
+
+**Frozen copy.** HANDOFF §7 "History".
+
+**Done when.** List of who/when, read-only preview (desktop + mobile), restore creates a new version, nothing is overwritten.
 
 ---
 
-## Prochaine étape
+## E7 — Access administration
 
-E0 et E1 sont détaillées dans [`stories/`](./stories/). Après relecture/merge, on enchaîne
-sur le **détail de l'E2** (ou l'epic de ton choix), avec critères d'acceptation et périmètre technique.
+**Goal.** Give the admin management of the **allowlist** and **members** (registered
+vs pending), roles, **enable/disable** — **never delete**.
+
+**Scope — Back**
+- `require_admin` dependency; `/admin` route **server-protected**.
+- `GET /api/admin/members` (Users + Allowlist LEFT JOIN on email).
+- `POST /api/admin/allowlist {email}` · `DELETE /api/admin/allowlist/{id}` (pending entries only).
+- `PATCH /api/admin/users/{id} {role|status}` (ACTIVE|DISABLED, **never delete**).
+
+**Scope — Front**
+- **AccessManager** (Membres / Invités en attente tabs + counters) · **MemberRow** · **PendingRow**.
+- **Ajouter un e-mail** · member menu **Promouvoir admin** / **Désactiver le compte**.
+- **Entry point** "Administration" in the avatar menu, **admins only**.
+
+**Mockups.** `Keepou - Admin.dc.html`.
+
+**Related rules (claude.md).** §5 disable, never delete · §6 `/admin` server-protected.
+
+**Frozen copy.** HANDOFF §7 "Admin".
+
+**Done when.** Allowlist manageable, statuses/roles editable, disable reversible, admin route refused server-side, entry hidden from non-admins.
+
+---
+
+## E8 — Polish: PWA, accessibility, i18n, quality
+
+**Goal.** Harden and finalize: installable, accessible, centralized strings, tested.
+
+**Scope**
+- **PWA**: manifest (icon = mascot), favicon, responsive.
+- **A11y**: real `<input type=checkbox>` + labels, labeled fields, `role="status"`/aria-live lock banners, contrasts OK, mobile hit targets ≥ 44px.
+- **i18n**: centralize the FR copy (HANDOFF §7).
+- **Quality**: back tests (allowlist, atomic lock, versioning), key front tests, CI lint/build/test.
+
+**Mockups.** All (state & responsive verification).
+
+**Done when.** App installable, a11y verified, strings centralized, test suite green in CI.
+
+---
+
+## Cross-cutting (present in each epic)
+
+- **Visual fidelity**: exact tokens; light **and** dark; desktop **and** mobile.
+- **Server security**: allowlist, admin role, lock — **always** server-side.
+- **Markdown**: note bodies in GFM from the MVP (no future migration).
+- **Tests** as we go on the critical business rules.
+
+---
+
+## Next step
+
+E0 and E1 are detailed in [`stories/`](./stories/). After review/merge, we move on
+to the **detail of E2** (or the epic of your choice), with acceptance criteria and technical scope.
