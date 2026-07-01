@@ -1,168 +1,168 @@
-# E0 — Fondations & design system — Stories détaillées
+# E0 — Foundations & design system — Detailed stories
 
-> Objectif de l'epic : un monorepo qui démarre (front + back) et un **design system
-> fidèle aux maquettes**, base de tous les écrans suivants.
+> Epic goal: a monorepo that boots (frontend + backend) and a **design system
+> faithful to the mockups**, the base for all subsequent screens.
 >
-> 🛠️ **Une partie est déjà posée par le scaffold** (commit d'intégration). Chaque story
-> indique son état : `posé` (fait par le scaffold), `à compléter`, ou `à faire`.
-> Convention d'estimation : **S** (≤ ½ j), **M** (1–2 j), **L** (3 j+).
+> 🛠️ **Part of this is already in place from the scaffold** (integration commit). Each story
+> notes its state: `in place` (done by the scaffold), `to complete`, or `to do`.
+> Estimate scale: **S** (≤ ½ day), **M** (1–2 days), **L** (3+ days).
 
 ---
 
-## E0-S1 — Monorepo, structure & tooling · `posé` · S
+## E0-S1 — Monorepo, structure & tooling · `in place` · S
 
-**Objectif.** Une arborescence claire `web/` + `api/` + `design/`, avec scripts de dev.
+**Goal.** A clear tree `web/` + `api/` + `design/`, with dev scripts.
 
-**Tâches**
-- Arborescence `web/` (React+Vite+TS), `api/` (FastAPI), `design/` (maquettes, source de vérité).
+**Tasks**
+- Tree `web/` (React+Vite+TS), `api/` (FastAPI), `design/` (mockups, source of truth).
 - `.gitignore` (node_modules, `__pycache__`, `.venv`, `dist`, `*.db`, `.env`…).
-- README racine (structure, démarrage front/back).
+- Root README (structure, frontend/backend startup).
 
-**Critères d'acceptation**
-- [x] `web/` et `api/` présents avec leur structure (handoff §6).
-- [x] `README.md` décrit la structure et les commandes de démarrage.
-- [x] Aucun artefact de build versionné (`dist/`, `node_modules/`, `*.tsbuildinfo`).
+**Acceptance criteria**
+- [x] `web/` and `api/` present with their structure (handoff §6).
+- [x] `README.md` describes the structure and the startup commands.
+- [x] No build artifacts versioned (`dist/`, `node_modules/`, `*.tsbuildinfo`).
 
-**Notes.** Fait. Voir `README.md`, `.gitignore`.
+**Notes.** Done. See `README.md`, `.gitignore`.
 
 ---
 
-## E0-S2 — Bootstrap back FastAPI · `posé` · S
+## E0-S2 — Backend bootstrap FastAPI · `in place` · S
 
-**Objectif.** API qui démarre, configurable, avec un endpoint de santé.
+**Goal.** An API that boots, is configurable, and has a health endpoint.
 
-**Tâches**
-- `app/main.py` : `FastAPI()`, montage des routers (stubs), CORS.
-- `app/config.py` : settings via env (`DATABASE_URL`, `SESSION_SECRET`, `CORS_ORIGINS`).
-- `app/db.py` : engine + `get_session`.
+**Tasks**
+- `app/main.py`: `FastAPI()`, mounting the routers (stubs), CORS.
+- `app/config.py`: settings via env (`DATABASE_URL`, `SESSION_SECRET`, `CORS_ORIGINS`).
+- `app/db.py`: engine + `get_session`.
 - Route `GET /api/health`.
 
-**Critères d'acceptation**
-- [x] `uvicorn app.main:app` démarre sans erreur.
+**Acceptance criteria**
+- [x] `uvicorn app.main:app` starts without error.
 - [x] `GET /api/health` → `{"status":"ok"}`.
-- [x] CORS lit `CORS_ORIGINS` depuis l'environnement.
-- [x] `.env.example` fourni.
+- [x] CORS reads `CORS_ORIGINS` from the environment.
+- [x] `.env.example` provided.
 
-**Notes.** Fait. Routers `auth`/`notes`/`admin` montés mais **sans routes** (remplis en E2/E3…).
-
----
-
-## E0-S3 — Base de données & migrations Alembic · `à compléter` · M
-
-**Objectif.** Couche DB prête, migrations opérationnelles (vides tant qu'aucun modèle).
-
-**Tâches**
-- `alembic.ini` + `migrations/env.py` branchés sur `app.config` et `SQLModel.metadata` — `posé`.
-- `app/models.py` : aujourd'hui un stub (le modèle réel est défini en E2/E3/E5/E6 selon handoff §4).
-- **À compléter** : valider le flux `alembic revision --autogenerate` + `alembic upgrade head` dès le premier modèle (E2).
-- Choisir le SGBD de dev : SQLite par défaut (E0), PostgreSQL en prod (cf. E1).
-
-**Critères d'acceptation**
-- [x] `alembic current` s'exécute (env.py charge la config sans erreur).
-- [ ] `alembic upgrade head` joue une première migration réelle (déclenché en E2 avec `User`/`AllowlistEntry`).
-- [x] L'URL de base vient de `settings.database_url` (pas codée en dur).
-
-**Notes.** Le squelette Alembic est posé ; la première migration réelle vient avec le premier modèle (dépendance E2).
+**Notes.** Done. Routers `auth`/`notes`/`admin` are mounted but **without routes** (filled in E2/E3…).
 
 ---
 
-## E0-S4 — Bootstrap front React/Vite + routing · `à compléter` · M
+## E0-S3 — Database & Alembic migrations · `to complete` · M
 
-**Objectif.** SPA qui démarre, routeur en place, prête à accueillir les écrans.
+**Goal.** DB layer ready, migrations operational (empty as long as there's no model).
 
-**Tâches**
-- `main.tsx` (BrowserRouter), `App.tsx` (shell) — `posé`.
-- `vite.config.ts` avec proxy `/api` → back en dev — `posé`.
-- **À compléter** : déclarer les routes du handoff §5 (`/login`, `/register`, `/`, `/note/:id`, `/note/:id/history`, `/admin`) avec des placeholders, + garde d'auth basique (redirection).
+**Tasks**
+- `alembic.ini` + `migrations/env.py` wired to `app.config` and `SQLModel.metadata` — `in place`.
+- `app/models.py`: currently a stub (the real model is defined in E2/E3/E5/E6 per handoff §4).
+- **To complete**: validate the `alembic revision --autogenerate` + `alembic upgrade head` flow as soon as the first model lands (E2).
+- Choose the dev DBMS: SQLite by default (E0), PostgreSQL in prod (see E1).
 
-**Critères d'acceptation**
-- [x] `npm run dev` démarre, `npm run build` (type-check + build) passe.
-- [x] Appels API relatifs `/api/...` proxifiés vers le back en dev.
-- [ ] Les routes principales existent (placeholders) et la navigation fonctionne.
+**Acceptance criteria**
+- [x] `alembic current` runs (env.py loads the config without error).
+- [ ] `alembic upgrade head` runs a first real migration (triggered in E2 with `User`/`AllowlistEntry`).
+- [x] The database URL comes from `settings.database_url` (not hardcoded).
 
-**Notes.** Le shell boot ; le squelette de routes/placeholders est à ajouter (les écrans réels arrivent E2+).
-
----
-
-## E0-S5 — Design system : tokens & thème clair/sombre · `posé` · M
-
-**Objectif.** Les tokens exacts des maquettes disponibles partout, thème commutable.
-
-**Tâches**
-- `styles/tokens.css` : variables `:root` + `[data-theme="dark"]` **copiées des maquettes** (surfaces, texte, 5 teintes de cartes clair+sombre, marque, rayons, ombres) — handoff §1.
-- Polices Fredoka / Nunito Sans / IBM Plex Mono (import Google Fonts dans `index.html`).
-- `hooks/useTheme.ts` : `data-theme` sur `<html>`, respect `prefers-color-scheme`, override persistant (localStorage).
-
-**Critères d'acceptation**
-- [x] Les valeurs de `tokens.css` correspondent **exactement** au `:root`/`[data-theme=dark]` de `Keepou - Board.dc.html`.
-- [x] Les 3 polices se chargent et sont exposées via `--font-brand/-ui/-mono`.
-- [x] Le toggle thème bascule clair⇄sombre et persiste au reload ; premier chargement respecte l'OS.
-
-**Notes.** Fait. Référence visuelle : `design/Keepou - Board.dc.html`.
+**Notes.** The Alembic scaffold is in place; the first real migration comes with the first model (E2 dependency).
 
 ---
 
-## E0-S6 — Shell UI : topbar + layout responsive · `à faire` · M
+## E0-S4 — Frontend bootstrap React/Vite + routing · `to complete` · M
 
-**Objectif.** Une coquille réutilisable (topbar + conteneur) au point de bascule des maquettes.
+**Goal.** An SPA that boots, router in place, ready to host the screens.
 
-**Tâches**
-- Composant **Topbar** : logo mascotte + « Keepou » (Fredoka), zone centrale, actions (thème, avatar) — structure fidèle à `Keepou - Board.dc.html` (sticky, `backdrop-filter: blur(8px)`, fond `--topbar`).
-- Conteneur de contenu (`max-width` ~1320px, paddings des maquettes).
-- Helper responsive : point de bascule **~640px** (desktop ↔ mobile) — utilisé ensuite par éditeur/historique.
+**Tasks**
+- `main.tsx` (BrowserRouter), `App.tsx` (shell) — `in place`.
+- `vite.config.ts` with a proxy `/api` → backend in dev — `in place`.
+- **To complete**: declare the handoff §5 routes (`/login`, `/register`, `/`, `/note/:id`, `/note/:id/history`, `/admin`) with placeholders, + a basic auth guard (redirect).
 
-**Critères d'acceptation**
-- [ ] Topbar fidèle (mesures, blur, bordure `--border`) en clair + sombre.
-- [ ] Layout responsive ≥/< 640px conforme aux maquettes.
-- [ ] Composants réutilisables (importés par le Board en E3).
+**Acceptance criteria**
+- [x] `npm run dev` starts, `npm run build` (type-check + build) passes.
+- [x] Relative API calls `/api/...` proxied to the backend in dev.
+- [ ] The main routes exist (placeholders) and navigation works.
 
-**Notes.** Le `App.tsx` actuel contient une topbar minimale de démonstration à remplacer par le composant réel.
-
----
-
-## E0-S7 — Client API & gestion d'erreurs typées · `à compléter` · S
-
-**Objectif.** Un wrapper fetch unique, cookies de session, erreurs exploitables par l'UI.
-
-**Tâches**
-- `api/client.ts` : `get/post/patch/delete`, `credentials:'include'`, `ApiError(status, message, payload)` — `posé`.
-- **À compléter** : helpers de mapping d'erreurs UI (401 → redirection login, 403 → message, 409 → conflit verrou) au fil des epics.
-
-**Critères d'acceptation**
-- [x] Toutes les requêtes passent par le wrapper et envoient les cookies.
-- [x] Les réponses non-2xx lèvent `ApiError` avec `status` + `payload`.
-- [ ] Convention de traitement 401/403/409 documentée et appliquée (E2/E5).
-
-**Notes.** Base posée ; l'exploitation fine des codes se fait dans les epics concernées.
+**Notes.** The shell boots; the routes/placeholders scaffold is still to be added (the real screens arrive in E2+).
 
 ---
 
-## E0-S8 — Qualité : lint, format, types, tests & CI · `posé` · M
+## E0-S5 — Design system: tokens & light/dark theme · `in place` · M
 
-**Objectif.** Garde-fous automatiques dès le départ (avant que le code grossisse).
+**Goal.** The exact tokens from the mockups available everywhere, switchable theme.
 
-**Tâches**
-- Back géré par **uv** (`pyproject.toml` + `uv.lock`) ; `requirements.txt` **généré** (`uv export`).
-  - **Ruff** (lint `E/W/F/I/UP/B/SIM/C4` + format), **ty** (types, Astral), **pytest** (+ httpx pour `TestClient`).
-- Front : **ESLint** (flat config + typescript-eslint + react-hooks/refresh), **Prettier**, **tsc --noEmit**, **Vitest** (+ Testing Library, jsdom).
-- **CI** GitHub Actions (`.github/workflows/ci.yml`) : job `api` (ruff · ty · pytest) + job `web` (tsc · eslint · prettier · vitest · build).
-- Transverse : `.editorconfig`, `.pre-commit-config.yaml` (ruff + prettier).
+**Tasks**
+- `styles/tokens.css`: `:root` + `[data-theme="dark"]` variables **copied from the mockups** (surfaces, text, 5 card shades light+dark, brand, radii, shadows) — handoff §1.
+- Fredoka / Nunito Sans / IBM Plex Mono fonts (Google Fonts import in `index.html`).
+- `hooks/useTheme.ts`: `data-theme` on `<html>`, respect `prefers-color-scheme`, persistent override (localStorage).
 
-**Critères d'acceptation**
-- [x] Back : `uv run ruff check .`, `uv run ruff format --check .`, `uv run ty check`, `uv run pytest` passent.
-- [x] Front : `npm run typecheck`, `lint`, `format`, `test`, `build` passent.
-- [x] Smoke test back : `GET /api/health` + roundtrip hash mot de passe (`tests/test_health.py`).
-- [x] Workflow CI déclenché sur push/PR, bloque si une étape échoue.
+**Acceptance criteria**
+- [x] The values in `tokens.css` match **exactly** the `:root`/`[data-theme=dark]` of `Keepou - Board.dc.html`.
+- [x] The 3 fonts load and are exposed via `--font-brand/-ui/-mono`.
+- [x] The theme toggle switches light⇄dark and persists across reload; first load respects the OS.
 
-**Notes.** En place et vérifié localement. Le **CD** (déploiement) est ajouté en **E1** (Railway).
+**Notes.** Done. Visual reference: `design/Keepou - Board.dc.html`.
 
 ---
 
-## Définition de « E0 terminée »
+## E0-S6 — UI shell: topbar + responsive layout · `to do` · M
 
-- [ ] Les deux apps démarrent et se parlent en dev (proxy `/api`).
-- [ ] Design system fidèle (tokens + 3 polices + thème clair/sombre persistant).
-- [ ] Topbar + layout responsive réutilisables.
-- [ ] Squelette de routes front + garde d'auth basique.
-- [ ] Lint front/back + CI verte.
-- [ ] Squelette Alembic prêt (1ʳᵉ migration réelle déléguée à E2).
+**Goal.** A reusable shell (topbar + container) at the mockups' breakpoint.
+
+**Tasks**
+- **Topbar** component: mascot logo + « Keepou » (Fredoka), central area, actions (theme, avatar) — structure faithful to `Keepou - Board.dc.html` (sticky, `backdrop-filter: blur(8px)`, `--topbar` background).
+- Content container (`max-width` ~1320px, mockup paddings).
+- Responsive helper: breakpoint **~640px** (desktop ↔ mobile) — used later by the editor/history.
+
+**Acceptance criteria**
+- [ ] Topbar faithful (measurements, blur, `--border`) in light + dark.
+- [ ] Responsive layout ≥/< 640px matching the mockups.
+- [ ] Reusable components (imported by the Board in E3).
+
+**Notes.** The current `App.tsx` contains a minimal demo topbar to be replaced by the real component.
+
+---
+
+## E0-S7 — API client & typed error handling · `to complete` · S
+
+**Goal.** A single fetch wrapper, session cookies, errors usable by the UI.
+
+**Tasks**
+- `api/client.ts`: `get/post/patch/delete`, `credentials:'include'`, `ApiError(status, message, payload)` — `in place`.
+- **To complete**: UI error-mapping helpers (401 → login redirect, 403 → message, 409 → lock conflict) as the epics progress.
+
+**Acceptance criteria**
+- [x] Every request goes through the wrapper and sends cookies.
+- [x] Non-2xx responses raise `ApiError` with `status` + `payload`.
+- [ ] 401/403/409 handling convention documented and applied (E2/E5).
+
+**Notes.** Base in place; the fine-grained handling of the codes happens in the relevant epics.
+
+---
+
+## E0-S8 — Quality: lint, format, types, tests & CI · `in place` · M
+
+**Goal.** Automatic guardrails from the start (before the code grows).
+
+**Tasks**
+- Backend managed by **uv** (`pyproject.toml` + `uv.lock`); `requirements.txt` **generated** (`uv export`).
+  - **Ruff** (lint `E/W/F/I/UP/B/SIM/C4` + format), **ty** (types, Astral), **pytest** (+ httpx for `TestClient`).
+- Frontend: **ESLint** (flat config + typescript-eslint + react-hooks/refresh), **Prettier**, **tsc --noEmit**, **Vitest** (+ Testing Library, jsdom).
+- **CI** GitHub Actions (`.github/workflows/ci.yml`): `api` job (ruff · ty · pytest) + `web` job (tsc · eslint · prettier · vitest · build).
+- Cross-cutting: `.editorconfig`, `.pre-commit-config.yaml` (ruff + prettier).
+
+**Acceptance criteria**
+- [x] Backend: `uv run ruff check .`, `uv run ruff format --check .`, `uv run ty check`, `uv run pytest` pass.
+- [x] Frontend: `npm run typecheck`, `lint`, `format`, `test`, `build` pass.
+- [x] Backend smoke test: `GET /api/health` + password hash roundtrip (`tests/test_health.py`).
+- [x] CI workflow triggered on push/PR, blocks if a step fails.
+
+**Notes.** In place and verified locally. **CD** (deployment) is added in **E1** (Railway).
+
+---
+
+## Definition of "E0 done"
+
+- [ ] Both apps start and talk to each other in dev (`/api` proxy).
+- [ ] Faithful design system (tokens + 3 fonts + persistent light/dark theme).
+- [ ] Reusable topbar + responsive layout.
+- [ ] Frontend routes scaffold + basic auth guard.
+- [ ] Frontend/backend lint + green CI.
+- [ ] Alembic scaffold ready (1st real migration delegated to E2).

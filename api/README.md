@@ -1,14 +1,14 @@
 Keepou API — FastAPI + SQLModel + Alembic.
 
-Géré avec **uv**. Démarrage :
+Managed with **uv**. Getting started:
 
 ```bash
 uv sync
 uv run uvicorn app.main:app --reload   # http://localhost:8000 — /api/health
 ```
 
-Qualité : `uv run ruff check .` · `uv run ruff format .` · `uv run ty check` · `uv run pytest`.
+Quality: `uv run ruff check .` · `uv run ruff format .` · `uv run ty check` · `uv run pytest`.
 
-`requirements.txt` est généré depuis `uv.lock` (`uv export --no-dev`) pour le déploiement.
+`requirements.txt` is generated from `uv.lock` (`uv export --no-dev`) for deployment.
 
-Squelette ; logique métier implémentée epic par epic (voir `../EPICS.md` et `../stories/`).
+Scaffold; business logic is implemented epic by epic (see `../EPICS.md` and `../stories/`).

@@ -1,50 +1,50 @@
-# Keepou — Handoff design → développement
+# Keepou — Design → development handoff
 
-Document de référence pour reprendre **à l'identique** les maquettes validées. Les fichiers `Keepou - *.dc.html` à la racine sont la source de vérité visuelle ; ce document en extrait les tokens, les états et les comportements, et propose le mapping vers Next.js + Prisma.
+Reference document for reproducing the approved mockups **exactly**. The `Keepou - *.dc.html` files at the repo root are the visual source of truth; this document extracts their tokens, states and behaviors, and proposes the mapping to React + FastAPI.
 
-Sommaire :
-1. Design system (tokens exacts)
-2. Inventaire des écrans (maquettes ↔ exigences PRD)
-3. Spécifications de comportement
-4. Modèle de données (SQLModel)
+Contents:
+1. Design system (exact tokens)
+2. Screen inventory (mockups ↔ PRD requirements)
+3. Behavior specifications
+4. Data model (SQLModel)
 5. Routes & API
-6. Découpage front React + back FastAPI
-7. États & messages (copy FR)
-8. Accessibilité, responsive, PWA
+6. React front + FastAPI back breakdown
+7. States & messages (French copy)
+8. Accessibility, responsive, PWA
 
 ---
 
-## 1. Design system — tokens exacts
+## 1. Design system — exact tokens
 
-Palette extraite du logo (burrito-mascotte). **Réutiliser ces valeurs telles quelles.**
+Palette extracted from the logo (burrito mascot). **Reuse these values as-is.**
 
-### Couleurs de marque
-| Rôle | Hex | Usage |
+### Brand colors
+| Role | Hex | Usage |
 |---|---|---|
-| Or (tortilla) | `#EAB64C` | Accent primaire, dégradé bouton `linear-gradient(150deg,#EAB64C,#D89030)` |
-| Or foncé | `#D89030` | Fin du dégradé primaire |
-| Salsa / terracotta | `#C75D43` | Verrou « édité par un autre », erreurs, avatar |
-| Terracotta foncé | `#C04A30` | (refus) `linear-gradient(150deg,#D86A50,#C04A30)` |
-| Avocat | `#9DB84E` | États « à toi », public (clair) |
-| Vert profond | `#3A5132` | Boutons secondaires, cases cochées, statut actif, admin |
-| Teal | `#5FA39A` | Avatar / accent tertiaire |
-| Encre chaude | `#2E2A20` | Texte principal, bezel mobile |
-| Crème | `#FBF5E9` / fond board `#FBF4E6` | Fonds clairs |
+| Gold (tortilla) | `#EAB64C` | Primary accent, button gradient `linear-gradient(150deg,#EAB64C,#D89030)` |
+| Dark gold | `#D89030` | End of the primary gradient |
+| Salsa / terracotta | `#C75D43` | "Edited by someone else" lock, errors, avatar |
+| Dark terracotta | `#C04A30` | (denial) `linear-gradient(150deg,#D86A50,#C04A30)` |
+| Avocado | `#9DB84E` | "Yours" states, public (light) |
+| Deep green | `#3A5132` | Secondary buttons, checked boxes, active status, admin |
+| Teal | `#5FA39A` | Avatar / tertiary accent |
+| Warm ink | `#2E2A20` | Main text, mobile bezel |
+| Cream | `#FBF5E9` / board background `#FBF4E6` | Light backgrounds |
 
-### Surfaces & texte (clair)
+### Surfaces & text (light)
 ```
 --bg:#FBF4E6;  --surface:#ffffff;  --border:#EBDFC6;  --track:#EFE4CE;
 --ink:#2E2A20; --ink-soft:#6A6354; --ink-mute:#A1977F;
 ```
 
-### Surfaces & texte (sombre)
+### Surfaces & text (dark)
 ```
 --bg:#211D16;  --surface:#2C2719;  --border:#43391F;
 --ink:#F3ECDD; --ink-soft:#C9BFA3; --ink-mute:#8E8161;
 ```
 
-### Couleurs de cartes (5 teintes, dégradé + bordure)
-| Nom | Clair (bg / border) | Sombre (bg / border) |
+### Card colors (5 shades, gradient + border)
+| Name | Light (bg / border) | Dark (bg / border) |
 |---|---|---|
 | gold | `linear-gradient(160deg,#FCEFCF,#F7E2AE)` / `#EFD79E` | `linear-gradient(160deg,#3A3320,#2E2A18)` / `#4A4026` |
 | avocat | `linear-gradient(160deg,#EEF3D2,#DFEAAE)` / `#D4E0A2` | `linear-gradient(160deg,#2F3A22,#26301B)` / `#3F4A2A` |
@@ -52,101 +52,101 @@ Palette extraite du logo (burrito-mascotte). **Réutiliser ces valeurs telles qu
 | clay | `linear-gradient(160deg,#F6E9D8,#ECD8BC)` / `#E6CDA9` | `linear-gradient(160deg,#352D1C,#2A2416)` / `#46391F` |
 | teal | `linear-gradient(160deg,#DFEDE8,#C7DED5)` / `#BAD7CD` | `linear-gradient(160deg,#1F332E,#1A2A26)` / `#2C443D` |
 
-Ces 5 teintes sont le sélecteur de couleur d'une note. Stocker un identifiant (`gold|avocat|salsa|clay|teal`), pas le hex.
+These 5 shades are a note's color picker. Store an identifier (`gold|avocat|salsa|clay|teal`), not the hex.
 
-### Typographie
-- **Fredoka** (600/500) — marque « Keepou », titres de notes, titres d'écran, libellés de boutons.
-- **Nunito Sans** (400/600/700) — corps, UI, métadonnées.
-- **IBM Plex Mono** (500/600) — labels techniques, horodatages en MAJUSCULES, codes (`note.md`).
-- Imports Google Fonts (poids utilisés) :
+### Typography
+- **Fredoka** (600/500) — "Keepou" brand, note titles, screen titles, button labels.
+- **Nunito Sans** (400/600/700) — body, UI, metadata.
+- **IBM Plex Mono** (500/600) — technical labels, UPPERCASE timestamps, codes (`note.md`).
+- Google Fonts imports (weights used):
   `Fredoka:wght@400;500;600;700` · `Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700` · `IBM+Plex+Mono:wght@400;500;600`
 
-### Échelle & formes
-- Rayons : cartes `18px`, panneaux/cartes UI `14–16px`, modale `20px`, champs `10px`, pilules/boutons `999px`, cases à cocher `5px` (desktop) / `6px` (mobile, `22px`).
-- Ombres : carte board `0 8px 16px -13px rgba(46,42,32,.4)` ; modale `0 40px 80px -30px rgba(46,42,32,.6)` ; cadre `0 30px 60px -40px rgba(46,42,32,.5)`.
-- Topbar : `backdrop-filter:blur(8px)`, fond `rgba(251,244,230,.86)`, bordure bas `--border`.
-- Board : masonry `column-count:4` (desktop) / `2` (mobile), `column-gap:16–18px`, cartes `break-inside:avoid`.
-- Hit targets mobile ≥ 44px.
+### Scale & shapes
+- Radii: cards `18px`, UI panels/cards `14–16px`, modal `20px`, fields `10px`, pills/buttons `999px`, checkboxes `5px` (desktop) / `6px` (mobile, `22px`).
+- Shadows: board card `0 8px 16px -13px rgba(46,42,32,.4)`; modal `0 40px 80px -30px rgba(46,42,32,.6)`; frame `0 30px 60px -40px rgba(46,42,32,.5)`.
+- Topbar: `backdrop-filter:blur(8px)`, background `rgba(251,244,230,.86)`, bottom border `--border`.
+- Board: masonry `column-count:4` (desktop) / `2` (mobile), `column-gap:16–18px`, cards `break-inside:avoid`.
+- Mobile hit targets ≥ 44px.
 
 ---
 
-## 2. Inventaire des écrans ↔ exigences PRD
+## 2. Screen inventory ↔ PRD requirements
 
-| Maquette | Écran | Couvre (FR du PRD) |
+| Mockup | Screen | Covers (PRD, FR) |
 |---|---|---|
-| `Keepou - Board.dc.html` | Board principal (canonique, clair+sombre, onglets, composer) | Liste notes, onglets **Mes notes / Public**, recherche, composer rapide, sélecteur couleur, bascule privé/public, thème |
-| `Keepou - Éditeur & verrou.dc.html` | Exploration des 2 formats + **4 états de verrou** | Verrou mono-éditeur (à toi / verrouillé / expiré / conflit), lecture seule, reprise |
-| `Keepou - Éditeur canonique.dc.html` | **Éditeur retenu** : modale desktop / plein écran mobile, texte + cases, panneau Markdown | Édition texte + checklist, insertion de cases, sélecteur couleur, privé/public, autosave, **stockage Markdown** |
-| `Keepou - Historique.dc.html` | Panneau d'historique + aperçu lecture seule + restaurer (desktop & flow mobile 2 écrans) | Historique des versions, auteur + date, aperçu, restauration |
-| `Keepou - Auth.dc.html` | Connexion, création de compte, **refus allowlist**, variantes inline | Login, register conditionné à l'allowlist, messages d'erreur, compte désactivé |
-| `Keepou - Admin.dc.html` | Gestion des accès : allowlist, **Membres / En attente**, statuts, menu membre, point d'entrée | Allowlist, membres inscrits vs invités en attente, rôles, activation/désactivation |
-| `Board - 3 directions.dc.html` | Archive des 3 directions explorées (A retenue) | — (référence historique) |
+| `Keepou - Board.dc.html` | Main board (canonical, light+dark, tabs, composer) | Note list, **Mes notes / Public** tabs, search, quick composer, color picker, private/public toggle, theme |
+| `Keepou - Éditeur & verrou.dc.html` | Exploration of the 2 formats + **4 lock states** | Single-editor lock (yours / locked / expired / conflict), read-only, takeover |
+| `Keepou - Éditeur canonique.dc.html` | **Chosen editor**: desktop modal / mobile full screen, text + boxes, Markdown panel | Text + checklist editing, box insertion, color picker, private/public, autosave, **Markdown storage** |
+| `Keepou - Historique.dc.html` | History panel + read-only preview + restore (desktop & 2-screen mobile flow) | Version history, author + date, preview, restore |
+| `Keepou - Auth.dc.html` | Login, account creation, **allowlist denial**, inline variants | Login, register gated on the allowlist, error messages, disabled account |
+| `Keepou - Admin.dc.html` | Access management: allowlist, **Members / Pending**, statuses, member menu, entry point | Allowlist, registered members vs pending invitees, roles, activation/deactivation |
+| `Board - 3 directions.dc.html` | Archive of the 3 explored directions (A chosen) | — (historical reference) |
 
-**Décisions de format figées :** éditeur en **modale** ≥ tablette, **plein écran** sous ~640px. Historique en **panneau latéral** desktop, **flow 2 écrans** (liste → aperçu) mobile.
+**Frozen format decisions:** editor as a **modal** ≥ tablet, **full screen** below ~640px. History as a **side panel** on desktop, **2-screen flow** (list → preview) on mobile.
 
 ---
 
-## 3. Spécifications de comportement
+## 3. Behavior specifications
 
-### 3.1 Verrou mono-éditeur
-Modèle volontairement simple (pas de CRDT/OT). Une note a au plus un verrou actif.
+### 3.1 Single-editor lock
+Deliberately simple model (no CRDT/OT). A note has at most one active lock.
 
-1. **Acquisition** — à l'ouverture en édition, le client tente d'acquérir le verrou (`note.lockedById = me`, `lockedAt = now`, `lockExpiresAt = now + 60s`). Si déjà verrouillé par un autre → ouverture en **lecture seule**.
-2. **Heartbeat** — toutes les **~20 s** tant que l'éditeur est actif, prolonge `lockExpiresAt`. Au blur prolongé / fermeture, relâche le verrou.
-3. **Lecture seule (autre éditeur)** — bandeau terracotta « 🔒 Bob est en cours d'édition — lecture seule ». Champs désactivés. L'affichage se met à jour en temps réel (poll ou SSE).
-4. **Expiration** — sans heartbeat au-delà de `lockExpiresAt` (~60 s), le verrou est considéré libre. Bandeau or « Bob a fini de modifier — note disponible » + bouton **Modifier la note** (reprise).
-5. **Conflit** — si deux personnes reprennent quasi simultanément, le **serveur tranche** (transaction atomique sur le verrou). Le perdant voit « Léa modifie cette note » et un bouton **Passer en lecture seule**. Pas de notion de brouillon persistant (hors scope MVP) : on informe simplement que les dernières modifs n'ont pas pu être enregistrées.
+1. **Acquisition** — when opening for editing, the client attempts to acquire the lock (`note.lockedById = me`, `lockedAt = now`, `lockExpiresAt = now + 60s`). If already locked by someone else → opens in **read-only**.
+2. **Heartbeat** — every **~20 s** while the editor is active, extend `lockExpiresAt`. On prolonged blur / close, release the lock.
+3. **Read-only (another editor)** — terracotta banner "🔒 Bob est en cours d'édition — lecture seule". Fields disabled. The display updates in real time (poll or SSE).
+4. **Expiry** — with no heartbeat past `lockExpiresAt` (~60 s), the lock is considered free. Gold banner "Bob a fini de modifier — note disponible" + a **Modifier la note** button (takeover).
+5. **Conflict** — if two people take over nearly simultaneously, the **server decides** (atomic transaction on the lock). The loser sees "Léa modifie cette note" and a **Passer en lecture seule** button. No persistent draft concept (out of MVP scope): we simply inform that the latest edits could not be saved.
 
-**Couleurs de bandeau :** vert avocat = à toi · terracotta = verrouillé par un autre · or = expiré/reprise · sable `#F1EADB` = conflit.
+**Banner colors:** avocado green = yours · terracotta = locked by someone else · gold = expired/takeover · sand `#F1EADB` = conflict.
 
-### 3.2 Sauvegarde
-- Deux informations **distinctes**, jamais en conflit :
-  - **État de session** (en-tête) : `Modifié` (point or `#EAB64C`) → `Enregistrement…` (point `#9DAE6C`) → `Enregistré · à l'instant` (point/coche `#3A5132`).
-  - **Dernière version enregistrée** (sous-titre) : auteur + horodatage de la dernière version **persistée** ; ne change qu'après sauvegarde réussie.
-- **Debounce ~1,5 s** après la dernière frappe ; sauvegarde **immédiate** au blur / à la fermeture.
-- Le heartbeat du verrou est **indépendant** de la sauvegarde du contenu.
+### 3.2 Save
+- Two **distinct** pieces of information, never in conflict:
+  - **Session state** (header): `Modifié` (gold dot `#EAB64C`) → `Enregistrement…` (dot `#9DAE6C`) → `Enregistré · à l'instant` (dot/check `#3A5132`).
+  - **Last saved version** (subtitle): author + timestamp of the last **persisted** version; changes only after a successful save.
+- **Debounce ~1.5 s** after the last keystroke; **immediate** save on blur / close.
+- The lock heartbeat is **independent** of content saving.
 
-### 3.3 Contenu & Markdown
-- Le corps mélange **paragraphes** et **cases à cocher** dans un flux ordonné.
-- Affordance **« Insérer une case à cocher »** en **bas** de la zone de texte (pas au milieu).
-- Persistance **Markdown (GFM)** dès le MVP :
-  - paragraphe → texte ;
-  - case → `- [ ] libellé` (non cochée) / `- [x] libellé` (cochée).
-  - Le **titre** est stocké à part (champ dédié), pas dans le Markdown.
-- Sérialisation de référence (voir `Keepou - Éditeur canonique.dc.html`, méthode `buildMd`) : ligne vide entre un paragraphe et un groupe de cases ; pas plus d'une ligne vide consécutive.
-- Rendu riche (gras, listes imbriquées) possible plus tard **sans migration** puisque déjà en Markdown.
+### 3.3 Content & Markdown
+- The body mixes **paragraphs** and **checkboxes** in an ordered flow.
+- **"Insert a checkbox"** affordance at the **bottom** of the text area (not in the middle).
+- **Markdown (GFM)** persistence from the MVP onward:
+  - paragraph → text;
+  - box → `- [ ] label` (unchecked) / `- [x] label` (checked).
+  - The **title** is stored separately (dedicated field), not in the Markdown.
+- Reference serialization (see `Keepou - Éditeur canonique.dc.html`, `buildMd` method): a blank line between a paragraph and a group of boxes; no more than one consecutive blank line.
+- Rich rendering (bold, nested lists) is possible later **without migration** since it's already Markdown.
 
-### 3.4 Versionnage & historique
-- **Une version = une session d'édition**, créée au relâchement du verrou (pas par frappe ni par case cochée).
-- Une version stocke : auteur, timestamp, snapshot du corps (Markdown) + titre + couleur + visibilité.
-- L'historique liste **qui** et **quand** (pas de résumé des changements, pas de diff visuel).
-- Sélectionner une version la **réaffiche telle quelle** (lecture seule). Un seul bouton : **Restaurer**.
-- **Restaurer** crée une **nouvelle version** dont le contenu = celui de la version choisie. Rien n'est écrasé.
-- Mobile : liste (chevrons) → écran d'**aperçu lecture seule** (bandeau or « Aperçu — lecture seule · version de X ») → barre **Fermer / Restaurer cette version**.
+### 3.4 Versioning & history
+- **One version = one editing session**, created on lock release (not per keystroke nor per checked box).
+- A version stores: author, timestamp, snapshot of the body (Markdown) + title + color + visibility.
+- History lists **who** and **when** (no change summary, no visual diff).
+- Selecting a version **re-displays it as-is** (read-only). A single button: **Restaurer**.
+- **Restaurer** creates a **new version** whose content = that of the chosen version. Nothing is overwritten.
+- Mobile: list (chevrons) → **read-only preview** screen (gold banner "Aperçu — lecture seule · version de X") → **Fermer / Restaurer cette version** bar.
 
-### 3.5 Visibilité privé/public
-- Interrupteur **réversible** dans l'éditeur.
-- Public → visible par tous les membres sur l'onglet **Public**, avec auteur + date de dernière modif.
-- Repasser **public → privé** : **confirmation** « Cette note ne sera plus visible par les autres » ; elle disparaît alors du board public des autres.
+### 3.5 Private/public visibility
+- **Reversible** switch in the editor.
+- Public → visible to all members on the **Public** tab, with author + last-modified date.
+- Switching **public → private**: **confirmation** "Cette note ne sera plus visible par les autres"; it then disappears from the others' public board.
 
-### 3.6 Allowlist & comptes
-- **Register** : le serveur vérifie que l'e-mail est dans l'allowlist **avant** de créer le compte. Sinon → écran **Accès non autorisé** (pas de création, pas de contact in-app, bouton **Retour à la connexion**).
-- **Login** : messages inline — identifiants erronés (terracotta), **compte désactivé** (or, « accès suspendu »).
-- Pas de « demande d'accès » : l'utilisateur **crée un compte** ; il passe ou échoue selon l'allowlist.
+### 3.6 Allowlist & accounts
+- **Register**: the server checks that the email is on the allowlist **before** creating the account. Otherwise → **Accès non autorisé** screen (no creation, no in-app contact, **Retour à la connexion** button).
+- **Login**: inline messages — wrong credentials (terracotta), **disabled account** (gold, "access suspended").
+- No "access request": the user **creates an account**; it passes or fails depending on the allowlist.
 
 ### 3.7 Admin
-- Onglets **Membres** (inscrits) / **Invités en attente** (e-mail autorisé, compte pas encore créé), avec compteurs.
-- **Ajouter un e-mail** à l'allowlist (champ + bouton) → apparaît en *En attente*.
-- Statuts membre : **Actif** (vert) / **Désactivé** (or). En attente = autorisé sans compte.
-- Menu membre (⋯) : **Promouvoir admin**, **Désactiver le compte**. **Pas de suppression de compte.** (Retirer un e-mail *en attente* de l'allowlist reste possible.)
-- **Désactiver** ≠ supprimer : bloque la connexion, conserve compte + notes, réversible.
-- Entrée **Administration** visible **uniquement pour les admins** (menu avatar). Route `/admin` protégée serveur.
+- **Membres** (registered) / **Invités en attente** (email allowed, account not yet created) tabs, with counters.
+- **Add an email** to the allowlist (field + button) → appears as *En attente*.
+- Member statuses: **Actif** (green) / **Désactivé** (gold). Pending = allowed without an account.
+- Member menu (⋯): **Promouvoir admin**, **Désactiver le compte**. **No account deletion.** (Removing a *pending* email from the allowlist remains possible.)
+- **Disable** ≠ delete: blocks login, keeps account + notes, reversible.
+- **Administration** entry visible **only to admins** (avatar menu). `/admin` route protected server-side.
 
 ---
 
-## 4. Modèle de données (SQLModel proposé)
+## 4. Data model (proposed SQLModel)
 
-Déduit des écrans. **SQLModel** (SQLAlchemy + Pydantic), migrations **Alembic**. À ajuster selon le SGBD (PostgreSQL recommandé).
+Derived from the screens. **SQLModel** (SQLAlchemy + Pydantic), **Alembic** migrations. Adjust to the DBMS (PostgreSQL recommended).
 
 ```python
 import uuid
@@ -163,7 +163,7 @@ class Role(str, Enum):
 
 class UserStatus(str, Enum):
     ACTIVE = "ACTIVE"
-    DISABLED = "DISABLED"          # jamais de suppression
+    DISABLED = "DISABLED"          # never deleted
 
 class NoteColor(str, Enum):
     GOLD = "GOLD"; AVOCAT = "AVOCAT"; SALSA = "SALSA"; CLAY = "CLAY"; TEAL = "TEAL"
@@ -186,7 +186,7 @@ class AllowlistEntry(SQLModel, table=True):
     email: str = Field(unique=True, index=True)
     added_by_id: str = Field(foreign_key="user.id")
     added_at: datetime = Field(default_factory=datetime.utcnow)
-    # "en attente" = AllowlistEntry dont l'email n'a pas de User (join sur email)
+    # "pending" = AllowlistEntry whose email has no User (join on email)
 
 class Note(SQLModel, table=True):
     id: str = Field(default_factory=_id, primary_key=True)
@@ -196,13 +196,13 @@ class Note(SQLModel, table=True):
     visibility: Visibility = Visibility.PRIVATE
     owner_id: str = Field(foreign_key="user.id", index=True)
 
-    # verrou mono-éditeur (porté par la note)
+    # single-editor lock (carried by the note)
     locked_by_id: str | None = Field(default=None, foreign_key="user.id")
     locked_at: datetime | None = None
     lock_expires_at: datetime | None = None
 
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)  # = "dernière version enregistrée"
+    updated_at: datetime = Field(default_factory=datetime.utcnow)  # = "last saved version"
     versions: list["NoteVersion"] = Relationship(back_populates="note")
 
 class NoteVersion(SQLModel, table=True):
@@ -210,149 +210,149 @@ class NoteVersion(SQLModel, table=True):
     note_id: str = Field(foreign_key="note.id", index=True)
     author_id: str = Field(foreign_key="user.id")
     title: str
-    body: str                                  # snapshot Markdown
+    body: str                                  # Markdown snapshot
     color: NoteColor
     visibility: Visibility
-    created_at: datetime = Field(default_factory=datetime.utcnow)  # horodatage affiché dans l'historique
+    created_at: datetime = Field(default_factory=datetime.utcnow)  # timestamp shown in the history
     note: Note = Relationship(back_populates="versions")
-    # index composite (note_id, created_at) à créer via Alembic
+    # composite index (note_id, created_at) to create via Alembic
 ```
 
-Notes :
-- **Verrou** porté par la `Note` (1 verrou max) → simplicité, atomicité via `UPDATE ... WHERE locked_by_id IS NULL OR lock_expires_at < :now` (update conditionnel, retour du nombre de lignes affectées pour détecter le conflit).
-- **En attente** = `AllowlistEntry` dont l'`email` n'a pas de `User`. Côté admin, fais un `LEFT JOIN User ON User.email = AllowlistEntry.email`.
-- `Note.updated_at` alimente « Dernière version enregistrée » ; `NoteVersion.created_at` la liste d'historique.
-- `password_hash` via **passlib** (`bcrypt`). Sessions par cookie signé (ex. `itsdangerous`) ou JWT httpOnly — au choix, mais l'auth reste **serveur**.
+Notes:
+- **Lock** carried by the `Note` (1 lock max) → simplicity, atomicity via `UPDATE ... WHERE locked_by_id IS NULL OR lock_expires_at < :now` (conditional update, returning the affected row count to detect the conflict).
+- **Pending** = `AllowlistEntry` whose `email` has no `User`. On the admin side, do a `LEFT JOIN User ON User.email = AllowlistEntry.email`.
+- `Note.updated_at` feeds "Last saved version"; `NoteVersion.created_at` the history list.
+- `password_hash` via **passlib** (`bcrypt`). Sessions via signed cookie (e.g. `itsdangerous`) or httpOnly JWT — your choice, but auth stays **server-side**.
 
 ---
 
 ## 5. Routes & API
 
-Front **React SPA** (Vite) découplé ; back **FastAPI**. Le front consomme l'API et gère le routage client.
+Decoupled **React SPA** front (Vite); **FastAPI** back. The front consumes the API and handles client-side routing.
 
-### Routes front (React Router)
-| Route | Écran | Garde (client + API) |
+### Front routes (React Router)
+| Route | Screen | Guard (client + API) |
 |---|---|---|
-| `/login` | Connexion | public |
-| `/register` | Création de compte | public (échoue si hors allowlist) |
-| `/` | Board (Mes notes / Public via `?tab=`) | authentifié |
-| `/note/:id` | Éditeur — modale ≥ tablette / page plein écran mobile | authentifié + accès note |
-| `/note/:id/history` | Historique (panneau desktop / écran mobile) | authentifié + accès note |
-| `/admin` | Administration | **admin only** (la garde réelle est l'API) |
+| `/login` | Login | public |
+| `/register` | Account creation | public (fails if off-allowlist) |
+| `/` | Board (Mes notes / Public via `?tab=`) | authenticated |
+| `/note/:id` | Editor — modal ≥ tablet / mobile full-screen page | authenticated + note access |
+| `/note/:id/history` | History (desktop panel / mobile screen) | authenticated + note access |
+| `/admin` | Administration | **admin only** (the real guard is the API) |
 
-### Endpoints FastAPI (indicatifs)
+### FastAPI endpoints (indicative)
 ```
-POST   /api/auth/register                 → 403 si email hors allowlist ; 201 sinon
-POST   /api/auth/login                    → 401 identifiants ; 403 si status=DISABLED
+POST   /api/auth/register                 → 403 if email off-allowlist ; 201 otherwise
+POST   /api/auth/login                    → 401 credentials ; 403 if status=DISABLED
 POST   /api/auth/logout
-GET    /api/auth/me                        (session courante ; role pour afficher /admin)
+GET    /api/auth/me                        (current session ; role to display /admin)
 
 GET    /api/notes?tab=mine|public
 POST   /api/notes                          (create)
 GET    /api/notes/{id}
 PATCH  /api/notes/{id}                      (title, body Markdown, color, visibility)
-POST   /api/notes/{id}/lock                 (acquire/renew — heartbeat ~20s) → 409 si tenu par autre
+POST   /api/notes/{id}/lock                 (acquire/renew — heartbeat ~20s) → 409 if held by another
 DELETE /api/notes/{id}/lock                 (release)
 GET    /api/notes/{id}/versions
-POST   /api/notes/{id}/restore/{version_id} → crée une nouvelle version
+POST   /api/notes/{id}/restore/{version_id} → creates a new version
 
-# Admin (dépendance require_admin)
-GET    /api/admin/members                   (Users + Allowlist en LEFT JOIN)
+# Admin (require_admin dependency)
+GET    /api/admin/members                   (Users + Allowlist via LEFT JOIN)
 POST   /api/admin/allowlist                 {email}
-DELETE /api/admin/allowlist/{id}            (uniquement entrées "en attente")
-PATCH  /api/admin/users/{id}                {role|status}   # status: ACTIVE|DISABLED, jamais delete
+DELETE /api/admin/allowlist/{id}            (only "pending" entries)
+PATCH  /api/admin/users/{id}                {role|status}   # status: ACTIVE|DISABLED, never delete
 ```
 
-- Conventions FastAPI : schémas **Pydantic** en entrée/sortie, codes via `HTTPException` (`403`, `401`, `409`), dépendances `Depends(get_current_user)` / `Depends(require_admin)`.
-- Le **verrou** s'acquiert par un `UPDATE` conditionnel atomique (cf. §4) : si 0 ligne affectée → `409` et renvoyer qui tient le verrou.
-- Tous les contrôles sensibles (allowlist, rôle admin, verrou) sont **serveur**. Le front n'affiche que ce que l'API renvoie.
+- FastAPI conventions: **Pydantic** schemas in/out, codes via `HTTPException` (`403`, `401`, `409`), `Depends(get_current_user)` / `Depends(require_admin)` dependencies.
+- The **lock** is acquired through an atomic conditional `UPDATE` (cf. §4): if 0 rows affected → `409` and return who holds the lock.
+- All sensitive checks (allowlist, admin role, lock) are **server-side**. The front only displays what the API returns.
 
 ---
 
-## 6. Découpage (front React + back FastAPI)
+## 6. Breakdown (React front + FastAPI back)
 
 ### Front (`web/`, React + Vite + TS)
 ```
 src/
-  main.tsx, App.tsx          // router, thème clair/sombre (data-theme), polices
-  api/client.ts              // fetch wrapper (cookies/session, erreurs typées)
+  main.tsx, App.tsx          // router, light/dark theme (data-theme), fonts
+  api/client.ts              // fetch wrapper (cookies/session, typed errors)
   pages/Login.tsx, Register.tsx, Board.tsx, Admin.tsx
   components/
-    Topbar.tsx               // logo, recherche, onglets pill, thème, avatar+menu
-    TabSwitch.tsx            // Mes notes / Public (pill segmenté)
-    Composer.tsx             // saisie rapide + couleurs + toggle public
-    NoteCard.tsx             // carte board (couleur, checklist, lock badge, auteur)
-    NoteGrid.tsx             // masonry column-count responsive
+    Topbar.tsx               // logo, search, pill tabs, theme, avatar+menu
+    TabSwitch.tsx            // Mes notes / Public (segmented pill)
+    Composer.tsx             // quick input + colors + public toggle
+    NoteCard.tsx             // board card (color, checklist, lock badge, author)
+    NoteGrid.tsx             // responsive masonry column-count
     editor/
-      NoteEditor.tsx         // shell (modale desktop / plein écran mobile)
-      LockBanner.tsx         // 4 états (à toi / verrouillé / expiré / conflit)
+      NoteEditor.tsx         // shell (desktop modal / mobile full screen)
+      LockBanner.tsx         // 4 states (yours / locked / expired / conflict)
       SaveStatus.tsx         // Modifié / Enregistrement… / Enregistré
-      BlockList.tsx          // paragraphes + cases ; "Insérer une case" en bas
-      ColorPicker.tsx        // 5 teintes
-      VisibilityToggle.tsx   // privé/public + confirmation public→privé
+      BlockList.tsx          // paragraphs + boxes ; "Insérer une case" at the bottom
+      ColorPicker.tsx        // 5 shades
+      VisibilityToggle.tsx   // private/public + public→private confirmation
     history/
-      HistoryPanel.tsx       // desktop : liste + aperçu
+      HistoryPanel.tsx       // desktop : list + preview
       VersionRow.tsx, VersionPreview.tsx, RestoreConfirm.tsx
     admin/
       AccessManager.tsx, MemberRow.tsx, PendingRow.tsx
   lib/
-    markdown.ts              // serialize/parse blocks ↔ Markdown (voir buildMd)
+    markdown.ts              // serialize/parse blocks ↔ Markdown (see buildMd)
   hooks/
-    useAutosave.ts           // debounce 1,5 s + flush au blur
-    useNoteLock.ts           // heartbeat 20 s, états du verrou
+    useAutosave.ts           // debounce 1.5 s + flush on blur
+    useNoteLock.ts           // heartbeat 20 s, lock states
     useTheme.ts
 ```
 
 ### Back (`api/`, FastAPI + SQLModel)
 ```
 app/
-  main.py                    // FastAPI(), montage routers, CORS, middleware session
+  main.py                    // FastAPI(), router mounting, CORS, session middleware
   db.py                      // engine, get_session
   models.py                  // SQLModel (cf. §4)
   schemas.py                 // Pydantic in/out
-  security.py                // hash passlib, session, get_current_user, require_admin
+  security.py                // passlib hash, session, get_current_user, require_admin
   routers/
     auth.py                  // register (check allowlist), login, logout, me
     notes.py                 // CRUD + lock/unlock + versions + restore
     admin.py                 // members, allowlist, users (role/status)
   services/
-    locks.py                 // acquire/renew/release, expiration, détection conflit
-    markdown.py              // (optionnel) validation/normalisation du Markdown
+    locks.py                 // acquire/renew/release, expiration, conflict detection
+    markdown.py              // (optional) Markdown validation/normalization
 migrations/                  // Alembic
 ```
 
-Hooks front clés : `useAutosave(noteId)` (debounce 1,5 s + flush au blur), `useNoteLock(noteId)` (heartbeat 20 s, états), `useTheme()`. Le rendu du Markdown peut rester côté front (les cases restent éditables) ; `lib/markdown.ts` est le miroir de `buildMd` des maquettes.
+Key front hooks: `useAutosave(noteId)` (debounce 1.5 s + flush on blur), `useNoteLock(noteId)` (heartbeat 20 s, states), `useTheme()`. Markdown rendering can stay on the front (boxes remain editable); `lib/markdown.ts` mirrors the mockups' `buildMd`.
 
 ---
 
-## 7. États & messages (copy FR figée)
+## 7. States & messages (frozen French copy)
 
-**Verrou**
-- À toi : « Tu modifies cette note »
-- Verrouillé : « 🔒 Bob est en cours d'édition — lecture seule » / sous-texte « Édition indisponible tant que Bob modifie la note. L'affichage se met à jour en temps réel. »
-- Expiré : « Bob a fini de modifier — note disponible » + bouton « Modifier la note »
-- Conflit : « Léa modifie cette note » + « Léa a commencé à modifier cette note pendant ton absence. Tes dernières modifications n'ont pas pu être enregistrées. » + bouton « Passer en lecture seule »
+**Lock**
+- Yours: « Tu modifies cette note »
+- Locked: « 🔒 Bob est en cours d'édition — lecture seule » / subtext « Édition indisponible tant que Bob modifie la note. L'affichage se met à jour en temps réel. »
+- Expired: « Bob a fini de modifier — note disponible » + button « Modifier la note »
+- Conflict: « Léa modifie cette note » + « Léa a commencé à modifier cette note pendant ton absence. Tes dernières modifications n'ont pas pu être enregistrées. » + button « Passer en lecture seule »
 
-**Sauvegarde** : « Modifié » · « Enregistrement… » · « Enregistré · à l'instant » · sous-titre « Dernière version enregistrée par X · <date> »
+**Save**: « Modifié » · « Enregistrement… » · « Enregistré · à l'instant » · subtitle « Dernière version enregistrée par X · <date> »
 
-**Historique** : badge « actuelle » · lignes « Modifié par X » / « Créée par X » · bouton « Restaurer cette version » · aperçu mobile « Aperçu — lecture seule · Version de X · <date> » · confirmation « La version actuelle sera conservée dans l'historique — rien n'est perdu. »
+**History**: « actuelle » badge · lines « Modifié par X » / « Créée par X » · button « Restaurer cette version » · mobile preview « Aperçu — lecture seule · Version de X · <date> » · confirmation « La version actuelle sera conservée dans l'historique — rien n'est perdu. »
 
-**Visibilité** : confirmation public→privé « Cette note ne sera plus visible par les autres. »
+**Visibility**: public→private confirmation « Cette note ne sera plus visible par les autres. »
 
-**Auth** : « Se connecter » · « Créer mon compte » · login erreur « E-mail ou mot de passe incorrect. » · désactivé « Ton accès a été suspendu. Contacte l'administrateur. » · refus allowlist « Accès non autorisé » + « L'adresse <email> ne figure pas sur la liste des membres autorisés de cette instance Keepou. » + bouton « Retour à la connexion ».
+**Auth**: « Se connecter » · « Créer mon compte » · login error « E-mail ou mot de passe incorrect. » · disabled « Ton accès a été suspendu. Contacte l'administrateur. » · allowlist denial « Accès non autorisé » + « L'adresse <email> ne figure pas sur la liste des membres autorisés de cette instance Keepou. » + button « Retour à la connexion ».
 
-**Admin** : onglets « Membres » / « Invités en attente » · « Ajouter à la liste » · statuts « Actif » / « Désactivé » / « En attente » · menu « Promouvoir admin » / « Désactiver le compte » · note « Désactiver, jamais supprimer ».
-
----
-
-## 8. Accessibilité, responsive, PWA
-- **Responsive** : board 4 col → 2 col ; éditeur modale → plein écran ; historique panneau → flow 2 écrans. Point de bascule ~640px.
-- **Thème** : `data-theme="light|dark"` sur la racine, variables CSS de la §1. Respecter `prefers-color-scheme` au premier chargement, override manuel persistant (localStorage).
-- **A11y** : cases à cocher = vrais `<input type=checkbox>` + label ; champs avec labels ; bandeaux de verrou en `role="status"` (aria-live polite) ; contrastes texte/encre OK sur cartes claires.
-- **PWA** : manifest (icône = mascotte), responsive, offline-first non requis MVP mais éviter les hypothèses bloquantes.
-- **i18n** : copy actuelle en français ; centraliser les chaînes (cf. §7) pour faciliter une trad ultérieure.
+**Admin**: tabs « Membres » / « Invités en attente » · « Ajouter à la liste » · statuses « Actif » / « Désactivé » / « En attente » · menu « Promouvoir admin » / « Désactiver le compte » · note « Désactiver, jamais supprimer ».
 
 ---
 
-### Ouvrir les maquettes
-Ouvre les fichiers `Keepou - *.dc.html` dans un navigateur pour voir tous les états en interaction (onglets, thème, toggle des cases, sélection de version, ajout d'e-mail). Le canvas `Keepou - Éditeur & verrou.dc.html` montre les 4 états de verrou côte à côte ; `Keepou - Éditeur canonique.dc.html` montre le Markdown généré en direct.
+## 8. Accessibility, responsive, PWA
+- **Responsive**: board 4 col → 2 col; editor modal → full screen; history panel → 2-screen flow. Breakpoint ~640px.
+- **Theme**: `data-theme="light|dark"` on the root, CSS variables from §1. Respect `prefers-color-scheme` on first load, persistent manual override (localStorage).
+- **A11y**: checkboxes = real `<input type=checkbox>` + label; fields with labels; lock banners as `role="status"` (aria-live polite); text/ink contrasts OK on light cards.
+- **PWA**: manifest (icon = mascot), responsive, offline-first not required for MVP but avoid blocking assumptions.
+- **i18n**: current copy in French; centralize the strings (cf. §7) to ease a later translation.
+
+---
+
+### Opening the mockups
+Open the `Keepou - *.dc.html` files in a browser to see all states in interaction (tabs, theme, box toggling, version selection, email addition). The `Keepou - Éditeur & verrou.dc.html` canvas shows the 4 lock states side by side; `Keepou - Éditeur canonique.dc.html` shows the generated Markdown live.

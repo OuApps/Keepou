@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Configuration applicative (lue depuis l'environnement / .env)."""
+    """Application configuration (read from the environment / .env)."""
 
     database_url: str = "sqlite:///./keepou.db"
     session_secret: str = "dev-change-me"

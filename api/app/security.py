@@ -1,11 +1,11 @@
 """
-Sécurité : hash de mot de passe, sessions, dépendances d'authz.
+Security: password hash, sessions, authz dependencies.
 
-Squelette (implémenté en E1/E6) :
-- `hash_password` / `verify_password` via passlib (bcrypt) ;
-- session par cookie signé (itsdangerous) ;
-- `get_current_user` (401 si non authentifié) ;
-- `require_admin` (403 si non admin) — garde réelle de /admin (handoff règle 6).
+Scaffold (implemented in E1/E6):
+- `hash_password` / `verify_password` via passlib (bcrypt);
+- session via signed cookie (itsdangerous);
+- `get_current_user` (401 if not authenticated);
+- `require_admin` (403 if not admin) — real guard for /admin (handoff rule 6).
 """
 
 from passlib.context import CryptContext

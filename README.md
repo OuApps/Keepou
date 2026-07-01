@@ -1,39 +1,39 @@
 # Keepou
 
-**Google Keep auto-hébergé**, privé, pour une petite communauté (famille, voisins).
-Notes texte + cases à cocher, privées ou publiques, édition **mono-éditeur verrouillée**,
-historique de versions, accès par **allowlist** gérée par un admin. PWA responsive
-(desktop + mobile), thème clair + sombre.
+**Self-hosted Google Keep**, private, for a small community (family, neighbors).
+Text notes + checkboxes, private or public, **locked single-editor** editing,
+version history, access via an admin-managed **allowlist**. Responsive PWA
+(desktop + mobile), light + dark theme.
 
-> Ce dépôt part des maquettes validées avec un designer. Le design est **figé** et fait
-> office de source de vérité visuelle. L'implémentation se fait **epic par epic** — voir
+> This repository starts from the mockups validated with a designer. The design is **frozen** and
+> serves as the visual source of truth. Implementation proceeds **epic by epic** — see
 > [`EPICS.md`](./EPICS.md).
 
-## Structure du dépôt
+## Repository structure
 
 ```
 .
-├── EPICS.md          # Découpage macro en epics (point d'entrée du dev)
-├── design/           # Maquettes validées + handoff (SOURCE DE VÉRITÉ visuelle)
-│   ├── HANDOFF.md            # Tokens, comportements, modèle de données, API, copy FR
-│   ├── claude.md            # Règles produit non négociables
-│   ├── Keepou - *.dc.html   # Maquettes interactives (board, éditeur, historique, auth, admin)
-│   ├── assets/ uploads/     # Logo mascotte, favicon
-│   └── chats/               # Transcript des échanges design
-├── web/              # Front — React + Vite + TypeScript (SPA découplée)
-└── api/              # Back — Python + FastAPI + SQLModel + Alembic
+├── EPICS.md          # Macro breakdown into epics (dev entry point)
+├── design/           # Validated mockups + handoff (visual SOURCE OF TRUTH)
+│   ├── HANDOFF.md            # Tokens, behaviors, data model, API, French UI copy
+│   ├── claude.md            # Non-negotiable product rules
+│   ├── Keepou - *.dc.html   # Interactive mockups (board, editor, history, auth, admin)
+│   ├── assets/ uploads/     # Mascot logo, favicon
+│   └── chats/               # Design conversation transcript
+├── web/              # Frontend — React + Vite + TypeScript (decoupled SPA)
+└── api/              # Backend — Python + FastAPI + SQLModel + Alembic
 ```
 
 ## Stack
 
-| Couche | Techno |
+| Layer | Tech |
 |---|---|
-| Front | React + TypeScript (Vite), React Router, consomme l'API REST |
+| Front | React + TypeScript (Vite), React Router, consumes the REST API |
 | Back | Python + FastAPI, SQLModel (SQLAlchemy + Pydantic), Alembic |
-| Auth | Session/cookie, e-mail + mot de passe (passlib/bcrypt), allowlist **serveur** |
-| Stockage notes | Markdown (GFM task lists `- [ ]` / `- [x]`) |
+| Auth | Session/cookie, email + password (passlib/bcrypt), **server-side** allowlist |
+| Note storage | Markdown (GFM task lists `- [ ]` / `- [x]`) |
 
-## Démarrer (squelette)
+## Getting started (scaffold)
 
 ### Front (`web/`)
 ```bash
@@ -42,17 +42,17 @@ npm install
 npm run dev          # http://localhost:5173
 ```
 
-### Back (`api/`) — géré avec [uv](https://docs.astral.sh/uv/)
+### Back (`api/`) — managed with [uv](https://docs.astral.sh/uv/)
 ```bash
 cd api
 uv sync                              # crée .venv + installe runtime & dev (lockfile uv.lock)
 uv run uvicorn app.main:app --reload # http://localhost:8000 — /api/health
 ```
 
-> `requirements.txt` est **généré** depuis `uv.lock` (`uv export --no-dev`) pour le
-> déploiement (Nixpacks/Railway) — ne pas l'éditer à la main.
+> `requirements.txt` is **generated** from `uv.lock` (`uv export --no-dev`) for
+> deployment (Nixpacks/Railway) — do not edit it by hand.
 
-## Qualité & tests
+## Quality & tests
 
 | | Back (`api/`) | Front (`web/`) |
 |---|---|---|
@@ -61,14 +61,14 @@ uv run uvicorn app.main:app --reload # http://localhost:8000 — /api/health
 | Types | `uv run ty check` | `npm run typecheck` (tsc) |
 | Tests | `uv run pytest` | `npm run test` (Vitest) |
 
-La **CI** (`.github/workflows/ci.yml`) rejoue tout ça sur chaque push/PR. Hooks
-pré-commit optionnels : `pip install pre-commit && pre-commit install`.
+The **CI** (`.github/workflows/ci.yml`) replays all of this on every push/PR. Optional
+pre-commit hooks: `pip install pre-commit && pre-commit install`.
 
-> ⚠️ À ce stade le projet est un **squelette** : structure, tooling, design system et
-> qualité/CI sont en place, la logique métier est implémentée **story par story** au fil des epics.
+> ⚠️ At this stage the project is a **scaffold**: structure, tooling, design system and
+> quality/CI are in place; business logic is implemented **story by story** across the epics.
 
-## Règles produit non négociables
+## Non-negotiable product rules
 
-Voir [`design/claude.md`](./design/claude.md). En résumé : verrou mono-éditeur,
-autosave, 1 session = 1 version, allowlist serveur, **désactivation jamais suppression**,
-`/admin` protégée serveur, visibilité privé⇄public réversible.
+See [`design/claude.md`](./design/claude.md). In short: single-editor lock,
+autosave, 1 session = 1 version, server-side allowlist, **disable, never delete**,
+`/admin` protected server-side, reversible private⇄public visibility.

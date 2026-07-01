@@ -1,9 +1,9 @@
 /**
- * Wrapper fetch pour l'API FastAPI.
- * - envoie les cookies de session (`credentials: 'include'`)
- * - remonte des erreurs typées (status + payload) pour gérer 401/403/409 côté UI
+ * fetch wrapper for the FastAPI API.
+ * - sends session cookies (`credentials: 'include'`)
+ * - surfaces typed errors (status + payload) to handle 401/403/409 on the UI side
  *
- * Squelette : enrichi story par story (auth, notes, lock, admin…).
+ * Skeleton: fleshed out story by story (auth, notes, lock, admin…).
  */
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? ''

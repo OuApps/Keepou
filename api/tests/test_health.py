@@ -1,4 +1,4 @@
-"""Smoke test : l'app démarre et /api/health répond."""
+"""Smoke test: the app starts and /api/health responds."""
 
 from fastapi.testclient import TestClient
 

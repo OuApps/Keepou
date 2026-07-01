@@ -1,9 +1,9 @@
 """
-Auth — register (vérif allowlist serveur), login, logout, me.
+Auth — register (server-side allowlist check), login, logout, me.
 
-Endpoints prévus (handoff §5), implémentés en E1 :
-  POST /api/auth/register   → 403 si email hors allowlist ; 201 sinon
-  POST /api/auth/login      → 401 identifiants ; 403 si status=DISABLED
+Planned endpoints (handoff §5), implemented in E1:
+  POST /api/auth/register   → 403 if email not in allowlist; 201 otherwise
+  POST /api/auth/login      → 401 credentials; 403 if status=DISABLED
   POST /api/auth/logout
   GET  /api/auth/me
 """

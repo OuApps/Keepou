@@ -1,30 +1,35 @@
-# Keepou — instructions projet (Claude Code)
+# Keepou — project instructions (Claude Code)
 
-> Ce fichier est lu à chaque session. Il fixe le cadre. Le détail exhaustif des écrans, tokens et comportements est dans **`HANDOFF.md`** — lis-le avant d'écrire du code UI.
+> This file is read at the start of every session. It sets the frame. The exhaustive detail of screens, tokens, and behaviors lives in **`HANDOFF.md`** — read it before writing any UI code.
 
-## Le produit
-Keepou est un **Google Keep auto-hébergé**, privé, pour une petite communauté (famille, voisins). Notes texte + cases à cocher, privées ou publiques, édition **mono-éditeur verrouillée**, historique de versions, accès par **allowlist** gérée par un admin. PWA responsive (desktop + mobile), thème clair + sombre.
+## Repository language
+- **The working language of this repository is English.** All `.md` deliverables (READMEs, `EPICS.md`, stories, `docs/`, this file) and all code comments are written in **English**.
+- **Exception — the product UI copy stays French.** Keepou's users are a small francophone community, so every user-facing string in the app (and the "copy FR" section of `HANDOFF.md`) stays in **French**, verbatim. Translate the documentation, never the UI strings.
+- The design bundle transcript `design/chats/chat1.md` is a historical record of the design conversation and is kept in its original language.
 
-## Stack cible
-- **Back : Python + FastAPI** (API REST), **SQLModel** (SQLAlchemy + Pydantic) sur base relationnelle, migrations **Alembic**
-- **Front : React + TypeScript** (SPA Vite) découplé, consomme l'API FastAPI
-- Auth par session/cookie (e-mail + mot de passe, hash **passlib/bcrypt**), vérification allowlist **côté serveur**
-- Stockage du corps des notes en **Markdown** (task lists GFM `- [ ]` / `- [x]`)
+## The product
+Keepou is a **self-hosted Google Keep**, private, for a small community (family, neighbors). Text notes + checkboxes, private or public, **single-editor locked** editing, version history, access via an admin-managed **allowlist**. Responsive PWA (desktop + mobile), light + dark theme.
 
-## Règles non négociables (issues du design validé)
-1. **Verrou mono-éditeur** : une seule personne édite une note à la fois. Heartbeat ~20 s, expiration ~60 s, reprise possible, gestion de conflit. Jamais d'édition concurrente.
-2. **Autosave** ~1,5 s après la dernière frappe + au blur/fermeture. L'état de session (« Enregistré ») est distinct de « Dernière version enregistrée » (auteur + date persistés).
-3. **Versionnage** : **une version = une session d'édition** (créée au relâchement du verrou), pas une version par frappe ni par case cochée. Restaurer crée une nouvelle version — rien n'est jamais écrasé.
-4. **Allowlist** : un compte n'est créé que si l'e-mail est sur la liste. Vérification **serveur**, le front n'affiche que le message renvoyé. Pas de « demande d'accès » in-app, pas de contact admin in-app.
-5. **Désactivation, jamais suppression** : l'admin peut désactiver un compte (connexion bloquée, notes conservées, réactivable). Pas de suppression de compte.
-6. **`/admin` protégée serveur** : l'entrée n'apparaît que pour les admins ; la route refuse les non-admins.
-7. **Privé ⇄ public réversible** : repasser une note en privé la retire du board public des autres (confirmation requise).
+## Target stack
+- **Back: Python + FastAPI** (REST API), **SQLModel** (SQLAlchemy + Pydantic) on a relational database, **Alembic** migrations
+- **Front: React + TypeScript** (Vite SPA), decoupled, consumes the FastAPI API
+- Session/cookie auth (email + password, hashed with **passlib/bcrypt**), allowlist check **server-side**
+- Note bodies stored as **Markdown** (GFM task lists `- [ ]` / `- [x]`)
 
-## Fidélité visuelle
-Les maquettes `.dc.html` sont la **source de vérité visuelle**. Reprends les tokens exacts (couleurs, dégradés de cartes, typo, rayons, ombres) listés dans `HANDOFF.md` — ne réinvente pas de palette. Police : **Fredoka** (titres/marque), **Nunito Sans** (texte/UI), **IBM Plex Mono** (labels techniques, horodatages en majuscules).
+## Non-negotiable rules (from the validated design)
+1. **Single-editor lock**: only one person edits a note at a time. Heartbeat ~20 s, expiry ~60 s, takeover possible, conflict handling. Never concurrent editing.
+2. **Autosave** ~1.5 s after the last keystroke + on blur/close. The session state ("Enregistré") is distinct from the "last saved version" (persisted author + date).
+3. **Versioning**: **one version = one editing session** (created when the lock is released), not one version per keystroke or per checkbox toggle. Restoring creates a new version — nothing is ever overwritten.
+4. **Allowlist**: an account is only created if the email is on the list. The check is **server-side**; the front only displays the message the server returns. No in-app "access request", no in-app admin contact.
+5. **Disable, never delete**: an admin can disable an account (login blocked, notes kept, re-enableable). No account deletion.
+6. **`/admin` protected server-side**: the entry only appears for admins; the route rejects non-admins.
+7. **Private ⇄ public reversible**: switching a note back to private removes it from other members' public board (confirmation required).
 
-## Ne pas faire
-- Pas de collaboration temps réel type CRDT/OT — le modèle est le **verrou**, volontairement simple.
-- Pas de diff visuel dans l'historique — on réaffiche une version telle quelle.
-- Pas d'emoji décoratif dans la chrome (ceux des notes d'exemple sont du contenu utilisateur).
-- Pas de nouvelle dépendance UI lourde sans raison ; CSS au plus proche des maquettes.
+## Visual fidelity
+The `.dc.html` mockups are the **visual source of truth**. Reuse the exact tokens (colors, card gradients, typography, radii, shadows) listed in `HANDOFF.md` — do not reinvent a palette. Fonts: **Fredoka** (titles/brand), **Nunito Sans** (body/UI), **IBM Plex Mono** (technical labels, uppercase timestamps).
+
+## Do not
+- No real-time collaboration à la CRDT/OT — the model is the **lock**, deliberately simple.
+- No visual diff in history — a version is simply re-displayed as-is.
+- No decorative emoji in the chrome (the ones in the sample notes are user content).
+- No new heavy UI dependency without reason; keep CSS as close to the mockups as possible.

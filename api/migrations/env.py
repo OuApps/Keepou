@@ -4,7 +4,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 from sqlmodel import SQLModel
 
-# Importe les modèles pour peupler SQLModel.metadata (autogenerate).
+# Import the models to populate SQLModel.metadata (autogenerate).
 import app.models  # noqa: F401
 from app.config import settings
 

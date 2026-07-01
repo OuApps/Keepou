@@ -1,10 +1,10 @@
 import { useTheme } from './hooks/useTheme'
 
 /**
- * Shell de l'application — squelette E0.
- * Sert à vérifier que le design system est câblé (tokens, polices, thème clair/sombre).
- * Les écrans réels (Board, Éditeur, Historique, Auth, Admin) arrivent epic par epic
- * via React Router — voir EPICS.md et le découpage front du handoff §6.
+ * Application shell — E0 skeleton.
+ * Used to verify the design system is wired up (tokens, fonts, light/dark theme).
+ * The real screens (Board, Editor, History, Auth, Admin) arrive epic by epic
+ * via React Router — see EPICS.md and the frontend breakdown in handoff §6.
  */
 export default function App() {
   const { theme, toggle } = useTheme()
