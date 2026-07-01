@@ -9,6 +9,21 @@
 
 ---
 
+## Stories at a glance
+
+- [x] **E0-S1** — Monorepo, structure & tooling
+- [x] **E0-S2** — Backend bootstrap FastAPI
+- [ ] **E0-S3** — Database & Alembic migrations *(scaffold ready; 1st real migration in E2)*
+- [ ] **E0-S4** — Frontend bootstrap React/Vite + routing *(routes/guard to add)*
+- [x] **E0-S5** — Design system: tokens & light/dark theme
+- [ ] **E0-S6** — UI shell: topbar + responsive layout
+- [ ] **E0-S7** — API client & typed error handling *(base wired; error mapping later)*
+- [x] **E0-S8** — Quality: lint, format, types, tests & CI
+
+**Done: 4/8** — the scaffold covers S1, S2, S5, S8.
+
+---
+
 ## E0-S1 — Monorepo, structure & tooling · `in place` · S
 
 **Goal.** A clear tree `web/` + `api/` + `design/`, with dev scripts.
@@ -160,9 +175,9 @@
 
 ## Definition of "E0 done"
 
-- [ ] Both apps start and talk to each other in dev (`/api` proxy).
-- [ ] Faithful design system (tokens + 3 fonts + persistent light/dark theme).
+- [x] Both apps start and talk to each other in dev (`/api` proxy).
+- [x] Faithful design system (tokens + 3 fonts + persistent light/dark theme).
 - [ ] Reusable topbar + responsive layout.
 - [ ] Frontend routes scaffold + basic auth guard.
-- [ ] Frontend/backend lint + green CI.
-- [ ] Alembic scaffold ready (1st real migration delegated to E2).
+- [x] Frontend/backend lint + green CI.
+- [x] Alembic scaffold ready (1st real migration delegated to E2).
