@@ -66,7 +66,9 @@ notes, and a full history of who changed what.
 - **FR-A2** Subsequent sign-ups are allowed **only if the email is on the
   allowlist**; otherwise the user is politely rejected on the login/register page.
 - **FR-A3** Authentication is **email + password**; passwords are stored hashed.
-- **FR-A4** Sessions persist via secure, httpOnly cookies.
+- **FR-A4** Authentication uses a **bearer token** (signed JWT: access + refresh)
+  issued at login; the client stores it and sends it on each request. _(A secure
+  httpOnly-cookie session is a documented later upgrade — see ARCHITECTURE §8.)_
 - **FR-A5** A **deactivated** user can no longer sign in, but **their notes are
   kept** (never deleted). Reactivation restores access.
 

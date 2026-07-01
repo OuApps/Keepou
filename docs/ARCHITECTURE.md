@@ -29,16 +29,16 @@ flowchart LR
     DB[(PostgreSQL · Railway plugin)]
 
     UI -- app shell --> ST
-    UI -- fetch/JSON + cookie --> API
+    UI -- fetch/JSON + Bearer --> API
     API -- SQLModel / SQLAlchemy --> DB
 ```
 
 There is **no SSR**: the frontend is a static Vite build served on its own
-service; the API is a separate FastAPI service. In production both sit behind
-**one custom domain** — the web service serves the SPA and reverse-proxies
-`/api/*` to the API — so auth is first-party (see §8); preview/dev on the default
-Railway domains fall back to cross-origin + CORS. Keeping the two apart makes the
-API reusable and the front trivially cacheable (see §10).
+service; the API is a separate FastAPI service on its own domain. The front calls
+the API **cross-origin** and authenticates with a **JWT bearer token** in the
+`Authorization` header (see §8) — no cookies, so no custom domain or reverse proxy
+is needed and CORS is straightforward. Keeping the two apart makes the API
+reusable and the front trivially cacheable (see §10).
 
 ## 2. Stack & rationale
 
@@ -48,7 +48,7 @@ API reusable and the front trivially cacheable (see §10).
 | Backend | **Python + FastAPI** | Typed, small, great for a REST API; first-class Pydantic schemas. |
 | ORM / migrations | **SQLModel (SQLAlchemy + Pydantic) + Alembic** | Typed models shared with schemas; versioned migrations. |
 | Database | **PostgreSQL** (prod), **SQLite** (dev) | Robust concurrency for shared notes + history; SQLite keeps local dev zero-setup. |
-| Auth | **Email/password + signed session cookie** | No third-party identity provider; server-side allowlist and authz. |
+| Auth | **Email/password + JWT bearer token** (access + refresh) | Simplest cross-origin setup — no cookie/domain constraints; server-side allowlist and authz. A same-site cookie is a documented later upgrade (§8). |
 | Hosting | **Railway** | Managed Postgres plugin injects `DATABASE_URL`; per-service deploys. |
 | Client delivery | **PWA** (manifest + service worker) | Installable, responsive, one codebase for mobile + desktop. |
 
@@ -56,8 +56,8 @@ API reusable and the front trivially cacheable (see §10).
 
 Note bodies are stored as **Markdown (GFM task lists)** — the title is a separate
 field. History keeps one **version per editing session** (see §6). Passwords are
-hashed; sessions are stateless signed cookies (see §8), so there is **no session
-table**.
+hashed; auth uses **stateless JWT bearer tokens** (see §8), so there is **no
+session table**.
 
 ```mermaid
 erDiagram
@@ -113,7 +113,9 @@ erDiagram
 - **User.role** — `ADMIN` or `MEMBER`. The first user created is `ADMIN`.
 - **User.status** — `ACTIVE` / `DISABLED`. A disabled user cannot sign in; their
   data is retained (never deleted, FR-A5). The status is checked **on every
-  request**, so disabling logs a user out even with a valid cookie.
+  request** (the bearer token only asserts identity — the API re-loads the user
+  and verifies `ACTIVE`), so disabling takes effect immediately even if the user
+  still holds a valid token.
 - **AllowlistEntry** — the allowlist. An email here may sign up; once they do, a
   `User` row exists. A `LEFT JOIN User ON User.email = AllowlistEntry.email` lets
   the admin UI show "allowed (pending)" vs "registered" (FR-U2).
@@ -242,10 +244,10 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
 
 | Method | Path | Purpose | Notes |
 | --- | --- | --- | --- |
-| POST | `/api/auth/register` | Create account | Allowlist-gated; bootstraps admin; `403` if not allowed |
-| POST | `/api/auth/login` | Sign in | Sets session cookie; `401` bad creds, `403` if `DISABLED` |
-| POST | `/api/auth/logout` | Sign out | |
-| GET | `/api/auth/me` | Current user + role | Drives client route guards |
+| POST | `/api/auth/register` | Create account | Allowlist-gated; bootstraps admin; `403` if not allowed; returns tokens |
+| POST | `/api/auth/login` | Sign in | Returns `{access, refresh}`; `401` bad creds, `403` if `DISABLED` |
+| POST | `/api/auth/refresh` | Renew the access token | Takes the refresh token; `401` if invalid/expired |
+| GET | `/api/auth/me` | Current user + role | Bearer-authenticated; drives client route guards |
 | GET | `/api/notes?tab=mine\|public` | List notes | `mine` = own; `public` = all members' public (with author); `?archived=` filter |
 | POST | `/api/notes` | Create note | |
 | GET | `/api/notes/:id` | Read a note | Visibility-checked |
@@ -266,23 +268,28 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
 ## 8. Authentication & sessions
 
 - Passwords hashed with **bcrypt** via **passlib** — never stored in plaintext.
-- Sessions are **stateless, signed cookies** (via `itsdangerous`): the cookie
-  carries a signed reference to the user, set **httpOnly + Secure + SameSite**.
-  No session table is needed.
-- On each request, `get_current_user` verifies the cookie signature, loads the
-  user, and checks `status == ACTIVE`; `require_admin` additionally checks the
-  role. Because status is re-checked every request, **deactivation takes effect
-  immediately** (no waiting for a token to expire).
-- **Same-site cookies (decided — see story E1-S6):** production serves the front
-  and API under **one custom domain** (front `https://keepou.<tld>`, API
-  reverse-proxied under `https://keepou.<tld>/api/*`), so the session cookie is
-  **first-party**: `SameSite=Lax; Secure; HttpOnly`, and **no CORS** is needed.
-  (Acceptable variant: sibling subdomains `app.` / `api.` on the same registrable
-  domain with `Domain=.keepou.<tld>`, still `SameSite=Lax` but with CORS.) The
-  default `*.up.railway.app` domains are a public suffix and can't share a cookie,
-  so **preview/dev** environments fall back to cross-site `SameSite=None; Secure`
-  with CORS credentials. `SameSite` and the cookie `Domain` are **env-configured**
-  so prod stays on `Lax`.
+- Auth is a **stateless JWT** flow: login/register return a short-lived **access
+  token** and a longer-lived **refresh token**, both **signed** with a server
+  secret. No session table.
+- The client stores the tokens in **`localStorage`** and sends the access token on
+  every request as **`Authorization: Bearer <token>`**. `POST /api/auth/refresh`
+  swaps a valid refresh token for a fresh access token. **Logout is client-side**
+  (drop the tokens).
+- On each request, `get_current_user` verifies the token signature, loads the
+  user, and checks `status == ACTIVE`; `require_admin` also checks the role.
+  Because status is re-read from the DB every request, **deactivation is effective
+  immediately** — a disabled user's token stops working at once.
+- **Why bearer, not a cookie:** it needs **no custom domain and no reverse
+  proxy** — front and API live on the default Railway domains and talk
+  cross-origin with plain CORS. Accepted MVP trade-offs: `localStorage` tokens are
+  readable by JS (**XSS exposure**), and a leaked token can't be revoked
+  server-side before it expires (mitigated by a **short access-token TTL** + the
+  per-request `status` check; a refresh-token deny-list can be added later).
+- **Later upgrade (documented, not MVP):** switch to a **httpOnly,
+  `SameSite=Lax` cookie** for stronger XSS resistance. That requires serving front
+  + API under **one domain** (custom domain + `/api` reverse proxy) or sibling
+  subdomains — deferred until a custom domain is available. The data model is
+  unchanged, so the migration stays localized to auth.
 
 ## 9. PWA & responsiveness
 
@@ -299,16 +306,15 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
 
 ## 10. Deployment (Railway)
 
-One Railway project, **two services** + the managed Postgres plugin. In production
-a **single custom domain** points at the **web** service, which serves the SPA and
-**reverse-proxies `/api/*`** to the API service over Railway private networking —
-so the session cookie is first-party (§8) and **no CORS** is needed. Each service
-points at a **Root Directory** and listens on `$PORT`.
+One Railway project, **two public services** + the managed Postgres plugin — **no
+custom domain required**: auth is a bearer token (not a cookie), so the front and
+API can live on the default `*.up.railway.app` domains and talk cross-origin. Each
+service points at a **Root Directory** and listens on `$PORT`.
 
-| Service | Root | Build / Start | Exposure |
+| Service | Root | Build / Start | Public URL |
 | --- | --- | --- | --- |
-| **keepou-web** | `web/` | build SPA + serve `dist/` on `$PORT` with **`/api` → API proxy** + SPA fallback | **public** (custom domain) |
-| **keepou-api** | `api/` | Nixpacks; `uvicorn app.main:app --host 0.0.0.0 --port $PORT` | internal (via the web proxy); `/api/health` |
+| **keepou-api** | `api/` | Nixpacks; `uvicorn app.main:app --host 0.0.0.0 --port $PORT` | `https://<api>.up.railway.app` · `/api/health` |
+| **keepou-web** | `web/` | `npm ci && npm run build` → serve `dist/` on `$PORT` (SPA fallback) | `https://<web>.up.railway.app` |
 | **Postgres** | — | managed plugin | injects `DATABASE_URL` |
 
 - **Migrations**: `alembic upgrade head` runs as a **pre-deploy** command on the
@@ -316,30 +322,32 @@ points at a **Root Directory** and listens on `$PORT`.
   E2).
 - **Continuous deployment**: pushes to the production branch redeploy both
   services; PR preview environments if the Railway plan allows.
-- **Preview/dev** on the default `*.up.railway.app` domains can't share a
-  first-party cookie (public suffix), so they fall back to **cross-site**
-  (`SameSite=None; Secure` + CORS). Prod on the custom domain stays first-party
-  `Lax` (§8).
+- **CORS**: the API allows the exact web origin(s) via `CORS_ORIGINS`; credentials
+  are **not** used (the token rides in the header), so there is no
+  wildcard-with-credentials pitfall.
 - **Required environment variables**:
 
   | Variable | Service | Purpose |
   | --- | --- | --- |
   | `DATABASE_URL` | api | Postgres connection (from the Railway plugin) |
-  | `SESSION_SECRET` | api | Signs session cookies (strong value in prod) |
-  | `SESSION_COOKIE_SAMESITE` | api | `Lax` in prod (single domain) · `None` for cross-site preview |
-  | `CORS_ORIGINS` | api | Allowed front origin(s) — only used by the cross-site fallback |
-  | `VITE_API_URL` | web | API base URL, inlined **at build time** — `/api` (same-origin) in prod |
+  | `SESSION_SECRET` | api | Signs the access/refresh JWTs (strong value in prod) |
+  | `CORS_ORIGINS` | api | Allowed web origin(s) |
+  | `VITE_API_URL` | web | Public API base URL, inlined **at build time** |
 
 > `VITE_API_URL` is baked into the static build, so changing it requires a
-> rebuild of `keepou-web`; in the single-domain setup it is simply `/api`.
+> rebuild of `keepou-web`.
 
 ## 11. Security considerations
 
 - Allowlist enforced **server-side** on registration — never trust the client.
 - Lock, visibility and admin-role checks enforced **server-side** on every
   mutating request; the lock grant is an atomic conditional update.
-- Sessions are **signed** cookies (`httpOnly` + `Secure` + `SameSite`); user
-  `status` is re-checked per request so deactivation is instant.
+- Auth is a **signed JWT bearer token**; the API re-checks user `status` every
+  request, so **deactivation is immediate**. Tokens live in `localStorage`
+  (**XSS-exposed** — accepted MVP trade-off; a short access-token TTL bounds the
+  window). A httpOnly-cookie upgrade is documented in §8.
+- **CORS** is restricted to the exact web origin(s); no credentials are used
+  (bearer token in the header), avoiding the `*`-with-credentials footgun.
 - **Last-admin guard** prevents locking everyone out of administration (FR-U5).
 - **Disable, never delete** for user accounts; note deletion is restricted to the
   owner or an admin (FR-N6).

@@ -222,7 +222,7 @@ Notes:
 - **Lock** carried by the `Note` (1 lock max) → simplicity, atomicity via `UPDATE ... WHERE locked_by_id IS NULL OR lock_expires_at < :now` (conditional update, returning the affected row count to detect the conflict).
 - **Pending** = `AllowlistEntry` whose `email` has no `User`. On the admin side, do a `LEFT JOIN User ON User.email = AllowlistEntry.email`.
 - `Note.updated_at` feeds "Last saved version"; `NoteVersion.created_at` the history list.
-- `password_hash` via **passlib** (`bcrypt`). Sessions via signed cookie (e.g. `itsdangerous`) or httpOnly JWT — your choice, but auth stays **server-side**.
+- `password_hash` via **passlib** (`bcrypt`). Auth is a **JWT bearer token** (access + refresh) sent in the `Authorization` header; a httpOnly cookie is a possible later upgrade. Auth stays **server-side**.
 
 ---
 
@@ -275,7 +275,7 @@ PATCH  /api/admin/users/{id}                {role|status}   # status: ACTIVE|DIS
 ```
 src/
   main.tsx, App.tsx          // router, light/dark theme (data-theme), fonts
-  api/client.ts              // fetch wrapper (cookies/session, typed errors)
+  api/client.ts              // fetch wrapper (bearer token, typed errors)
   pages/Login.tsx, Register.tsx, Board.tsx, Admin.tsx
   components/
     Topbar.tsx               // logo, search, pill tabs, theme, avatar+menu

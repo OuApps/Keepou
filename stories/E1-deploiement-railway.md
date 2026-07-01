@@ -7,20 +7,19 @@
 > Estimation convention: **S** (≤ ½ day), **M** (1–2 days), **L** (3+ days).
 > All these stories are `to do` (nothing is deployed yet).
 
-**Target topology on Railway (1 project, 3 services), single public domain:**
+**Target topology on Railway (1 project, 3 services):**
 
 ```
-Railway project "Keepou"  ·  prod behind ONE custom domain
-├── Postgres     (managed plugin)          → DATABASE_URL
-├── keepou-api   (root: api/, internal)    → reached via the web /api proxy · /api/health
-└── keepou-web   (root: web/, PUBLIC)      → https://keepou.<tld>
-                                              serves the SPA + proxies /api/* → keepou-api
+Railway project "Keepou"
+├── Postgres     (managed plugin)     → DATABASE_URL
+├── keepou-api   (root: api/)         → https://<api>.up.railway.app · /api/health
+└── keepou-web   (root: web/)         → https://<web>.up.railway.app
 ```
 
 > Monorepo: each Railway service points to a **Root Directory** (`api/` or `web/`).
 > Railway injects `$PORT` — both services **must listen on `$PORT`**.
-> In production the **web** service is the only public entry and reverse-proxies
-> `/api/*` to the API, so the session cookie is first-party (`SameSite=Lax`, see S6).
+> Auth is a **JWT bearer token** (not a cookie), so the two can stay on the default
+> Railway domains and talk cross-origin — **no custom domain needed** (S6).
 
 ---
 
@@ -31,7 +30,7 @@ Railway project "Keepou"  ·  prod behind ONE custom domain
 - [ ] **E1-S3** — FastAPI API service on Railway
 - [ ] **E1-S4** — Alembic migrations run on deploy
 - [ ] **E1-S5** — Frontend service (Vite) on Railway
-- [ ] **E1-S6** — CORS, cookies & prod security
+- [ ] **E1-S6** — CORS & prod security (bearer auth)
 - [ ] **E1-S7** — Continuous deployment (push + PR preview)
 - [ ] **E1-S8** — Env variables & runbook documented
 
@@ -85,10 +84,10 @@ Railway project "Keepou"  ·  prod behind ONE custom domain
 - **Start command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
 - `api/railway.json` (or `railway.toml`) file: builder, `startCommand`, `healthcheckPath = /api/health`, restart policy.
 - Variables: `DATABASE_URL` (Postgres reference), `SESSION_SECRET` (generated), `CORS_ORIGINS` (frontend URL, see S6).
-- A public domain is **optional** in prod: the API is reached via the web `/api` proxy (S5). Keep one only if handy for the healthcheck/previews.
+- Generate a **public domain** for the API service.
 
 **Acceptance criteria**
-- [ ] `GET /api/health` → 200 `{"status":"ok"}` (directly or via the web `/api` proxy).
+- [ ] `GET https://<api>/api/health` → 200 `{"status":"ok"}`.
 - [ ] The service reads its env variables (DB, secret, CORS).
 - [ ] Railway healthcheck green; automatic restart on crash.
 
@@ -121,38 +120,37 @@ Railway project "Keepou"  ·  prod behind ONE custom domain
 
 **Tasks**
 - **keepou-web** service, **Root Directory = `web/`**, build `npm ci && npm run build` → `dist/`.
-- Serve `dist/` **with SPA fallback** on `$PORT` **and reverse-proxy `/api/*`** to the API service (Railway private networking) — a static server that also proxies, e.g. **Caddy** or **Nginx** (`npx serve` alone can't proxy). This is what makes the app single-origin (see S6/§8).
-- Attach the **custom domain** to this service (it is the single public entry).
-- Build variable **`VITE_API_URL` = `/api`** (same-origin). ⚠️ injected **at build time** (Vite inlines `import.meta.env`) → rebuild if it changes.
+- Serve `dist/` statically **with SPA fallback** on `$PORT`:
+  - simple option: start `npx serve -s dist -l $PORT` (add `serve` as a devDep or via `npx`),
+  - or a small static server (Caddy/Nginx) depending on ops preference.
+- Build variable **`VITE_API_URL`** = public URL of the API (S3). ⚠️ injected **at build time** (Vite inlines `import.meta.env`) → rebuild if the URL changes.
+- Generate the frontend **public domain**.
 
 **Acceptance criteria**
-- [ ] The frontend is served over HTTPS on the custom domain and loads with no console error.
-- [ ] `GET /api/health` **through the web domain** reaches the API (the `/api` proxy works).
-- [ ] `fetch` calls hit **same-origin `/api`** (no cross-origin request in prod).
+- [ ] The frontend is served over HTTPS and loads with no console error.
+- [ ] `fetch` calls target the prod API (`VITE_API_URL`), not localhost.
 - [ ] SPA routing works on deep-link (fallback to `index.html`).
 
-**Notes.** In dev the Vite `/api` proxy fills this role; in prod the web server's `/api` proxy does — so the session cookie stays first-party (no CORS). The cross-site + CORS path is only the `*.up.railway.app` preview fallback (S6).
+**Notes.** In dev the Vite `/api` proxy is enough; in prod the front calls the API cross-origin at `VITE_API_URL`, sending the JWT bearer token in the `Authorization` header, with CORS allowing the web origin (S6).
 
 ---
 
-## E1-S6 — CORS, cookies & prod security · M
+## E1-S6 — CORS & prod security (bearer auth) · S
 
-**Goal.** Cookie-based auth that is functional and secure between two Railway domains.
+**Goal.** Working, secure cross-origin auth between the two Railway services, with **no custom domain**.
 
 **Tasks**
-- Backend: `CORS_ORIGINS` = the exact frontend domain, `allow_credentials=True` (already wired in `main.py`).
-- **Decision — same-site under one custom domain.** Serve the front and API under a single custom domain, with the API reverse-proxied under `/api` (front `https://keepou.<tld>`, API `https://keepou.<tld>/api/*`). The session cookie is then first-party: `SameSite=Lax; Secure; HttpOnly` — and **no CORS** is needed.
-  - Acceptable variant: sibling subdomains `app.keepou.<tld>` / `api.keepou.<tld>` with cookie `Domain=.keepou.<tld>` (still `SameSite=Lax`; CORS required across the two origins).
-  - **Preview/dev on `*.up.railway.app`** (a public suffix ⇒ no shared cookie) fall back to cross-site `SameSite=None; Secure` + `CORS_ORIGINS` with credentials.
-  - Drive `SameSite` and the cookie `Domain` from env so prod stays on `Lax`; keep `allow_credentials=True` + an exact `CORS_ORIGINS` (already wired in `main.py`).
+- **Decision — JWT bearer token (like our sibling project), no cookie.** The front stores an access + refresh token in `localStorage` and sends `Authorization: Bearer <token>`; the API validates it and re-checks the user `status` on every request. This needs **no custom domain and no reverse proxy** — the two default Railway domains just talk cross-origin.
+- Backend **CORS**: `CORS_ORIGINS` = the exact web origin(s); `allow_credentials=False` (the token is a header, not a cookie — so **no** `*`-with-credentials issue).
+- Secrets: `SESSION_SECRET` signs the JWTs (strong value in prod, not the `.env.example` one). Short access-token TTL + longer refresh TTL.
 - HTTPS enforced (default on Railway).
 
 **Acceptance criteria**
-- [ ] Login from the prod frontend establishes the session and `GET /api/auth/me` works (cookie sent back).
-- [ ] No unauthorized origin is accepted by the API (strict CORS).
-- [ ] Cookies marked `Secure` + `HttpOnly` in prod.
+- [ ] Login from the prod frontend returns tokens; `GET /api/auth/me` works with the `Authorization` header.
+- [ ] The API only accepts the configured web origin(s) (strict CORS, no credentials).
+- [ ] A disabled account is rejected on its next request (the server re-checks `status`).
 
-**Notes.** Decision recorded in [`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md) §8: same-site under a custom domain (`SameSite=Lax`); cross-site `None` only for `*.up.railway.app` previews. Impacts E2 (cookie flags).
+**Notes.** Decision recorded in [`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md) §8: JWT bearer for the MVP; a httpOnly same-site cookie is a **documented later upgrade** (needs a custom domain). Impacts E2 (token issuance/validation).
 
 ---
 
@@ -197,9 +195,9 @@ Railway project "Keepou"  ·  prod behind ONE custom domain
 - [ ] API + frontend accessible via their Railway URLs (HTTPS).
 - [ ] PostgreSQL connected; migrations run automatically on deploy.
 - [ ] Push on the production branch → auto-deploy of both services.
-- [ ] Cookie-based auth working between frontend and API (same-site under a custom domain — see E1-S6).
+- [ ] Bearer-token auth working between frontend and API (cross-origin + CORS — see E1-S6).
 - [ ] Env variables and runbook documented.
 
-> ℹ️ **To confirm before implementation:** the production branch (`main`?), the **custom
-> domain** to use (now required for same-site cookies — see E1-S6), and the Railway plan
-> (whether PR deploys are available).
+> ℹ️ **To confirm before implementation:** the production branch (`main`?) and the Railway
+> plan (whether PR deploys are available). No custom domain is needed for the MVP (bearer
+> auth); one is only required if/when we move to same-site cookies (see E1-S6).
