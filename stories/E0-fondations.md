@@ -14,13 +14,13 @@
 - [x] **E0-S1** — Monorepo, structure & tooling
 - [x] **E0-S2** — Backend bootstrap FastAPI
 - [ ] **E0-S3** — Database & Alembic migrations *(scaffold ready; 1st real migration in E2)*
-- [ ] **E0-S4** — Frontend bootstrap React/Vite + routing *(routes/guard to add)*
+- [x] **E0-S4** — Frontend bootstrap React/Vite + routing
 - [x] **E0-S5** — Design system: tokens & light/dark theme
-- [ ] **E0-S6** — UI shell: topbar + responsive layout
-- [ ] **E0-S7** — API client & typed error handling *(base wired; error mapping later)*
+- [x] **E0-S6** — UI shell: topbar + responsive layout
+- [x] **E0-S7** — API client & typed error handling *(bearer token wired; 401/403/409 mapping in E2/E5)*
 - [x] **E0-S8** — Quality: lint, format, types, tests & CI
 
-**Done: 4/8** — the scaffold covers S1, S2, S5, S8.
+**Done: 7/8** — only S3 remains, and its first real migration is deliberately delegated to E2.
 
 ---
 
@@ -81,21 +81,26 @@
 
 ---
 
-## E0-S4 — Frontend bootstrap React/Vite + routing · `to complete` · M
+## E0-S4 — Frontend bootstrap React/Vite + routing · `done` · M
 
 **Goal.** An SPA that boots, router in place, ready to host the screens.
 
 **Tasks**
-- `main.tsx` (BrowserRouter), `App.tsx` (shell) — `in place`.
+- `main.tsx` (BrowserRouter), `App.tsx` (route map) — `in place`.
 - `vite.config.ts` with a proxy `/api` → backend in dev — `in place`.
-- **To complete**: declare the handoff §5 routes (`/login`, `/register`, `/`, `/note/:id`, `/note/:id/history`, `/admin`) with placeholders, + a basic auth guard (redirect).
+- Handoff §5 routes (`/login`, `/register`, `/`, `/note/:id`, `/note/:id/history`, `/admin`)
+  as placeholder pages (`src/pages/`), a `*` 404, + a client auth guard
+  (`src/auth/RequireAuth.tsx`) redirecting to `/login` — `done`.
 
 **Acceptance criteria**
 - [x] `npm run dev` starts, `npm run build` (type-check + build) passes.
 - [x] Relative API calls `/api/...` proxied to the backend in dev.
-- [ ] The main routes exist (placeholders) and navigation works.
+- [x] The main routes exist (placeholders) and navigation works.
 
-**Notes.** The shell boots; the routes/placeholders scaffold is still to be added (the real screens arrive in E2+).
+**Notes.** Guard: `RequireAuth` reads the presence of an access token (`src/auth/`);
+the authoritative check stays server-side. A temporary "Entrer en mode démo" button on
+the login placeholder sets a token so the shell is reachable for design QA — E2 replaces
+it with the real login. The real screens arrive in E2+.
 
 ---
 
@@ -117,39 +122,49 @@
 
 ---
 
-## E0-S6 — UI shell: topbar + responsive layout · `to do` · M
+## E0-S6 — UI shell: topbar + responsive layout · `done` · M
 
 **Goal.** A reusable shell (topbar + container) at the mockups' breakpoint.
 
 **Tasks**
-- **Topbar** component: mascot logo + « Keepou » (Fredoka), central area, actions (theme, avatar) — structure faithful to `Keepou - Board.dc.html` (sticky, `backdrop-filter: blur(8px)`, `--topbar` background).
-- Content container (`max-width` ~1320px, mockup paddings).
-- Responsive helper: breakpoint **~640px** (desktop ↔ mobile) — used later by the editor/history.
+- **Topbar** component (`src/components/Topbar.tsx`): mascot logo + « Keepou » (Fredoka),
+  central slot, actions (theme toggle, avatar) — faithful to `Keepou - Board.dc.html`
+  (sticky, `backdrop-filter: blur(8px)`, `--topbar` background, `--border` bottom) — `done`.
+- `AppShell` (topbar + content container `max-width:1320px`, mockup paddings) wrapping the
+  authenticated screens — `done`.
+- Responsive helpers in `src/styles/layout.css`: breakpoint **~640px**, mobile hit
+  targets ≥ 44px — `done`.
 
 **Acceptance criteria**
-- [ ] Topbar faithful (measurements, blur, `--border`) in light + dark.
-- [ ] Responsive layout ≥/< 640px matching the mockups.
-- [ ] Reusable components (imported by the Board in E3).
+- [x] Topbar faithful (measurements, blur, `--border`) in light + dark.
+- [x] Responsive layout ≥/< 640px matching the mockups.
+- [x] Reusable components (imported by the Board in E3).
 
-**Notes.** The current `App.tsx` contains a minimal demo topbar to be replaced by the real component.
+**Notes.** The shared `ThemeToggle` and `Topbar` are reused by the Board in E3. The
+avatar is a temporary dev sign-out until E7 turns it into the real menu.
 
 ---
 
-## E0-S7 — API client & typed error handling · `to complete` · S
+## E0-S7 — API client & typed error handling · `done` (bearer) · S
 
 **Goal.** A single fetch wrapper (auth header + typed errors) usable by the UI.
 
 **Tasks**
 - `api/client.ts`: `get/post/patch/delete`, `ApiError(status, message, payload)` — `in place`.
-- **To complete**: attach the **`Authorization: Bearer`** token from `localStorage` (wired in E2 — the scaffold currently sets `credentials:'include'`, to be dropped), and UI error-mapping helpers (401 → login redirect, 403 → message, 409 → lock conflict) as the epics progress.
+- Attach the **`Authorization: Bearer`** token from `localStorage` when present; dropped
+  `credentials:'include'` (bearer token, not cookie). Token storage centralized in
+  `src/auth/storage.ts` — `done`.
+- **Deferred**: UI error-mapping helpers (401 → login redirect, 403 → message, 409 → lock
+  conflict) land in the relevant epics (E2 auth, E5 lock).
 
 **Acceptance criteria**
 - [x] Every request goes through the wrapper.
 - [x] Non-2xx responses raise `ApiError` with `status` + `payload`.
-- [ ] The wrapper attaches the `Authorization: Bearer` token from `localStorage` (E2).
+- [x] The wrapper attaches the `Authorization: Bearer` token from `localStorage`.
 - [ ] 401/403/409 handling convention documented and applied (E2/E5).
 
-**Notes.** Base in place; the fine-grained handling of the codes happens in the relevant epics.
+**Notes.** Bearer + single wrapper done; the fine-grained code handling happens in the
+relevant epics.
 
 ---
 
@@ -178,7 +193,7 @@
 
 - [x] Both apps start and talk to each other in dev (`/api` proxy).
 - [x] Faithful design system (tokens + 3 fonts + persistent light/dark theme).
-- [ ] Reusable topbar + responsive layout.
-- [ ] Frontend routes scaffold + basic auth guard.
+- [x] Reusable topbar + responsive layout.
+- [x] Frontend routes scaffold + basic auth guard.
 - [x] Frontend/backend lint + green CI.
 - [x] Alembic scaffold ready (1st real migration delegated to E2).

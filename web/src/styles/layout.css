@@ -1,0 +1,204 @@
+/*
+ * Keepou — layout & shell
+ * Topbar + content container, measured from `design/Keepou - Board.dc.html`.
+ * Breakpoint ~640px (handoff §8) separates desktop and mobile.
+ */
+
+.kp-app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Topbar — sticky, blurred, bottom border (Board mockup). */
+.kp-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 15px 28px;
+  background: var(--topbar);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+
+.kp-topbar__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.kp-topbar__logo {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+}
+
+.kp-topbar__name {
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 23px;
+  color: var(--ink);
+}
+
+/* Central slot — the Board fills it with search + tabs in E3. */
+.kp-topbar__center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.kp-topbar__avatar {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--brand-teal);
+  color: #fff;
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Round icon button (theme toggle & friends). */
+.kp-icon-btn {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Content container — centered, max 1320px (Board mockup). */
+.kp-container {
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 26px 28px 60px;
+}
+
+/* Centered single-column screen (auth, editor/history placeholders). */
+.kp-center {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 32px 20px;
+  text-align: center;
+}
+
+/* Brand lockup (logo + wordmark) for standalone screens. */
+.kp-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.kp-brand__logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.kp-brand__name {
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 26px;
+  color: var(--ink);
+}
+
+.kp-title {
+  font-family: var(--font-brand);
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0;
+}
+
+.kp-muted {
+  color: var(--ink-soft);
+  line-height: 1.6;
+  max-width: 520px;
+  margin: 0;
+}
+
+/* Primary pill button (gold gradient — handoff §1). */
+.kp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border: none;
+  border-radius: var(--r-pill);
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 14px;
+  color: #fff;
+  background: var(--grad-primary);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.kp-link {
+  color: var(--brand-gold-dark);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.kp-link:hover {
+  text-decoration: underline;
+}
+
+/* Uppercase mono tag for scaffold/epic labels (handoff §1 typography). */
+.kp-tag {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
+@media (max-width: 640px) {
+  .kp-topbar {
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .kp-topbar__name {
+    font-size: 20px;
+  }
+
+  .kp-container {
+    padding: 18px 16px 48px;
+  }
+
+  /* Board masonry 4 → 2 columns on mobile (handoff §1/§8). */
+  .kp-demo-grid {
+    column-count: 2 !important;
+  }
+
+  /* Mobile hit targets ≥ 44px (handoff §8). */
+  .kp-topbar__avatar,
+  .kp-icon-btn {
+    width: 44px;
+    height: 44px;
+  }
+}

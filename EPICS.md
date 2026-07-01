@@ -9,8 +9,8 @@
 > Non-negotiable product rules: `design/claude.md`.
 
 **Progress** — `[x]` epic shipped · `[ ]` not yet · 🔨 in progress · ✅ stories detailed · ⏳ stories TBD:
-- [ ] 🔨 **E0** — Foundations & design system · ✅ detailed → [`stories/E0-fondations.md`](./stories/E0-fondations.md) — *4/8 stories done*
-- [ ] **E1** — Railway deployment · ✅ detailed → [`stories/E1-deploiement-railway.md`](./stories/E1-deploiement-railway.md) — *0/8, not started*
+- [ ] 🔨 **E0** — Foundations & design system · ✅ detailed → [`stories/E0-fondations.md`](./stories/E0-fondations.md) — *7/8 stories done (S3's 1st migration → E2)*
+- [ ] 🔨 **E1** — Railway deployment · ✅ detailed → [`stories/E1-deploiement-railway.md`](./stories/E1-deploiement-railway.md) — *code & config ready (S2, S6, S8 done); Railway provisioning (S1, S3, S5, S7) pending → [`docs/DEPLOY.md`](./docs/DEPLOY.md)*
 - [ ] **E2** — Authentication & allowlist · ⏳ stories TBD
 - [ ] **E3** — Board & note management · ⏳ stories TBD
 - [ ] **E4** — Note editor · ⏳ stories TBD

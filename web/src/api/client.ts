@@ -1,10 +1,13 @@
 /**
  * fetch wrapper for the FastAPI API.
- * - sends session cookies (`credentials: 'include'`)
- * - surfaces typed errors (status + payload) to handle 401/403/409 on the UI side
+ * - attaches the JWT bearer token (`Authorization: Bearer <access>`) from localStorage
+ *   when present (auth is a header, not a cookie — E1-S6 / ARCHITECTURE §8);
+ * - surfaces typed errors (status + payload) so the UI can map 401/403/409.
  *
- * Skeleton: fleshed out story by story (auth, notes, lock, admin…).
+ * Skeleton: fine-grained code handling (401 → login redirect, 403 → message,
+ * 409 → lock conflict) is wired per epic (E2 auth, E5 lock).
  */
+import { getAccessToken } from '../auth/storage'
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? ''
 
@@ -21,10 +24,14 @@ export class ApiError extends Error {
 }
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const headers: Record<string, string> = {}
+  if (body !== undefined) headers['Content-Type'] = 'application/json'
+  const token = getAccessToken()
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
-    credentials: 'include',
-    headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
+    headers: Object.keys(headers).length > 0 ? headers : undefined,
     body: body !== undefined ? JSON.stringify(body) : undefined,
   })
 

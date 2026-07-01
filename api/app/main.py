@@ -6,10 +6,13 @@ from app.routers import admin, auth, notes
 
 app = FastAPI(title="Keepou API", version="0.0.0")
 
+# Auth is a JWT bearer token in the `Authorization` header, not a cookie (E1-S6 /
+# ARCHITECTURE §8), so credentials are not needed and CORS stays strict on the
+# configured web origin(s) — no wildcard-with-credentials pitfall.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
