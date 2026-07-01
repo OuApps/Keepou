@@ -18,6 +18,7 @@
 - [ ] **E6** — History & versions · ⏳ stories TBD
 - [ ] **E7** — Access administration · ⏳ stories TBD
 - [ ] **E8** — Polish (PWA, a11y, archive, i18n, quality) · ⏳ stories TBD
+- [ ] **E9** — Database cold backups & restore · ⏳ stories TBD
 
 ---
 
@@ -34,6 +35,7 @@
 | **E6** | History & versions | Versioning (1 session = 1 version), preview, restore | E4, E5 |
 | **E7** | Access administration | Allowlist, members/pending, roles, enable/disable | E2 |
 | **E8** | Polish: PWA, a11y, i18n, quality | Manifest, accessibility, **archive**, copy centralization, tests/CI | all |
+| **E9** | Database cold backups & restore | Scheduled off-site `pg_dump`, retention, tested restore | E1 |
 
 **Recommended critical path:** `E0 → E1 → E2 → E3 → E4 → E5 → E6`. **E1 (Railway)** is placed
 early on purpose: as soon as the scaffold runs, we wire up continuous deployment so **each
@@ -45,6 +47,7 @@ is born when the lock is released): chain them together.
 E0 ──▶ E1 (continuous deploy) ──▶ E2 ──▶ E3 ──▶ E4 ──▶ E5 ──▶ E6
                                └────────────▶ E7   (in parallel once E2 is done)
 E8: cross-cutting, hardened at the end
+E9: DB cold backups, once the DB is live (after E1)
 ```
 
 ---
@@ -116,8 +119,8 @@ with all the error states from the mockups. The allowlist is checked **server-si
 **Scope — Back**
 - `User` model (email, display_name, password_hash, role, status) + `AllowlistEntry`.
 - `POST /api/auth/register` → **403** if e-mail not in allowlist, **201** otherwise (passlib/bcrypt hash).
-- `POST /api/auth/login` → **401** credentials, **403** if `status=DISABLED`.
-- `POST /api/auth/logout`, `GET /api/auth/me` (current session + role).
+- `POST /api/auth/login` → **401** credentials, **403** if `status=DISABLED`; returns `{access, refresh}`.
+- `POST /api/auth/refresh` (refresh → new access token), `GET /api/auth/me` (current user + role); logout is client-side.
 - **JWT bearer** sessions (access + refresh tokens), `get_current_user` dependency.
 
 **Scope — Front**
@@ -280,6 +283,37 @@ vs pending), roles, **enable/disable** — **never delete**.
 **Mockups.** All (state & responsive verification).
 
 **Done when.** App installable, archive **designed then built** (hide/restore + filter), a11y verified, strings centralized, test suite green in CI.
+
+---
+
+## E9 — Database cold backups & restore
+
+**Goal.** Never lose data: take regular **off-site** backups of the PostgreSQL
+database and be able to **restore** them.
+
+**Scope — Backups**
+- Scheduled **logical dump** (`pg_dump`, compressed) of the prod DB — e.g. a daily
+  cron / scheduled job. "Cold" = a consistent point-in-time dump, **not** continuous
+  replication (hot standby / PITR are out of scope for the MVP).
+- Store dumps **off Railway** (external object storage — S3-compatible / Backblaze
+  B2 — or a pulled copy) so a Railway-side incident can't take the backups with it.
+- **Retention** (e.g. 7 daily + 4 weekly) + an integrity check of each dump.
+- Backup-target credentials in env (secrets); a **failure alert** is nice-to-have.
+
+**Scope — Restore**
+- A documented, **tested** restore: `pg_restore`/`psql` into a fresh database,
+  `alembic upgrade head` if needed, then verify (row counts / a smoke read).
+- Record in the runbook the restore time and the data-loss window (= backup interval).
+
+**Depends on.** E1 (the DB must be deployed). Wire it **as soon as the DB is live**,
+ideally **before real user data accumulates** (right after E1/E2).
+
+**Related rules.** The DB is the single source of truth — "disable, never delete"
+(users) and append-only history mean nothing should be lost; protect it.
+
+**Done when.** Automated backups run on schedule and land off-site, retention is
+enforced, dumps pass an integrity check, and a **full restore has been performed
+end-to-end at least once** (runbook written).
 
 ---
 

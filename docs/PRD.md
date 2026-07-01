@@ -22,7 +22,8 @@ notes, and a full history of who changed what.
 - An admin fully controls **who** can access the instance.
 - Every change to a note is **attributable and auditable** via history.
 - The app is **installable** and pleasant on both phone and desktop.
-- A single instance is **trivial to self-host** (one database, one service).
+- A single instance is **trivial to self-host** (one database, a small API + static front).
+- **Data is safe**: regular off-site backups with a tested restore (see E9) — no lost notes.
 
 ### Non-goals (out of scope — Keepou stays small)
 - ❌ Real-time collaborative co-editing (multiple live cursors, CRDT merge).

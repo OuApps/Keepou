@@ -322,6 +322,9 @@ service points at a **Root Directory** and listens on `$PORT`.
   E2).
 - **Continuous deployment**: pushes to the production branch redeploy both
   services; PR preview environments if the Railway plan allows.
+- **Backups**: the Postgres data is dumped **off-site** on a schedule with a
+  tested restore — see epic **E9** (data durability; the managed plugin alone is
+  not a backup).
 - **CORS**: the API allows the exact web origin(s) via `CORS_ORIGINS`; credentials
   are **not** used (the token rides in the header), so there is no
   wildcard-with-credentials pitfall.
