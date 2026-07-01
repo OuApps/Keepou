@@ -40,6 +40,7 @@ version history, access via an admin-managed **allowlist**. Responsive PWA
 |---|---|
 | [`docs/PRD.md`](./docs/PRD.md) | Product vision, personas, scope, functional requirements |
 | [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | System design, data model, auth, locking, history, API, deployment |
+| [`docs/DEPLOY.md`](./docs/DEPLOY.md) | Railway deployment runbook: services, env variables, migrations, rollback |
 | [`EPICS.md`](./EPICS.md) | Macro breakdown into epics (dev entry point) |
 | [`design/HANDOFF.md`](./design/HANDOFF.md) | Design tokens, behaviors, data model, API, French UI copy |
 

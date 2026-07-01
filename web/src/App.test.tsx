@@ -1,24 +1,35 @@
 import { render, screen } from '@testing-library/react'
-import { BrowserRouter } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { MemoryRouter } from 'react-router-dom'
+import { beforeEach, describe, expect, it } from 'vitest'
 import App from './App'
 
+function renderAt(path: string) {
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      <App />
+    </MemoryRouter>,
+  )
+}
+
 describe('App', () => {
-  it('renders the Keepou brand', () => {
-    render(
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>,
-    )
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
+  it('renders the login screen on /login', () => {
+    renderAt('/login')
     expect(screen.getByText('Keepou')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Se connecter' })).toBeInTheDocument()
+  })
+
+  it('redirects unauthenticated users from a guarded route to login', () => {
+    renderAt('/')
+    // No token → RequireAuth bounces / to the login screen.
+    expect(screen.getByRole('heading', { name: 'Se connecter' })).toBeInTheDocument()
   })
 
   it('applies data-theme on <html> on mount', () => {
-    render(
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>,
-    )
+    renderAt('/login')
     const theme = document.documentElement.getAttribute('data-theme')
     expect(theme === 'light' || theme === 'dark').toBe(true)
   })

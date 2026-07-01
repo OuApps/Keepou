@@ -25,16 +25,22 @@ Railway project "Keepou"
 
 ## Stories at a glance
 
-- [ ] **E1-S1** — Railway project + managed PostgreSQL
-- [ ] **E1-S2** — PostgreSQL driver & backend prod config
-- [ ] **E1-S3** — FastAPI API service on Railway
-- [ ] **E1-S4** — Alembic migrations run on deploy
-- [ ] **E1-S5** — Frontend service (Vite) on Railway
-- [ ] **E1-S6** — CORS & prod security (bearer auth)
-- [ ] **E1-S7** — Continuous deployment (push + PR preview)
-- [ ] **E1-S8** — Env variables & runbook documented
+- [ ] **E1-S1** — Railway project + managed PostgreSQL — *dashboard*
+- [x] **E1-S2** — PostgreSQL driver & backend prod config — *code done*
+- [~] **E1-S3** — FastAPI API service on Railway — *`api/railway.json` ready; provisioning is dashboard*
+- [~] **E1-S4** — Alembic migrations run on deploy — *pre-deploy command + rollback runbook ready; verified on 1st deploy*
+- [~] **E1-S5** — Frontend service (Vite) on Railway — *`web/railway.json` + `serve` ready; SPA fallback verified locally*
+- [x] **E1-S6** — CORS & prod security (bearer auth) — *code done + tested*
+- [ ] **E1-S7** — Continuous deployment (push + PR preview) — *dashboard*
+- [x] **E1-S8** — Env variables & runbook documented — *see `docs/DEPLOY.md`*
 
-**Done: 0/8** — not started (stories detailed, nothing deployed yet).
+**Status.** All **code & config** is in the repo (S2, S3, S4, S5, S6, S8): psycopg driver
++ URL normalization, strict CORS, the two `railway.json` service configs, the `serve`
+static server, and the [deployment runbook](../docs/DEPLOY.md). What remains is
+**dashboard-only** provisioning that can't live in the repo — creating the Railway
+project + Postgres (S1), the two services and their domains (S3/S5), and enabling
+auto-deploy (S7) — plus the live verification of S3–S6 on the first deploy. Follow
+`docs/DEPLOY.md` step by step. `[~]` = code ready, awaiting provisioning.
 
 ---
 
@@ -67,11 +73,12 @@ Railway project "Keepou"
 - Check `app/db.py`: SQLite `connect_args` does **not** apply to Postgres (already handled).
 
 **Acceptance criteria**
-- [ ] `pip install -r requirements.txt` installs psycopg.
-- [ ] With `DATABASE_URL=postgresql://…`, the app connects (scheme normalized automatically).
-- [ ] Local SQLite dev keeps working with no change.
+- [x] `pip install -r requirements.txt` installs psycopg (`psycopg[binary]` in `pyproject.toml` + generated `requirements.txt`).
+- [x] With `DATABASE_URL=postgres://…` or `postgresql://…`, the scheme is normalized to `postgresql+psycopg://…` automatically (`app/config.py`, covered by `tests/test_config.py`).
+- [x] Local SQLite dev keeps working with no change (SQLite `connect_args` still applied only for SQLite).
 
-**Notes.** Depends on E0-S2/S3 (config + db in place).
+**Notes.** Depends on E0-S2/S3 (config + db in place). The live Postgres connection is
+exercised on the first Railway deploy.
 
 ---
 
@@ -91,7 +98,10 @@ Railway project "Keepou"
 - [ ] The service reads its env variables (DB, secret, CORS).
 - [ ] Railway healthcheck green; automatic restart on crash.
 
-**Notes.** `SESSION_SECRET` **must** be a strong secret in prod (not the `.env.example` value).
+**Notes.** `api/railway.json` is in the repo (Nixpacks builder, start command, healthcheck
+`/api/health`, pre-deploy migration). Creating the service + generating the domain is the
+dashboard part (see `docs/DEPLOY.md`). `SESSION_SECRET` **must** be a strong secret in prod
+(not the `.env.example` value).
 
 ---
 
@@ -110,7 +120,9 @@ Railway project "Keepou"
 - [ ] A deployment with no new migration does not break (idempotent).
 - [ ] Rollback procedure documented (runbook S8).
 
-**Notes.** As long as there is no real model (before E2), `alembic upgrade head` is a safe no-op.
+**Notes.** The pre-deploy command lives in `api/railway.json` (`deploy.preDeployCommand`);
+the rollback procedure is written up in `docs/DEPLOY.md`. As long as there is no real model
+(before E2), `alembic upgrade head` is a safe no-op.
 
 ---
 
@@ -131,7 +143,12 @@ Railway project "Keepou"
 - [ ] `fetch` calls target the prod API (`VITE_API_URL`), not localhost.
 - [ ] SPA routing works on deep-link (fallback to `index.html`).
 
-**Notes.** In dev the Vite `/api` proxy is enough; in prod the front calls the API cross-origin at `VITE_API_URL`, sending the JWT bearer token in the `Authorization` header, with CORS allowing the web origin (S6).
+**Notes.** `web/railway.json` + the `start` script (`serve -s dist -l $PORT`) and the `serve`
+dependency are in the repo; the static build with SPA fallback was verified locally
+(`npm run build && npm run start`, deep-link → `index.html`). Creating the service + domain
+is the dashboard part. In dev the Vite `/api` proxy is enough; in prod the front calls the
+API cross-origin at `VITE_API_URL`, sending the JWT bearer token in the `Authorization`
+header, with CORS allowing the web origin (S6).
 
 ---
 
@@ -146,11 +163,11 @@ Railway project "Keepou"
 - HTTPS enforced (default on Railway).
 
 **Acceptance criteria**
-- [ ] Login from the prod frontend returns tokens; `GET /api/auth/me` works with the `Authorization` header.
-- [ ] The API only accepts the configured web origin(s) (strict CORS, no credentials).
-- [ ] A disabled account is rejected on its next request (the server re-checks `status`).
+- [ ] Login from the prod frontend returns tokens; `GET /api/auth/me` works with the `Authorization` header. *(E2 — needs the auth endpoints.)*
+- [x] The API only accepts the configured web origin(s) (strict CORS, `allow_credentials=False`) — `app/main.py`, covered by `tests/test_cors.py`.
+- [ ] A disabled account is rejected on its next request (the server re-checks `status`). *(E2 — needs `get_current_user`.)*
 
-**Notes.** Decision recorded in [`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md) §8: JWT bearer for the MVP; a httpOnly same-site cookie is a **documented later upgrade** (needs a custom domain). Impacts E2 (token issuance/validation).
+**Notes.** Decision recorded in [`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md) §8: JWT bearer for the MVP; a httpOnly same-site cookie is a **documented later upgrade** (needs a custom domain). Impacts E2 (token issuance/validation). The CORS/credentials posture is done now; the token-dependent criteria are satisfied in E2.
 
 ---
 
@@ -182,11 +199,12 @@ Railway project "Keepou"
 - **Runbook** (`docs/DEPLOY.md` or README section): create a service, re-run a migration, rollback, regenerate `SESSION_SECRET`, check the logs.
 
 **Acceptance criteria**
-- [ ] Exhaustive list of variables (role + example) documented.
-- [ ] Deployment + rollback runbook written.
-- [ ] A new member can follow the docs to reproduce the environment.
+- [x] Exhaustive list of variables (role + example) documented (`docs/DEPLOY.md`).
+- [x] Deployment + rollback runbook written (`docs/DEPLOY.md`).
+- [x] A new member can follow the docs to reproduce the environment.
 
-**Notes.** Builds on the `.env.example` files already provided by the scaffold.
+**Notes.** Builds on the `.env.example` files already provided by the scaffold; `api/.env.example`
+updated to reflect JWT signing + the Postgres URL normalization.
 
 ---
 

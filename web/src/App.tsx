@@ -1,64 +1,44 @@
-import { useTheme } from './hooks/useTheme'
+import { Route, Routes } from 'react-router-dom'
+import { AuthProvider } from './auth/AuthContext'
+import { RequireAuth } from './auth/RequireAuth'
+import { ThemeProvider } from './theme/ThemeProvider'
+import { AppShell } from './components/AppShell'
+import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
+import BoardPage from './pages/BoardPage'
+import AdminPage from './pages/AdminPage'
+import NoteEditorPage from './pages/NoteEditorPage'
+import HistoryPage from './pages/HistoryPage'
+import NotFoundPage from './pages/NotFoundPage'
 
 /**
- * Application shell — E0 skeleton.
- * Used to verify the design system is wired up (tokens, fonts, light/dark theme).
- * The real screens (Board, Editor, History, Auth, Admin) arrive epic by epic
- * via React Router — see EPICS.md and the frontend breakdown in handoff §6.
+ * Application root: providers (theme + auth) and the route map from handoff §5.
+ * The Router lives in `main.tsx`. Guarded routes redirect to /login (RequireAuth);
+ * the screens are placeholders until their epic (E2 auth, E3 board, E4/E5 editor,
+ * E6 history, E7 admin).
  */
 export default function App() {
-  const { theme, toggle } = useTheme()
-
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <header
-        style={{
-          position: 'sticky',
-          top: 0,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          padding: '15px 28px',
-          background: 'var(--topbar)',
-          backdropFilter: 'blur(8px)',
-          borderBottom: '1px solid var(--border)',
-        }}
-      >
-        <span
-          style={{
-            fontFamily: 'var(--font-brand)',
-            fontWeight: 600,
-            fontSize: 23,
-            color: 'var(--ink)',
-          }}
-        >
-          Keepou
-        </span>
-        <span style={{ flex: 1 }} />
-        <button
-          onClick={toggle}
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 'var(--r-pill)',
-            border: '1px solid var(--border)',
-            background: 'var(--surface)',
-            color: 'var(--ink)',
-            cursor: 'pointer',
-          }}
-          title="Thème"
-        >
-          {theme === 'light' ? '☾' : '☀'}
-        </button>
-      </header>
+    <ThemeProvider>
+      <AuthProvider>
+        <Routes>
+          {/* Public */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
 
-      <main style={{ maxWidth: 1320, margin: '0 auto', padding: '40px 28px', width: '100%' }}>
-        <h1 style={{ fontFamily: 'var(--font-brand)', color: 'var(--ink)' }}>Squelette prêt</h1>
-        <p style={{ color: 'var(--ink-soft)', maxWidth: 560, lineHeight: 1.6 }}>
-          Design system câblé (polices Fredoka / Nunito Sans / IBM Plex Mono, tokens clair +
-          sombre). Les écrans sont implémentés epic par epic — voir <code>EPICS.md</code>.
-        </p>
-      </main>
-    </div>
+          {/* Authenticated */}
+          <Route element={<RequireAuth />}>
+            <Route element={<AppShell />}>
+              <Route path="/" element={<BoardPage />} />
+              <Route path="/admin" element={<AdminPage />} />
+            </Route>
+            <Route path="/note/:id" element={<NoteEditorPage />} />
+            <Route path="/note/:id/history" element={<HistoryPage />} />
+          </Route>
+
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }
