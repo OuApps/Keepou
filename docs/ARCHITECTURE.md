@@ -34,10 +34,11 @@ flowchart LR
 ```
 
 There is **no SSR**: the frontend is a static Vite build served on its own
-service; the API is a separate FastAPI service. They are wired together by
-`VITE_API_URL` (front → API) and CORS + cookies (API ← front). Keeping the two
-apart makes the API reusable and the front trivially cacheable, at the cost of a
-cross-origin auth setup (see §8, §10).
+service; the API is a separate FastAPI service. In production both sit behind
+**one custom domain** — the web service serves the SPA and reverse-proxies
+`/api/*` to the API — so auth is first-party (see §8); preview/dev on the default
+Railway domains fall back to cross-origin + CORS. Keeping the two apart makes the
+API reusable and the front trivially cacheable (see §10).
 
 ## 2. Stack & rationale
 
@@ -298,13 +299,16 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
 
 ## 10. Deployment (Railway)
 
-One Railway project, **two services** + the managed Postgres plugin. Each service
-points at a **Root Directory** in the monorepo and listens on `$PORT`.
+One Railway project, **two services** + the managed Postgres plugin. In production
+a **single custom domain** points at the **web** service, which serves the SPA and
+**reverse-proxies `/api/*`** to the API service over Railway private networking —
+so the session cookie is first-party (§8) and **no CORS** is needed. Each service
+points at a **Root Directory** and listens on `$PORT`.
 
-| Service | Root | Build / Start | Public |
+| Service | Root | Build / Start | Exposure |
 | --- | --- | --- | --- |
-| **keepou-api** | `api/` | Nixpacks; `uvicorn app.main:app --host 0.0.0.0 --port $PORT` | `/api/health` healthcheck |
-| **keepou-web** | `web/` | `npm ci && npm run build` → serve `dist/` on `$PORT` (SPA fallback) | static app |
+| **keepou-web** | `web/` | build SPA + serve `dist/` on `$PORT` with **`/api` → API proxy** + SPA fallback | **public** (custom domain) |
+| **keepou-api** | `api/` | Nixpacks; `uvicorn app.main:app --host 0.0.0.0 --port $PORT` | internal (via the web proxy); `/api/health` |
 | **Postgres** | — | managed plugin | injects `DATABASE_URL` |
 
 - **Migrations**: `alembic upgrade head` runs as a **pre-deploy** command on the
@@ -312,17 +316,22 @@ points at a **Root Directory** in the monorepo and listens on `$PORT`.
   E2).
 - **Continuous deployment**: pushes to the production branch redeploy both
   services; PR preview environments if the Railway plan allows.
+- **Preview/dev** on the default `*.up.railway.app` domains can't share a
+  first-party cookie (public suffix), so they fall back to **cross-site**
+  (`SameSite=None; Secure` + CORS). Prod on the custom domain stays first-party
+  `Lax` (§8).
 - **Required environment variables**:
 
   | Variable | Service | Purpose |
   | --- | --- | --- |
   | `DATABASE_URL` | api | Postgres connection (from the Railway plugin) |
   | `SESSION_SECRET` | api | Signs session cookies (strong value in prod) |
-  | `CORS_ORIGINS` | api | Allowed front origin(s) for CORS |
-  | `VITE_API_URL` | web | Public API URL, inlined **at build time** |
+  | `SESSION_COOKIE_SAMESITE` | api | `Lax` in prod (single domain) · `None` for cross-site preview |
+  | `CORS_ORIGINS` | api | Allowed front origin(s) — only used by the cross-site fallback |
+  | `VITE_API_URL` | web | API base URL, inlined **at build time** — `/api` (same-origin) in prod |
 
 > `VITE_API_URL` is baked into the static build, so changing it requires a
-> rebuild of `keepou-web`.
+> rebuild of `keepou-web`; in the single-domain setup it is simply `/api`.
 
 ## 11. Security considerations
 
