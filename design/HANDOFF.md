@@ -194,6 +194,7 @@ class Note(SQLModel, table=True):
     body: str                                  # Markdown (GFM task lists)
     color: NoteColor = NoteColor.GOLD
     visibility: Visibility = Visibility.PRIVATE
+    archived: bool = False                     # hide from the board, never delete (E8)
     owner_id: str = Field(foreign_key="user.id", index=True)
 
     # single-editor lock (carried by the note)
@@ -242,10 +243,10 @@ Decoupled **React SPA** front (Vite); **FastAPI** back. The front consumes the A
 
 ### FastAPI endpoints (indicative)
 ```
-POST   /api/auth/register                 → 403 if email off-allowlist ; 201 otherwise
-POST   /api/auth/login                    → 401 credentials ; 403 if status=DISABLED
-POST   /api/auth/logout
-GET    /api/auth/me                        (current session ; role to display /admin)
+POST   /api/auth/register                 → 403 if email off-allowlist ; 201 + {access, refresh} otherwise
+POST   /api/auth/login                    → {access, refresh} ; 401 credentials ; 403 if status=DISABLED
+POST   /api/auth/refresh                   (refresh token → new access token) ; 401 if invalid/expired
+GET    /api/auth/me                        (current user ; role to display /admin)   # logout is client-side (drop tokens)
 
 GET    /api/notes?tab=mine|public
 POST   /api/notes                          (create)
