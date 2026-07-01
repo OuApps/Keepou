@@ -1,6 +1,6 @@
 # Keepou — Product Requirements Document (PRD)
 
-**Status:** Reviewed · **Owner:** @fregogui · **Last updated:** 2026-06-26
+**Status:** Reviewed · **Owner:** @fregogui · **Last updated:** 2026-07-01
 
 ---
 
@@ -28,12 +28,14 @@ notes, and a full history of who changed what.
 - ❌ Real-time collaborative co-editing (multiple live cursors, CRDT merge).
 - ❌ Multi-tenant SaaS (one instance = one group; no org isolation).
 - ❌ Public/anonymous access — everything is behind login.
-- ❌ Rich content beyond text + checklists (no images, no Markdown).
+- ❌ Rich media beyond text + checklists — no images or embeds. (Bodies are
+  persisted as **Markdown / GFM task lists**, so richer text is possible later
+  without a migration, but the MVP UI stays text + checkboxes.)
 - ❌ Email-dependent flows (password reset, email invitations — no SMTP
   dependency).
 - ❌ Native mobile apps (the PWA covers mobile).
 - ❌ Nice-to-haves that aren't part of the current scope: pinning, labels/tags,
-  history restore, retention/pruning, offline editing, and allowlist bulk-add.
+  retention/pruning, offline editing, and allowlist bulk-add.
 
 ## 3. Personas
 
@@ -53,8 +55,8 @@ notes, and a full history of who changed what.
   or **public** (all members).
 - **Lock** — a transient, single-editor claim on a public note while someone
   edits it.
-- **Version** — an immutable snapshot of a note's title + content at save time,
-  with author and timestamp.
+- **Version** — an immutable snapshot of a note's title + content, created once
+  per **editing session**, with author and timestamp.
 
 ## 5. Functional requirements
 
@@ -81,7 +83,8 @@ notes, and a full history of who changed what.
 ### 5.3 Notes
 - **FR-N1** A member can **create, read, update, archive** their notes.
 - **FR-N2** A note is **private** (owner-only) or **public** (all members).
-- **FR-N3** Note content supports **plain text and checklists** (checkable items).
+- **FR-N3** Note content supports **plain text and checklists** (checkable
+  items); bodies are persisted as **Markdown (GFM task lists)**.
 - **FR-N4** A note has a **color** chosen from a fixed palette.
 - **FR-N5** Only the **owner** can change a note's **visibility** (private ⇄
   public).
@@ -98,24 +101,24 @@ notes, and a full history of who changed what.
   in **read-only** mode.
 - **FR-L3** While editing, the client **refreshes the lock** (heartbeat) so it
   doesn't expire mid-session.
-- **FR-L4** A lock **auto-expires** after a short TTL of inactivity (e.g. ~30s
-  without heartbeat) so a closed tab never blocks others permanently.
+- **FR-L4** A lock **auto-expires** after a short TTL of inactivity (~60s without
+  heartbeat; the client refreshes it about every ~20s) so a closed tab never
+  blocks others permanently.
 - **FR-L5** If a member tries to edit a locked note, they see a **gentle message**
   identifying who's editing and inviting them to try again shortly — never a hard
   error.
 - **FR-L6** Leaving the editor **releases the lock** promptly.
 
 ### 5.5 History
-- **FR-H1** Each **save that changes title or content** creates an immutable
-  **version** with **author + timestamp**.
+- **FR-H1** Each **editing session** creates at most one immutable **version**
+  (title + content snapshot) with **author + timestamp**, recorded when the
+  session ends (lock release on public notes, editor close on private notes).
 - **FR-H2** Members can **view the history** of any note they can see (public-note
   history is visible to all members; private-note history only to the owner).
 - **FR-H3** History shows **who** made each change and **when**, and lets the
   viewer read the **content of any past version**.
-- **FR-H4** Changes to color / visibility / archive are recorded in a **lightweight
-  activity log** (stored for audit; **not surfaced in the UI for now**), separate
-  from content versions.
-- **FR-H5** History is **read-only** — viewing past states, no restore.
+- **FR-H4** **Restoring** a past version creates a **new version** whose content
+  equals the chosen one — nothing is ever overwritten.
 
 ### 5.6 Organization & search
 - **FR-S1** A member can **search** their notes (and accessible public notes) by
@@ -128,9 +131,11 @@ notes, and a full history of who changed what.
   web app manifest and installability.
 - **FR-P2** Layout adapts (multi-column masonry on desktop, 1–2 columns on mobile).
 
-> **Settled decisions:** the activity log is **stored but not shown in the UI**
-> (FR-H4); the allowlist is managed **one email at a time** (no bulk add); and the
-> **first registered user becomes admin** (FR-A1), with no environment-seeded admin.
+> **Settled decisions:** note bodies are stored as **Markdown / GFM** and history
+> keeps **one version per editing session**, with **restore** creating a new
+> version (FR-H1, FR-H4); the allowlist is managed **one email at a time** (no bulk
+> add); and the **first registered user becomes admin** (FR-A1), with no
+> environment-seeded admin.
 
 ## 6. Key user stories
 

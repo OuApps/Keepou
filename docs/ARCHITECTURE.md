@@ -1,141 +1,145 @@
 # Keepou — Architecture
 
-**Status:** Reviewed · **Last updated:** 2026-06-26
+**Status:** Reviewed · **Last updated:** 2026-07-01
 
 This document describes the technical design behind the requirements in
-[PRD.md](./PRD.md).
+[PRD.md](./PRD.md). It is aligned with the validated design
+([../design/HANDOFF.md](../design/HANDOFF.md)) and the `api/` + `web/` scaffold.
 
 ---
 
 ## 1. Overview
 
-Keepou is a single full-stack application backed by one PostgreSQL database,
-deployed as one service on Railway.
+Keepou is a **decoupled** application: a React single-page app (the client)
+talks to a FastAPI backend (the API) over REST/JSON, backed by one PostgreSQL
+database. Both run on Railway as **two services** plus the managed Postgres
+plugin.
 
 ```mermaid
 flowchart LR
-    subgraph Client [Client · PWA]
+    subgraph Client [Client · React SPA + PWA]
         UI[React UI + Service Worker]
     end
-    subgraph Server [Next.js app · Railway]
-        RH[Route Handlers / API]
-        SSR[Server Components]
+    subgraph Api [keepou-api · FastAPI · Railway]
+        API[REST API]
+    end
+    subgraph Web [keepou-web · static build · Railway]
+        ST[Vite build served statically]
     end
     DB[(PostgreSQL · Railway plugin)]
 
-    UI -- fetch/JSON --> RH
-    UI -- navigation --> SSR
-    RH -- Prisma --> DB
-    SSR -- Prisma --> DB
+    UI -- app shell --> ST
+    UI -- fetch/JSON + cookie --> API
+    API -- SQLModel / SQLAlchemy --> DB
 ```
 
-There is **no separate backend service**: the API lives in the same Next.js
-project as the UI (Route Handlers). This keeps deployment to a single artifact.
+There is **no SSR**: the frontend is a static Vite build served on its own
+service; the API is a separate FastAPI service. They are wired together by
+`VITE_API_URL` (front → API) and CORS + cookies (API ← front). Keeping the two
+apart makes the API reusable and the front trivially cacheable, at the cost of a
+cross-origin auth setup (see §8, §10).
 
 ## 2. Stack & rationale
 
 | Concern | Choice | Why |
 | --- | --- | --- |
-| App framework | **Next.js (App Router) + React + TypeScript** | One project for UI + API, SSR for fast first paint, easy PWA. |
-| Database | **PostgreSQL** | Robust concurrency for shared notes + history; first-class on Railway. |
-| ORM | **Prisma** | Typed schema, migrations, good DX. |
-| Auth | **Email/password + DB sessions** | No third-party dependency; works without any external identity provider. |
-| Hosting | **Railway** | Managed Postgres plugin injects `DATABASE_URL`; simple deploys. |
+| Frontend | **React + TypeScript (Vite SPA)** | Fast dev/build, decoupled from the API, easy PWA. |
+| Backend | **Python + FastAPI** | Typed, small, great for a REST API; first-class Pydantic schemas. |
+| ORM / migrations | **SQLModel (SQLAlchemy + Pydantic) + Alembic** | Typed models shared with schemas; versioned migrations. |
+| Database | **PostgreSQL** (prod), **SQLite** (dev) | Robust concurrency for shared notes + history; SQLite keeps local dev zero-setup. |
+| Auth | **Email/password + signed session cookie** | No third-party identity provider; server-side allowlist and authz. |
+| Hosting | **Railway** | Managed Postgres plugin injects `DATABASE_URL`; per-service deploys. |
 | Client delivery | **PWA** (manifest + service worker) | Installable, responsive, one codebase for mobile + desktop. |
 
 ## 3. Data model
 
+Note bodies are stored as **Markdown (GFM task lists)** — the title is a separate
+field. History keeps one **version per editing session** (see §6). Passwords are
+hashed; sessions are stateless signed cookies (see §8), so there is **no session
+table**.
+
 ```mermaid
 erDiagram
     User ||--o{ Note : owns
-    User ||--o{ Session : has
     User ||--o{ NoteVersion : authored
-    User ||--o{ ActivityLog : performed
+    User ||--o{ AllowlistEntry : invited
     Note ||--o{ NoteVersion : "has history"
-    Note ||--o{ ActivityLog : "has activity"
-    User ||--o{ Note : "locks (0..1 active)"
+    User ||--o| Note : "locks (0..1 active)"
 
     User {
-        uuid id PK
+        string id PK
         string email UK
-        string name
-        string passwordHash
+        string display_name
+        string password_hash
         enum role "ADMIN | MEMBER"
-        bool isActive
-        datetime createdAt
+        enum status "ACTIVE | DISABLED"
+        datetime created_at
     }
-    AllowedEmail {
-        uuid id PK
+    AllowlistEntry {
+        string id PK
         string email UK
-        uuid invitedById FK
-        datetime createdAt
-    }
-    Session {
-        uuid id PK
-        string tokenHash UK
-        uuid userId FK
-        datetime expiresAt
+        string added_by_id FK
+        datetime added_at
     }
     Note {
-        uuid id PK
-        uuid ownerId FK
+        string id PK
+        string owner_id FK
         string title
-        json content
-        string color
-        bool isPublic
+        string body "Markdown (GFM)"
+        enum color "GOLD | AVOCAT | SALSA | CLAY | TEAL"
+        enum visibility "PRIVATE | PUBLIC"
         bool archived
-        uuid lockedById FK "nullable"
-        datetime lockedAt "nullable"
-        datetime createdAt
-        datetime updatedAt
+        string locked_by_id FK "nullable"
+        datetime locked_at "nullable"
+        datetime lock_expires_at "nullable"
+        datetime created_at
+        datetime updated_at
     }
     NoteVersion {
-        uuid id PK
-        uuid noteId FK
-        uuid authorId FK
+        string id PK
+        string note_id FK
+        string author_id FK
         string title
-        json content
-        datetime createdAt
-    }
-    ActivityLog {
-        uuid id PK
-        uuid noteId FK
-        uuid actorId FK
-        enum action "VISIBILITY | COLOR | ARCHIVE | CREATE | DELETE"
-        json detail
-        datetime createdAt
+        string body "Markdown snapshot"
+        enum color
+        enum visibility
+        datetime created_at
     }
 ```
 
 ### Entity notes
 
 - **User.role** — `ADMIN` or `MEMBER`. The first user created is `ADMIN`.
-- **User.isActive** — deactivation flag. Inactive users cannot sign in; their
-  data is retained (FR-A5).
-- **AllowedEmail** — the allowlist. An email here may sign up; once they do, a
-  `User` row exists. The two together let the admin UI show "allowed (pending)"
-  vs "registered" (FR-U2).
-- **Session.tokenHash** — only a hash of the cookie token is stored, so a DB leak
-  doesn't yield usable sessions.
-- **Note.content** — stored as **JSON** to natively support **checklists** (an
-  array of `{ text, checked }`) alongside plain text, without a schema change if
-  richer blocks are added later. A plain-text note is `{ type: "text", text }`.
-- **Note.lockedById / lockedAt** — the single-editor lock (see §5). Only
-  meaningful when `isPublic`.
-- **NoteVersion** — immutable snapshot per content-changing save (FR-H1). Append
-  only.
-- **ActivityLog** — lightweight record for non-content changes (color, visibility,
-  archive) and lifecycle events (FR-H4).
+- **User.status** — `ACTIVE` / `DISABLED`. A disabled user cannot sign in; their
+  data is retained (never deleted, FR-A5). The status is checked **on every
+  request**, so disabling logs a user out even with a valid cookie.
+- **AllowlistEntry** — the allowlist. An email here may sign up; once they do, a
+  `User` row exists. A `LEFT JOIN User ON User.email = AllowlistEntry.email` lets
+  the admin UI show "allowed (pending)" vs "registered" (FR-U2).
+- **Note.body** — stored as **Markdown** with GFM task lists: a paragraph is
+  plain text, a checkbox is `- [ ] label` (unchecked) / `- [x] label` (checked).
+  Storing Markdown from the MVP means richer text can be rendered later **without
+  a migration**. The reference serializer is `buildMd` in the mockups; the
+  frontend mirror is `web/src/lib/markdown.ts`.
+- **Note.color** — an identifier from a fixed palette (`GOLD | AVOCAT | SALSA |
+  CLAY | TEAL`), not a hex value (FR-N4).
+- **Note.visibility** — `PRIVATE` (owner only) or `PUBLIC` (all members),
+  reversible by the owner (FR-N5); switching back to private removes it from
+  others' public board.
+- **Note.archived** — hides a note from the main board without deleting it
+  (FR-N8).
+- **Note.locked_by_id / locked_at / lock_expires_at** — the single-editor lock
+  carried by the note (see §5). Only meaningful on `PUBLIC` notes.
+- **NoteVersion** — an immutable snapshot (title + body + color + visibility +
+  author + timestamp) created once per editing session (FR-H1). Append-only; a
+  composite index on `(note_id, created_at)` backs the history listing.
 
-> **Content shape (illustrative):**
-> ```jsonc
-> // text note
-> { "type": "text", "text": "Buy milk" }
-> // checklist note
-> { "type": "checklist", "items": [
->     { "text": "Coffee", "checked": false },
->     { "text": "Bread",  "checked": true  }
-> ] }
+> **Body shape (illustrative Markdown):**
+> ```markdown
+> Groceries for the weekend.
+>
+> - [ ] Coffee
+> - [x] Bread
 > ```
 
 ## 4. Access control
@@ -146,20 +150,24 @@ erDiagram
 flowchart TD
     S[POST /api/auth/register] --> Z{Any user exists yet?}
     Z -- No --> ADM[Create user as ADMIN · bootstrap]
-    Z -- Yes --> AL{email in AllowedEmail?}
+    Z -- Yes --> AL{email in AllowlistEntry?}
     AL -- No --> REJ[403 · polite rejection]
     AL -- Yes --> USR[Create user as MEMBER]
 ```
 
+The allowlist check runs **server-side**; the client only renders the message the
+API returns. There is no in-app "request access" flow.
+
 ### 4.2 Permission matrix
 
-| Action | Owner | Other member | Admin | Inactive user |
+| Action | Owner | Other member | Admin | Disabled user |
 | --- | :---: | :---: | :---: | :---: |
 | View private note | ✅ | ❌ | ❌¹ | ❌ |
 | View public note | ✅ | ✅ | ✅ | ❌ |
 | Edit private note | ✅ | ❌ | ❌¹ | ❌ |
 | Edit public note content (with lock) | ✅ | ✅ | ✅ | ❌ |
 | Change note visibility | ✅ | ❌ | ❌ | ❌ |
+| Archive a note | ✅ | ❌ | ❌ | ❌ |
 | Delete a note | ✅ | ❌ | ✅ | ❌ |
 | Manage allowlist / users | ❌ | ❌ | ✅ | ❌ |
 
@@ -168,22 +176,27 @@ flowchart TD
 
 ## 5. Locking mechanism (public notes)
 
-A **pessimistic, single-writer lock** with a short TTL and client heartbeat —
-chosen over real-time co-editing for simplicity.
+A **pessimistic, single-writer lock** with a short TTL and a client heartbeat —
+chosen over real-time co-editing for simplicity. A note carries at most one
+active lock.
 
 - **Acquire** — `POST /api/notes/:id/lock`. Granted if the note is unlocked, the
-  existing lock is **stale** (`now − lockedAt > TTL`), or the caller already
-  holds it. Sets `lockedById = me`, `lockedAt = now`.
-- **Heartbeat** — the editor re-calls acquire every **~12s** (well under the TTL)
-  to keep the lock fresh while actively editing.
-- **TTL** — **~30s**. After that without a heartbeat, the lock is claimable by
+  existing lock is **stale** (`now > lock_expires_at`), or the caller already
+  holds it. The grant is an **atomic conditional update**
+  (`UPDATE ... WHERE locked_by_id IS NULL OR lock_expires_at < :now`); if it
+  affects **0 rows**, the lock is held by someone else.
+- **Heartbeat** — the editor re-calls acquire every **~20s** to extend
+  `lock_expires_at` while actively editing.
+- **TTL** — **~60s**. After that without a heartbeat, the lock is claimable by
   anyone. This bounds how long a closed tab can block others.
-- **Enforce** — `PUT /api/notes/:id` on a **public** note is rejected with
-  **HTTP 423 (Locked)** unless the caller holds a valid (non-stale) lock.
+- **Enforce** — a mutating request on a **public** note is rejected with
+  **HTTP 409 (Conflict)** unless the caller holds a valid (non-stale) lock; the
+  response says **who** holds it.
 - **Release** — `DELETE /api/notes/:id/lock` on leaving the editor (and via
-  `beforeunload` / `keepalive`).
-- **UX** — when blocked, the UI shows a calm banner: _"🔒 Being edited by **Bob** —
-  you can read it; try again in a moment."_ (FR-L5). Never a hard error page.
+  `beforeunload` / `keepalive`). Releasing the lock is what **creates the version**
+  for that session (see §6).
+- **UX** — when blocked, the UI shows a calm banner identifying who's editing and
+  inviting the reader to try again shortly (FR-L5). Never a hard error page.
 
 ```mermaid
 sequenceDiagram
@@ -193,10 +206,10 @@ sequenceDiagram
     A->>S: POST /notes/42/lock
     S-->>A: 200 (lock held by Alice)
     B->>S: POST /notes/42/lock
-    S-->>B: 423 (held by Alice) → "please wait"
-    A->>S: PUT /notes/42 (save)  [+ NoteVersion]
+    S-->>B: 409 (held by Alice) → "please wait"
+    A->>S: PATCH /notes/42 (save)
     S-->>A: 200
-    A->>S: DELETE /notes/42/lock (leave)
+    A->>S: DELETE /notes/42/lock (leave) [+ NoteVersion]
     B->>S: POST /notes/42/lock
     S-->>B: 200 (now Bob holds it)
 ```
@@ -204,85 +217,118 @@ sequenceDiagram
 > The lock prevents **simultaneous clobbering**; **history** (next section)
 > captures **who changed what**. They are complementary.
 
-## 6. History & activity
+## 6. History & versions
 
-- On every `PUT` that changes **title or content**, the server appends a
-  `NoteVersion` (snapshot of title + content + `authorId` + timestamp) in the
-  **same transaction** as the note update (FR-H1).
-- Non-content changes (visibility, color, archive) and lifecycle (create/delete)
-  append an `ActivityLog` entry instead (FR-H4). It is **stored for audit but not
-  surfaced in the UI for now**.
-- **Viewing**: `GET /api/notes/:id/history` returns the content **versions**,
-  ordered newest-first, gated by the same visibility rules as the note itself
-  (FR-H2).
-- History is **read-only** (FR-H5): viewing past states, no restore.
-- **Retention**: all versions are kept (snapshots are small text/checklist
-  content).
+- A note's edit is a **session**: from opening the editor to leaving it. One
+  session produces **at most one `NoteVersion`** (snapshot of title + body +
+  color + visibility + `author_id` + timestamp), created when the session ends —
+  i.e. when the **lock is released** on a public note, or the editor is closed on
+  a private note (FR-H1). Not one version per keystroke or per checkbox toggle.
+- **Viewing**: `GET /api/notes/:id/versions` returns the versions newest-first,
+  gated by the same visibility rules as the note itself (FR-H2). The history
+  lists **who** and **when**; selecting a version re-displays it read-only
+  (FR-H3). There is no visual diff — a version is shown as-is.
+- **Restore**: `POST /api/notes/:id/restore/:version_id` creates a **new**
+  version whose content equals the chosen one. Nothing is ever overwritten
+  (FR-H4).
+- **Retention**: all versions are kept (snapshots are small Markdown text).
 
 ## 7. API surface (REST, JSON)
 
+Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs are
+**Pydantic** schemas; status codes via `HTTPException`. All sensitive checks
+(allowlist, admin role, lock, visibility) are **server-side**.
+
 | Method | Path | Purpose | Notes |
 | --- | --- | --- | --- |
-| POST | `/api/auth/register` | Create account | Allowlist-gated; bootstraps admin |
-| POST | `/api/auth/login` | Sign in | Sets session cookie |
+| POST | `/api/auth/register` | Create account | Allowlist-gated; bootstraps admin; `403` if not allowed |
+| POST | `/api/auth/login` | Sign in | Sets session cookie; `401` bad creds, `403` if `DISABLED` |
 | POST | `/api/auth/logout` | Sign out | |
-| GET | `/api/notes` | List own notes | `?archived=` filter |
-| GET | `/api/notes?scope=public` | List public notes | Includes author |
+| GET | `/api/auth/me` | Current user + role | Drives client route guards |
+| GET | `/api/notes?tab=mine\|public` | List notes | `mine` = own; `public` = all members' public (with author); `?archived=` filter |
 | POST | `/api/notes` | Create note | |
 | GET | `/api/notes/:id` | Read a note | Visibility-checked |
-| PUT | `/api/notes/:id` | Update note | Lock-checked for public; writes a version |
+| PATCH | `/api/notes/:id` | Update note | `title`, `body`, `color`, `visibility`, `archived`; lock-checked for public |
 | DELETE | `/api/notes/:id` | Delete note | Owner or admin |
-| POST | `/api/notes/:id/lock` | Acquire / heartbeat lock | `423` if held by another |
-| DELETE | `/api/notes/:id/lock` | Release lock | |
-| GET | `/api/notes/:id/history` | Content version history | Visibility-checked |
-| GET | `/api/search?q=` | Search notes | Own + accessible public |
-| GET | `/api/admin/users` | List members (registered + allowed) | Admin |
+| POST | `/api/notes/:id/lock` | Acquire / heartbeat lock | `409` if held by another |
+| DELETE | `/api/notes/:id/lock` | Release lock | Ends the session → writes a version |
+| GET | `/api/notes/:id/versions` | Version history | Visibility-checked |
+| POST | `/api/notes/:id/restore/:version_id` | Restore a version | Creates a new version |
+| GET | `/api/admin/members` | Members (registered + allowed/pending) | Admin; `User` ⟕ `AllowlistEntry` |
 | POST | `/api/admin/allowlist` | Add allowed email | Admin |
-| DELETE | `/api/admin/allowlist/:email` | Remove allowed email | Admin |
-| POST | `/api/admin/users/:id/role` | Promote / demote | Admin; last-admin guard |
-| POST | `/api/admin/users/:id/active` | Activate / deactivate | Admin; last-admin guard |
+| DELETE | `/api/admin/allowlist/:id` | Remove allowed email | Admin; pending entries only |
+| PATCH | `/api/admin/users/:id` | Set `role` or `status` | Admin; last-admin guard; never deletes |
+
+> **Search** is a **client-side filter** over the loaded board in the MVP (FR-S1);
+> a dedicated server endpoint can be added later if the note count grows.
 
 ## 8. Authentication & sessions
 
-- Passwords hashed with **bcrypt** (or argon2) — never stored in plaintext.
-- On login, a random token is issued; only its **SHA-256 hash** is stored in
-  `Session`. The raw token lives in an **httpOnly, SameSite=Lax, Secure** cookie.
-- Server Components and Route Handlers resolve the current user by hashing the
-  cookie token and looking up a non-expired session, then checking `isActive`.
-- No JWTs: DB sessions allow instant revocation (deactivation logs a user out).
+- Passwords hashed with **bcrypt** via **passlib** — never stored in plaintext.
+- Sessions are **stateless, signed cookies** (via `itsdangerous`): the cookie
+  carries a signed reference to the user, set **httpOnly + Secure + SameSite**.
+  No session table is needed.
+- On each request, `get_current_user` verifies the cookie signature, loads the
+  user, and checks `status == ACTIVE`; `require_admin` additionally checks the
+  role. Because status is re-checked every request, **deactivation takes effect
+  immediately** (no waiting for a token to expire).
+- **Cross-origin note (decision pending, see §10 / story E1-S6):** with the front
+  and API on **different** Railway domains, the session cookie is cross-site and
+  must be `SameSite=None; Secure`. The recommended alternative is to serve both
+  under the **same domain** (API under `/api` via a reverse proxy / custom
+  domain) to keep `SameSite=Lax` — simpler and safer. This is an open
+  architectural decision that affects auth (E2).
 
 ## 9. PWA & responsiveness
 
-- **Manifest** (`manifest.webmanifest`): name, icons, theme color, `display:
-  standalone`, start URL.
-- **Service worker**: a minimal SW for installability and static-asset caching
-  (app shell). Offline editing and background sync are out of scope.
+- **Manifest** (`manifest.webmanifest`): name, icons (the mascot), theme color,
+  `display: standalone`, start URL — shipped with the `web/` build.
+- **Service worker**: a minimal SW for installability and app-shell caching.
+  Offline editing and background sync are out of scope.
+- **Theme**: `data-theme="light|dark"` on the root, CSS token variables; respects
+  `prefers-color-scheme` on first load with a persisted manual override
+  (localStorage).
 - **Responsive layout**: CSS multi-column masonry that collapses from 4 columns
-  (desktop) to 1–2 (mobile); touch-friendly targets; a single floating composer.
+  (desktop) to 1–2 (mobile); touch-friendly targets; a single composer. The
+  breakpoint is ~640px (editor: modal ≥ tablet, full-screen below).
 
 ## 10. Deployment (Railway)
 
-- **Service**: the Next.js app, built and started by Railway from the repo.
-- **Database**: Railway **PostgreSQL plugin**, which injects `DATABASE_URL` into
-  the service environment.
-- **Migrations**: `prisma migrate deploy` runs on release (pre-start), keeping the
-  schema in sync.
+One Railway project, **two services** + the managed Postgres plugin. Each service
+points at a **Root Directory** in the monorepo and listens on `$PORT`.
+
+| Service | Root | Build / Start | Public |
+| --- | --- | --- | --- |
+| **keepou-api** | `api/` | Nixpacks; `uvicorn app.main:app --host 0.0.0.0 --port $PORT` | `/api/health` healthcheck |
+| **keepou-web** | `web/` | `npm ci && npm run build` → serve `dist/` on `$PORT` (SPA fallback) | static app |
+| **Postgres** | — | managed plugin | injects `DATABASE_URL` |
+
+- **Migrations**: `alembic upgrade head` runs as a **pre-deploy** command on the
+  API service, before traffic shifts (a no-op until the first real model lands in
+  E2).
+- **Continuous deployment**: pushes to the production branch redeploy both
+  services; PR preview environments if the Railway plan allows.
 - **Required environment variables**:
 
-  | Variable | Purpose |
-  | --- | --- |
-  | `DATABASE_URL` | Postgres connection (provided by the Railway plugin) |
-  | `SESSION_SECRET` | Signs/derives session material |
-  | `APP_URL` | Public base URL (cookies, PWA start URL) |
+  | Variable | Service | Purpose |
+  | --- | --- | --- |
+  | `DATABASE_URL` | api | Postgres connection (from the Railway plugin) |
+  | `SESSION_SECRET` | api | Signs session cookies (strong value in prod) |
+  | `CORS_ORIGINS` | api | Allowed front origin(s) for CORS |
+  | `VITE_API_URL` | web | Public API URL, inlined **at build time** |
 
-- A `railway.json` / `nixpacks` config pins the build (`prisma generate && next
-  build`) and start (`prisma migrate deploy && next start`) commands.
+> `VITE_API_URL` is baked into the static build, so changing it requires a
+> rebuild of `keepou-web`.
 
 ## 11. Security considerations
 
 - Allowlist enforced **server-side** on registration — never trust the client.
-- Lock and visibility checks enforced **server-side** on every mutating request.
-- Session tokens stored **hashed**; cookies `httpOnly` + `Secure` + `SameSite`.
+- Lock, visibility and admin-role checks enforced **server-side** on every
+  mutating request; the lock grant is an atomic conditional update.
+- Sessions are **signed** cookies (`httpOnly` + `Secure` + `SameSite`); user
+  `status` is re-checked per request so deactivation is instant.
 - **Last-admin guard** prevents locking everyone out of administration (FR-U5).
+- **Disable, never delete** for user accounts; note deletion is restricted to the
+  owner or an admin (FR-N6).
 - Private-note content is shielded **even from admins** (§4.2).
 - AGPL-3.0: running a modified network service obliges offering source to users.
