@@ -8,10 +8,16 @@
 > Visual source of truth: the `design/Keepou - *.dc.html` files.
 > Non-negotiable product rules: `design/claude.md`.
 
-**Detail status:**
-- ✅ **E0** detailed → [`stories/E0-fondations.md`](./stories/E0-fondations.md)
-- ✅ **E1** detailed → [`stories/E1-deploiement-railway.md`](./stories/E1-deploiement-railway.md)
-- ⏳ E2 → E8: detailed later, epic by epic.
+**Progress** — `[x]` epic shipped · `[ ]` not yet · 🔨 in progress · ✅ stories detailed · ⏳ stories TBD:
+- [ ] 🔨 **E0** — Foundations & design system · ✅ detailed → [`stories/E0-fondations.md`](./stories/E0-fondations.md) — *4/8 stories done*
+- [ ] **E1** — Railway deployment · ✅ detailed → [`stories/E1-deploiement-railway.md`](./stories/E1-deploiement-railway.md) — *0/8, not started*
+- [ ] **E2** — Authentication & allowlist · ⏳ stories TBD
+- [ ] **E3** — Board & note management · ⏳ stories TBD
+- [ ] **E4** — Note editor · ⏳ stories TBD
+- [ ] **E5** — Single-editor lock & real-time · ⏳ stories TBD
+- [ ] **E6** — History & versions · ⏳ stories TBD
+- [ ] **E7** — Access administration · ⏳ stories TBD
+- [ ] **E8** — Polish (PWA, a11y, archive, i18n, quality) · ⏳ stories TBD
 
 ---
 
@@ -27,7 +33,7 @@
 | **E5** | Single-editor lock & real-time | Atomic acquisition, heartbeat, expiration, conflict, read-only | E4 |
 | **E6** | History & versions | Versioning (1 session = 1 version), preview, restore | E4, E5 |
 | **E7** | Access administration | Allowlist, members/pending, roles, enable/disable | E2 |
-| **E8** | Polish: PWA, a11y, i18n, quality | Manifest, accessibility, copy centralization, tests/CI | all |
+| **E8** | Polish: PWA, a11y, i18n, quality | Manifest, accessibility, **archive**, copy centralization, tests/CI | all |
 
 **Recommended critical path:** `E0 → E1 → E2 → E3 → E4 → E5 → E6`. **E1 (Railway)** is placed
 early on purpose: as soon as the scaffold runs, we wire up continuous deployment so **each
@@ -266,13 +272,14 @@ vs pending), roles, **enable/disable** — **never delete**.
 
 **Scope**
 - **PWA**: manifest (icon = mascot), favicon, responsive.
+- **Archive**: archive / unarchive a note (hide from the board without deleting) + `?archived=` board filter (FR-N8). Backend `Note.archived` field + a small UI affordance (**no mockup yet — to design**).
 - **A11y**: real `<input type=checkbox>` + labels, labeled fields, `role="status"`/aria-live lock banners, contrasts OK, mobile hit targets ≥ 44px.
 - **i18n**: centralize the FR copy (HANDOFF §7).
 - **Quality**: back tests (allowlist, atomic lock, versioning), key front tests, CI lint/build/test.
 
 **Mockups.** All (state & responsive verification).
 
-**Done when.** App installable, a11y verified, strings centralized, test suite green in CI.
+**Done when.** App installable, archive works (hide/restore + filter), a11y verified, strings centralized, test suite green in CI.
 
 ---
 

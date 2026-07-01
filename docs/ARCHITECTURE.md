@@ -127,7 +127,7 @@ erDiagram
   reversible by the owner (FR-N5); switching back to private removes it from
   others' public board.
 - **Note.archived** — hides a note from the main board without deleting it
-  (FR-N8).
+  (FR-N8). Scheduled for **E8** (not in the current mockups).
 - **Note.locked_by_id / locked_at / lock_expires_at** — the single-editor lock
   carried by the note (see §5). Only meaningful on `PUBLIC` notes.
 - **NoteVersion** — an immutable snapshot (title + body + color + visibility +
@@ -272,12 +272,16 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
   user, and checks `status == ACTIVE`; `require_admin` additionally checks the
   role. Because status is re-checked every request, **deactivation takes effect
   immediately** (no waiting for a token to expire).
-- **Cross-origin note (decision pending, see §10 / story E1-S6):** with the front
-  and API on **different** Railway domains, the session cookie is cross-site and
-  must be `SameSite=None; Secure`. The recommended alternative is to serve both
-  under the **same domain** (API under `/api` via a reverse proxy / custom
-  domain) to keep `SameSite=Lax` — simpler and safer. This is an open
-  architectural decision that affects auth (E2).
+- **Same-site cookies (decided — see story E1-S6):** production serves the front
+  and API under **one custom domain** (front `https://keepou.<tld>`, API
+  reverse-proxied under `https://keepou.<tld>/api/*`), so the session cookie is
+  **first-party**: `SameSite=Lax; Secure; HttpOnly`, and **no CORS** is needed.
+  (Acceptable variant: sibling subdomains `app.` / `api.` on the same registrable
+  domain with `Domain=.keepou.<tld>`, still `SameSite=Lax` but with CORS.) The
+  default `*.up.railway.app` domains are a public suffix and can't share a cookie,
+  so **preview/dev** environments fall back to cross-site `SameSite=None; Secure`
+  with CORS credentials. `SameSite` and the cookie `Domain` are **env-configured**
+  so prod stays on `Lax`.
 
 ## 9. PWA & responsiveness
 

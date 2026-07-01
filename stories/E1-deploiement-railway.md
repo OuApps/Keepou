@@ -21,6 +21,21 @@ Railway project "Keepou"
 
 ---
 
+## Stories at a glance
+
+- [ ] **E1-S1** — Railway project + managed PostgreSQL
+- [ ] **E1-S2** — PostgreSQL driver & backend prod config
+- [ ] **E1-S3** — FastAPI API service on Railway
+- [ ] **E1-S4** — Alembic migrations run on deploy
+- [ ] **E1-S5** — Frontend service (Vite) on Railway
+- [ ] **E1-S6** — CORS, cookies & prod security
+- [ ] **E1-S7** — Continuous deployment (push + PR preview)
+- [ ] **E1-S8** — Env variables & runbook documented
+
+**Done: 0/8** — not started (stories detailed, nothing deployed yet).
+
+---
+
 ## E1-S1 — Railway project + managed PostgreSQL · M
 
 **Goal.** Provision the project and the database, connect the GitHub repo.
@@ -124,9 +139,10 @@ Railway project "Keepou"
 
 **Tasks**
 - Backend: `CORS_ORIGINS` = the exact frontend domain, `allow_credentials=True` (already wired in `main.py`).
-- Session cookies (set in E2) in prod: `Secure`, `HttpOnly`, appropriate `SameSite`.
-  - Distinct domains `keepou-web` ↔ `keepou-api` ⇒ **cross-site** cookie ⇒ `SameSite=None; Secure` (otherwise the cookie is not sent back).
-  - ➡️ **Recommendation**: eventually, serve frontend + API under the **same domain** (`/api` subpath via a reverse proxy / custom domain) to stay on `SameSite=Lax` — simpler and safer. To be decided.
+- **Decision — same-site under one custom domain.** Serve the front and API under a single custom domain, with the API reverse-proxied under `/api` (front `https://keepou.<tld>`, API `https://keepou.<tld>/api/*`). The session cookie is then first-party: `SameSite=Lax; Secure; HttpOnly` — and **no CORS** is needed.
+  - Acceptable variant: sibling subdomains `app.keepou.<tld>` / `api.keepou.<tld>` with cookie `Domain=.keepou.<tld>` (still `SameSite=Lax`; CORS required across the two origins).
+  - **Preview/dev on `*.up.railway.app`** (a public suffix ⇒ no shared cookie) fall back to cross-site `SameSite=None; Secure` + `CORS_ORIGINS` with credentials.
+  - Drive `SameSite` and the cookie `Domain` from env so prod stays on `Lax`; keep `allow_credentials=True` + an exact `CORS_ORIGINS` (already wired in `main.py`).
 - HTTPS enforced (default on Railway).
 
 **Acceptance criteria**
@@ -134,7 +150,7 @@ Railway project "Keepou"
 - [ ] No unauthorized origin is accepted by the API (strict CORS).
 - [ ] Cookies marked `Secure` + `HttpOnly` in prod.
 
-**Notes.** This story formalizes the architecture decision (cross-site vs same domain). Impacts E2.
+**Notes.** Decision recorded in [`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md) §8: same-site under a custom domain (`SameSite=Lax`); cross-site `None` only for `*.up.railway.app` previews. Impacts E2 (cookie flags).
 
 ---
 
@@ -179,9 +195,9 @@ Railway project "Keepou"
 - [ ] API + frontend accessible via their Railway URLs (HTTPS).
 - [ ] PostgreSQL connected; migrations run automatically on deploy.
 - [ ] Push on the production branch → auto-deploy of both services.
-- [ ] Cookie-based auth working between frontend and API (cross-site/same-domain decision made).
+- [ ] Cookie-based auth working between frontend and API (same-site under a custom domain — see E1-S6).
 - [ ] Env variables and runbook documented.
 
-> ℹ️ **Hypotheses to confirm with you before implementation:** production branch (`main`?),
-> desired custom domain (impacts the cookie strategy S6), and Railway plan (PR deploys
-> available or not).
+> ℹ️ **To confirm before implementation:** the production branch (`main`?), the **custom
+> domain** to use (now required for same-site cookies — see E1-S6), and the Railway plan
+> (whether PR deploys are available).
