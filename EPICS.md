@@ -64,7 +64,7 @@ mockups' tokens into a reusable design system** so all following screens are
 - Conventions: Pydantic in/out schemas, `HTTPException` error handling.
 
 **Scope — Front (`web/`)**
-- Bootable React + Vite + TS app, React Router, `api/client.ts` wrapper (cookies/session, typed errors).
+- Bootable React + Vite + TS app, React Router, `api/client.ts` wrapper (bearer token, typed errors).
 - **Design tokens** (light + dark CSS variables) taken **exactly** from handoff §1.
 - **Fonts**: Fredoka (brand/titles), Nunito Sans (UI/text), IBM Plex Mono (labels/timestamps).
 - **Theme**: `data-theme="light|dark"`, honor `prefers-color-scheme` + persistent override (localStorage).
@@ -118,8 +118,8 @@ with all the error states from the mockups. The allowlist is checked **server-si
 
 **Scope — Back**
 - `User` model (email, display_name, password_hash, role, status) + `AllowlistEntry`.
-- `POST /api/auth/register` → **403** if e-mail not in allowlist, **201** otherwise (passlib/bcrypt hash).
-- `POST /api/auth/login` → **401** credentials, **403** if `status=DISABLED`; returns `{access, refresh}`.
+- `POST /api/auth/register` `{email, password, display_name}` → **403** if e-mail not in allowlist, **201** + `{access, refresh}` otherwise (passlib/bcrypt hash).
+- `POST /api/auth/login` `{email, password}` → **401** credentials, **403** if `status=DISABLED`; returns `{access, refresh}`.
 - `POST /api/auth/refresh` (refresh → new access token), `GET /api/auth/me` (current user + role); logout is client-side.
 - **JWT bearer** sessions (access + refresh tokens), `get_current_user` dependency.
 
@@ -148,6 +148,7 @@ notes / Public**; quick composer; faithful cards (color, checklist, meta).
 - `Note` model (title, body Markdown, color, visibility, owner, timestamps).
 - `GET /api/notes?tab=mine|public`, `POST /api/notes` (create), `GET /api/notes/{id}`.
 - `PATCH /api/notes/{id}` (base; fine-grained editing comes in E4).
+- `DELETE /api/notes/{id}` — delete a note, **owner or admin** (FR-N6).
 - **Public** tab = `PUBLIC` notes from all members (author + last-modified date).
 
 **Scope — Front**

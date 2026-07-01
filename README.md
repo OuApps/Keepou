@@ -14,6 +14,7 @@ version history, access via an admin-managed **allowlist**. Responsive PWA
 ```
 .
 ├── EPICS.md          # Macro breakdown into epics (dev entry point)
+├── docs/             # Product & architecture specs (PRD, ARCHITECTURE)
 ├── design/           # Validated mockups + handoff (visual SOURCE OF TRUTH)
 │   ├── HANDOFF.md            # Tokens, behaviors, data model, API, French UI copy
 │   ├── claude.md            # Non-negotiable product rules
@@ -30,8 +31,17 @@ version history, access via an admin-managed **allowlist**. Responsive PWA
 |---|---|
 | Front | React + TypeScript (Vite), React Router, consumes the REST API |
 | Back | Python + FastAPI, SQLModel (SQLAlchemy + Pydantic), Alembic |
-| Auth | Session/cookie, email + password (passlib/bcrypt), **server-side** allowlist |
+| Auth | **JWT bearer** (access + refresh in localStorage), email + password (passlib/bcrypt), **server-side** allowlist |
 | Note storage | Markdown (GFM task lists `- [ ]` / `- [x]`) |
+
+## Documentation
+
+| Doc | What's inside |
+|---|---|
+| [`docs/PRD.md`](./docs/PRD.md) | Product vision, personas, scope, functional requirements |
+| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | System design, data model, auth, locking, history, API, deployment |
+| [`EPICS.md`](./EPICS.md) | Macro breakdown into epics (dev entry point) |
+| [`design/HANDOFF.md`](./design/HANDOFF.md) | Design tokens, behaviors, data model, API, French UI copy |
 
 ## Getting started (scaffold)
 
@@ -45,7 +55,7 @@ npm run dev          # http://localhost:5173
 ### Back (`api/`) — managed with [uv](https://docs.astral.sh/uv/)
 ```bash
 cd api
-uv sync                              # crée .venv + installe runtime & dev (lockfile uv.lock)
+uv sync                              # creates .venv + installs runtime & dev (lockfile uv.lock)
 uv run uvicorn app.main:app --reload # http://localhost:8000 — /api/health
 ```
 
