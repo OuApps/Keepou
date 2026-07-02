@@ -11,14 +11,14 @@
 **Progress** — `[x]` epic shipped · `[ ]` not yet · 🔨 in progress · ✅ stories detailed · ⏳ stories TBD:
 - [ ] 🔨 **E0** — Foundations & design system · ✅ detailed → [`stories/E0-fondations.md`](./stories/E0-fondations.md) — *7/8 stories done (S3's 1st migration → E2)*
 - [ ] 🔨 **E1** — Railway deployment · ✅ detailed → [`stories/E1-deploiement-railway.md`](./stories/E1-deploiement-railway.md) — *code & config ready (S2, S6, S8 done); Railway provisioning (S1, S3, S5, S7) pending → [`docs/DEPLOY.md`](./docs/DEPLOY.md)*
-- [ ] **E2** — Authentication & allowlist · ⏳ stories TBD
-- [ ] **E3** — Board & note management · ⏳ stories TBD
-- [ ] **E4** — Note editor · ⏳ stories TBD
-- [ ] **E5** — Single-editor lock & real-time · ⏳ stories TBD
-- [ ] **E6** — History & versions · ⏳ stories TBD
-- [ ] **E7** — Access administration · ⏳ stories TBD
-- [ ] **E8** — Polish (PWA, a11y, archive, i18n, quality) · ⏳ stories TBD
-- [ ] **E9** — Database cold backups & restore · ⏳ stories TBD
+- [ ] **E2** — Authentication & allowlist · ✅ detailed → [`stories/E2-authentification.md`](./stories/E2-authentification.md)
+- [ ] **E3** — Board & note management · ✅ detailed → [`stories/E3-board-notes.md`](./stories/E3-board-notes.md)
+- [ ] **E4** — Note editor · ✅ detailed → [`stories/E4-editeur-note.md`](./stories/E4-editeur-note.md)
+- [ ] **E5** — Single-editor lock & real-time · ✅ detailed → [`stories/E5-verrou-temps-reel.md`](./stories/E5-verrou-temps-reel.md) — *real-time = short-polling*
+- [ ] **E6** — History & versions · ✅ detailed → [`stories/E6-historique-versions.md`](./stories/E6-historique-versions.md)
+- [ ] **E7** — Access administration · ✅ detailed → [`stories/E7-administration.md`](./stories/E7-administration.md)
+- [ ] **E8** — Polish (PWA, a11y, archive, i18n, quality) · ✅ detailed → [`stories/E8-polish-pwa-a11y-i18n.md`](./stories/E8-polish-pwa-a11y-i18n.md) — *archive story = "voir design avec designer" (design-gated)*
+- [ ] **E9** — Database cold backups & restore · ✅ detailed → [`stories/E9-backups-restore.md`](./stories/E9-backups-restore.md) — *Scaleway Object Storage + Railway cron*
 
 ---
 
@@ -329,5 +329,13 @@ end-to-end at least once** (runbook written).
 
 ## Next step
 
-E0 and E1 are detailed in [`stories/`](./stories/). After review/merge, we move on
-to the **detail of E2** (or the epic of your choice), with acceptance criteria and technical scope.
+**All epics are now detailed** in [`stories/`](./stories/) (E0 & E1 shipped/ready;
+E2–E9 written with acceptance criteria and technical scope). The recommended build
+order follows the critical path `E2 → E3 → E4 → E5 → E6` (with **E7** parallelizable
+after E2, **E8** hardened at the end, and **E9** wired as soon as the DB is live).
+
+Two points to keep in mind:
+- **E8 archive** is deliberately **design-gated** — its story is just "voir design
+  avec designer"; implementation stories come after the archive UI is designed.
+- **E9** uses **Scaleway Object Storage** (off-site) + a **Railway cron** service; the
+  live provisioning is dashboard-only (like E1).
