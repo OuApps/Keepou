@@ -30,6 +30,7 @@ router = APIRouter(prefix="/api/notes", tags=["notes"])
 
 DETAIL_NOTE_NOT_FOUND = "Note introuvable."
 DETAIL_DELETE_FORBIDDEN = "Seul l'auteur de la note ou un admin peut la supprimer."
+DETAIL_VISIBILITY_FORBIDDEN = "Seul l'auteur de la note peut changer sa visibilité."
 
 
 class Tab(StrEnum):
@@ -99,10 +100,23 @@ def read_note(note_id: str, user: CurrentUser, session: SessionDep) -> NoteOut:
 
 @router.patch("/{note_id}", response_model=NoteOut)
 def patch_note(note_id: str, data: NotePatch, user: CurrentUser, session: SessionDep) -> NoteOut:
-    # Readable ⇒ editable in E3: own notes, and any member's public note (the
-    # single-editor lock takes over public mutations in E5 with a 409).
+    # Readable ⇒ content-editable in E3: own notes, and any member's public note
+    # (the single-editor lock takes over public mutations in E5 with a 409).
     note = _get_readable_note(note_id, user, session)
-    changes = data.model_dump(exclude_unset=True)
+    # Drop explicit nulls: every Note column is NOT NULL, so `{"title": null}`
+    # would otherwise reach the DB and 500. A null means "leave unchanged".
+    changes = {k: v for k, v in data.model_dump(exclude_unset=True).items() if v is not None}
+    # Visibility is owner-only (ARCHITECTURE §4.2: neither members nor admins may
+    # flip it) — flipping a public note to private removes it from everyone's
+    # board, which only its owner may decide.
+    if (
+        "visibility" in changes
+        and changes["visibility"] != note.visibility
+        and note.owner_id != user.id
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail=DETAIL_VISIBILITY_FORBIDDEN
+        )
     for field, value in changes.items():
         setattr(note, field, value)
     if changes:

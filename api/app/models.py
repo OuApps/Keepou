@@ -9,8 +9,7 @@ migrations, no dead columns before their feature ships.
 Structural points to respect during implementation:
 - Lock carried by the Note (1 lock max) → atomic conditional update (E5).
 - "Pending" = AllowlistEntry whose email has no User (LEFT JOIN on email).
-- Note.updated_at = « dernière version enregistrée » ;
-  NoteVersion.created_at = history timestamp.
+- Note.updated_at = "last saved version"; NoteVersion.created_at = history timestamp.
 - Disable, never delete (UserStatus.DISABLED).
 """
 
@@ -92,4 +91,4 @@ class Note(SQLModel, table=True):
     visibility: Visibility = Visibility.PRIVATE
     owner_id: str = Field(foreign_key="user.id", index=True)
     created_at: datetime = Field(default_factory=_utcnow)
-    updated_at: datetime = Field(default_factory=_utcnow)  # = « dernière version enregistrée »
+    updated_at: datetime = Field(default_factory=_utcnow)  # = "last saved version"
