@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react'
 import { fetchMe, type TokenPair, type UserOut } from '../api/auth'
-import { SESSION_EXPIRED_EVENT } from '../api/client'
+import { ApiError, SESSION_EXPIRED_EVENT } from '../api/client'
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from './storage'
 
 /**
@@ -40,21 +40,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (status !== 'loading') return
     let cancelled = false
-    fetchMe()
-      .then((me) => {
-        if (cancelled) return
-        setUser(me)
-        setStatus('authenticated')
-      })
-      .catch(() => {
-        // A 401 already dropped the tokens (client wrapper); anything else
-        // (network, 403 disabled) also falls back to the login screen.
-        if (cancelled) return
-        setUser(null)
-        setStatus('anonymous')
-      })
+    let timer: number | undefined
+
+    const attempt = (retriesLeft: number) => {
+      fetchMe()
+        .then((me) => {
+          if (cancelled) return
+          setUser(me)
+          setStatus('authenticated')
+        })
+        .catch((err) => {
+          if (cancelled) return
+          // Only a real auth verdict ends the session: 401 (invalid/expired —
+          // tokens already dropped by the wrapper) or 403 (account disabled).
+          const isAuthError = err instanceof ApiError && (err.status === 401 || err.status === 403)
+          if (!isAuthError && retriesLeft > 0) {
+            // Network blip / 5xx: retry instead of bouncing valid tokens to /login.
+            timer = window.setTimeout(() => attempt(retriesLeft - 1), 1500)
+            return
+          }
+          if (isAuthError) clearTokens()
+          setUser(null)
+          setStatus('anonymous')
+        })
+    }
+
+    attempt(2)
     return () => {
       cancelled = true
+      if (timer !== undefined) window.clearTimeout(timer)
     }
   }, [status])
 

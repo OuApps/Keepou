@@ -60,14 +60,19 @@ describe('LoginPage', () => {
   it('shows the gold inline message for a disabled account (403)', async () => {
     stubFetch({
       '/api/auth/login': () =>
-        json(403, { detail: "Ton accès a été suspendu. Contacte l'administrateur." }),
+        json(403, {
+          detail: {
+            code: 'account_disabled',
+            message: "Ton accès a été suspendu. Contacte l'administrateur.",
+          },
+        }),
     })
     renderAt('/login')
     fillLogin('marie@famille-ou.fr', 'un mot de passe')
     fireEvent.click(screen.getByRole('button', { name: 'Se connecter' }))
 
     const alert = await screen.findByRole('alert')
-    expect(alert).toHaveTextContent('Ton accès a été suspendu. Contacte l’administrateur.')
+    expect(alert).toHaveTextContent("Ton accès a été suspendu. Contacte l'administrateur.")
     expect(alert).toHaveClass('kp-auth__msg--warning')
   })
 
@@ -141,5 +146,30 @@ describe('RegisterPage', () => {
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent('Un compte existe déjà avec cette adresse e-mail.')
     expect(alert).toHaveClass('kp-auth__msg--error')
+  })
+})
+
+describe('Session hydration', () => {
+  beforeEach(() => localStorage.clear())
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('drops the stored tokens and returns to login when the account was disabled (403)', async () => {
+    localStorage.setItem('keepou.access', 'jwt-access')
+    localStorage.setItem('keepou.refresh', 'jwt-refresh')
+    stubFetch({
+      '/api/auth/me': () =>
+        json(403, {
+          detail: {
+            code: 'account_disabled',
+            message: "Ton accès a été suspendu. Contacte l'administrateur.",
+          },
+        }),
+    })
+    renderAt('/')
+
+    // FR-A5: the disabled account's session ends — no stale tokens left behind.
+    expect(await screen.findByRole('button', { name: 'Se connecter' })).toBeInTheDocument()
+    expect(localStorage.getItem('keepou.access')).toBeNull()
+    expect(localStorage.getItem('keepou.refresh')).toBeNull()
   })
 })

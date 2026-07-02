@@ -121,7 +121,9 @@ def test_login_disabled_account_is_403(client, session) -> None:
     session.commit()
     res = login(client, ADMIN["email"], ADMIN["password"])
     assert res.status_code == 403
-    assert res.json()["detail"] == "Ton accès a été suspendu. Contacte l'administrateur."
+    detail = res.json()["detail"]
+    assert detail["code"] == "account_disabled"
+    assert detail["message"] == "Ton accès a été suspendu. Contacte l'administrateur."
 
 
 # --- refresh ---
@@ -192,6 +194,8 @@ def test_deactivation_is_immediate_even_with_valid_token(client, session) -> Non
 
     res = client.get("/api/auth/me", headers=headers)
     assert res.status_code == 403
+    # Structured detail: lets the client log out on this specific 403.
+    assert res.json()["detail"]["code"] == "account_disabled"
 
 
 def test_token_for_deleted_user_is_401(client) -> None:
@@ -200,6 +204,22 @@ def test_token_for_deleted_user_is_401(client) -> None:
     assert (
         client.get("/api/auth/me", headers={"Authorization": f"Bearer {ghost}"}).status_code == 401
     )
+
+
+# --- password hashing (bcrypt_sha256: no 72-byte truncation) ---
+
+
+def test_long_passphrases_keep_their_entropy(client, session) -> None:
+    """bcrypt alone silently truncates at 72 bytes; the SHA-256 pre-hash must not."""
+    long_password = "x" * 72 + "-la-fin-compte-aussi"
+    res = register(
+        client,
+        {"email": ADMIN["email"], "password": long_password, "display_name": "Marie"},
+    )
+    assert res.status_code == 201
+    # Same 72-byte prefix, different tail → must NOT authenticate.
+    assert login(client, ADMIN["email"], "x" * 72 + "-autre-fin").status_code == 401
+    assert login(client, ADMIN["email"], long_password).status_code == 200
 
 
 # --- require_admin (guard used by /admin in E7) ---
