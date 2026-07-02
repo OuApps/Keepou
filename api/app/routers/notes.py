@@ -1,30 +1,37 @@
 """
-Notes — board CRUD (E3). Lock lands in E5, versions/restore in E6.
+Notes — board CRUD (E3) + single-editor lock (E5). Versions/restore land in E6.
 
 Endpoints (handoff §5):
   GET    /api/notes?tab=mine|public   mine = caller's notes; public = all members'
                                       PUBLIC notes (author + updated_at). Newest-first.
   POST   /api/notes                   create (owner = caller)
-  GET    /api/notes/{id}              visibility-checked
-  PATCH  /api/notes/{id}              consolidated editor update (E4-S1)
+  GET    /api/notes/{id}              visibility-checked; carries the lock state
+  PATCH  /api/notes/{id}              consolidated editor update (E4-S1);
+                                      on a PUBLIC note requires a fresh lock (FR-L2)
   DELETE /api/notes/{id}              owner or admin only (FR-N6)
+  POST   /api/notes/{id}/lock         acquire / renew (heartbeat) — 409 + holder if held
+  DELETE /api/notes/{id}/lock         release (idempotent; E6 writes the version here)
 
 Permissions (server-side, ARCHITECTURE §4.2):
 - A private note is invisible to non-owners — including admins — and answers 404
   (not 403) so its very existence stays shielded.
-- A public note is readable and editable by any member (the single-editor lock
-  guarding those mutations arrives in E5); deletion stays owner/admin (403).
+- A public note is readable by any member but mutating it requires holding the
+  single-editor lock (409 otherwise); deletion stays owner/admin (403).
+- Private notes edit lock-free (single owner, no contention). The lock endpoints
+  still accept the owner's own private note — harmless and invisible to others —
+  but the front never locks private notes (E5 key decisions).
 """
 
 from enum import StrEnum
 
 from fastapi import APIRouter, HTTPException, status
-from sqlmodel import col, select
+from sqlmodel import Session, col, select
 
 from app.db import SessionDep
 from app.models import Note, Role, User, Visibility, _utcnow
-from app.schemas import NoteIn, NoteOut, NotePatch
+from app.schemas import LockedBy, NoteIn, NoteOut, NotePatch
 from app.security import CurrentUser
+from app.services import locks
 
 router = APIRouter(prefix="/api/notes", tags=["notes"])
 
@@ -38,7 +45,12 @@ class Tab(StrEnum):
     PUBLIC = "public"
 
 
-def _note_out(note: Note, author: User) -> NoteOut:
+def _note_out(note: Note, author: User, session: Session) -> NoteOut:
+    locked_by = None
+    if note.locked_by_id is not None:
+        holder = session.get(User, note.locked_by_id)
+        if holder is not None:
+            locked_by = LockedBy(id=holder.id, display_name=holder.display_name)
     return NoteOut(
         id=note.id,
         title=note.title,
@@ -49,7 +61,37 @@ def _note_out(note: Note, author: User) -> NoteOut:
         author_name=author.display_name,
         created_at=note.created_at,
         updated_at=note.updated_at,
+        # Stale locks are reported as-is: an expiry in the past is exactly what
+        # lets a reader offer the takeover (E5-S3).
+        locked_by=locked_by,
+        lock_expires_at=note.lock_expires_at,
     )
+
+
+def _lock_conflict_detail(note: Note, session: Session) -> dict:
+    """The 409 body: who holds the lock (FR-L5), or that a lock is required.
+
+    `code: "note_locked"` = someone else holds a fresh lock (carries the holder);
+    `code: "lock_required"` = the note is free/stale but the caller saved without
+    a valid lock — re-acquiring is enough. Timestamps are ISO strings (the
+    exception body is JSON-encoded directly, not by pydantic).
+    """
+    holder = session.get(User, note.locked_by_id) if note.locked_by_id is not None else None
+    if holder is not None and not locks.is_stale(note.lock_expires_at):
+        return {
+            "code": "note_locked",
+            "message": f"{holder.display_name} est en cours d'édition.",
+            "locked_by": {"id": holder.id, "display_name": holder.display_name},
+            "lock_expires_at": (
+                note.lock_expires_at.isoformat() if note.lock_expires_at is not None else None
+            ),
+        }
+    return {
+        "code": "lock_required",
+        "message": "Un verrou actif est requis pour modifier une note publique.",
+        "locked_by": None,
+        "lock_expires_at": None,
+    }
 
 
 def _get_readable_note(note_id: str, user: User, session: SessionDep) -> Note:
@@ -72,7 +114,7 @@ def list_notes(user: CurrentUser, session: SessionDep, tab: Tab = Tab.MINE) -> l
     else:
         query = query.where(Note.visibility == Visibility.PUBLIC)
     rows = session.exec(query.order_by(col(Note.updated_at).desc())).all()
-    return [_note_out(note, author) for note, author in rows]
+    return [_note_out(note, author, session) for note, author in rows]
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=NoteOut)
@@ -87,7 +129,7 @@ def create_note(data: NoteIn, user: CurrentUser, session: SessionDep) -> NoteOut
     session.add(note)
     session.commit()
     session.refresh(note)
-    return _note_out(note, user)
+    return _note_out(note, user, session)
 
 
 @router.get("/{note_id}", response_model=NoteOut)
@@ -95,7 +137,7 @@ def read_note(note_id: str, user: CurrentUser, session: SessionDep) -> NoteOut:
     note = _get_readable_note(note_id, user, session)
     author = session.get(User, note.owner_id)
     assert author is not None  # FK guarantees the owner exists
-    return _note_out(note, author)
+    return _note_out(note, author, session)
 
 
 @router.patch("/{note_id}", response_model=NoteOut)
@@ -117,6 +159,17 @@ def patch_note(note_id: str, data: NotePatch, user: CurrentUser, session: Sessio
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail=DETAIL_VISIBILITY_FORBIDDEN
         )
+    # Single-editor enforcement (FR-L2): mutating a PUBLIC note requires holding
+    # a fresh lock — the server decides, never the client. Private notes are
+    # single-owner and edit lock-free.
+    if (
+        changes
+        and note.visibility == Visibility.PUBLIC
+        and not locks.holds_valid_lock(note, user.id)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=_lock_conflict_detail(note, session)
+        )
     for field, value in changes.items():
         setattr(note, field, value)
     if changes:
@@ -126,7 +179,38 @@ def patch_note(note_id: str, data: NotePatch, user: CurrentUser, session: Sessio
     session.refresh(note)
     author = session.get(User, note.owner_id)
     assert author is not None
-    return _note_out(note, author)
+    return _note_out(note, author, session)
+
+
+@router.post("/{note_id}/lock", response_model=NoteOut)
+def lock_note(note_id: str, user: CurrentUser, session: SessionDep) -> NoteOut:
+    """Acquire or renew (heartbeat ~20 s) the single-editor lock.
+
+    The grant is one atomic conditional UPDATE (ARCHITECTURE §5): two
+    near-simultaneous acquisitions race on the row and exactly one wins — the
+    loser gets a 409 naming the holder (FR-L1/FR-L5).
+    """
+    note = _get_readable_note(note_id, user, session)
+    if not locks.acquire(session, note.id, user.id):
+        session.refresh(note)  # re-read who won
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=_lock_conflict_detail(note, session)
+        )
+    session.refresh(note)
+    author = session.get(User, note.owner_id)
+    assert author is not None
+    return _note_out(note, author, session)
+
+
+@router.delete("/{note_id}/lock", status_code=status.HTTP_204_NO_CONTENT)
+def unlock_note(note_id: str, user: CurrentUser, session: SessionDep) -> None:
+    """Release the caller's lock — idempotent, and never touches someone else's.
+
+    Releasing ends the editing session: E6 will create the note's version
+    exactly here (one session = one version).
+    """
+    note = _get_readable_note(note_id, user, session)
+    locks.release(session, note.id, user.id)
 
 
 @router.delete("/{note_id}", status_code=status.HTTP_204_NO_CONTENT)

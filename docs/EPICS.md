@@ -14,7 +14,7 @@
 - [x] **E2** — Authentication & allowlist · ✅ detailed → [`stories/E2-authentification.md`](./stories/E2-authentification.md) — *shipped (bootstrap admin, allowlist gate, JWT bearer, login/register/denial screens, tests)*
 - [x] **E3** — Board & note management · ✅ detailed → [`stories/E3-board-notes.md`](./stories/E3-board-notes.md) — *shipped (Note model + CRUD API, Mes notes/Public tabs, composer, faithful cards, masonry 4→2, client-side search, tests)*
 - [x] **E4** — Note editor · ✅ detailed → [`stories/E4-editeur-note.md`](./stories/E4-editeur-note.md) — *shipped (consolidated PATCH, `lib/markdown.ts` blocks ⇄ GFM, modal/full-screen editor, BlockList + « Insérer une case à cocher », 3-state autosave + flush on blur/close, color picker, public→private confirmation, tests)*
-- [ ] **E5** — Single-editor lock & real-time · ✅ detailed → [`stories/E5-verrou-temps-reel.md`](./stories/E5-verrou-temps-reel.md) — *real-time = short-polling*
+- [x] **E5** — Single-editor lock & real-time · ✅ detailed → [`stories/E5-verrou-temps-reel.md`](./stories/E5-verrou-temps-reel.md) — *shipped (lock columns migration, atomic acquire/renew/release + PATCH enforcement with structured 409, lock state in the note payload, `useNoteLock` heartbeat 20 s / poll ~12 s / release on close & `beforeunload`, LockBanner 4 states + read-only, tests back & front)*
 - [ ] **E6** — History & versions · ✅ detailed → [`stories/E6-historique-versions.md`](./stories/E6-historique-versions.md)
 - [ ] **E7** — Access administration · ✅ detailed → [`stories/E7-administration.md`](./stories/E7-administration.md)
 - [ ] **E8** — Polish (PWA, a11y, archive, i18n, quality) · ✅ detailed → [`stories/E8-polish-pwa-a11y-i18n.md`](./stories/E8-polish-pwa-a11y-i18n.md) — *archive story = "voir design avec designer" (design-gated)*
@@ -329,12 +329,13 @@ end-to-end at least once** (runbook written).
 
 ## Next step
 
-**E0, E1 (core), E2, E3 and E4 are shipped**; E5–E9 are detailed in
+**E0, E1 (core), E2, E3, E4 and E5 are shipped**; E6–E9 are detailed in
 [`stories/`](./stories/) with acceptance criteria and technical scope. Next on the
-critical path: **E5 — single-editor lock**, then **E6** (a version is born when the
-lock is released — chain them). **E7** (admin) is unblocked and can be
-parallelized; **E9** (DB backups) is recommended early now that auth opens
-the door to real user data; **E8** is hardened at the end.
+critical path: **E6 — history & versions** (a version is born when the lock is
+released — the release endpoint already marks the spot, and `locked_at` carries
+the session start). **E7** (admin) is unblocked and can be parallelized; **E9**
+(DB backups) is recommended early now that auth opens the door to real user
+data; **E8** is hardened at the end.
 
 Two points to keep in mind:
 - **E8 archive** is deliberately **design-gated** — its story is just "voir design

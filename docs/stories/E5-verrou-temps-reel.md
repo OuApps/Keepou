@@ -5,7 +5,8 @@
 > conflict), read-only for the others, updated in near real-time.
 >
 > Estimation convention: **S** (≤ ½ day), **M** (1–2 days), **L** (3+ days).
-> All these stories are `to do` (nothing is built yet).
+> **All stories shipped** — verified end-to-end with two browsers against the
+> real API (acquire / read-only / poll refresh / takeover / conflict).
 
 **Reference docs.** `design/HANDOFF.md` §3.1 & §7 (Lock), `docs/ARCHITECTURE.md` §5,
 PRD FR-L1…FR-L6, claude.md §1. Visual source of truth:
@@ -25,14 +26,31 @@ PRD FR-L1…FR-L6, claude.md §1. Visual source of truth:
 
 ## Stories at a glance
 
-- [ ] **E5-S1** — Back: lock columns migration (`locked_by_id`, `locked_at`, `lock_expires_at`)
-- [ ] **E5-S2** — Back: `locks.py` + acquire/renew/release endpoints (atomic) + enforcement
-- [ ] **E5-S3** — Back: lock state in the note payload (for short-poll)
-- [ ] **E5-S4** — Front: `useNoteLock` (acquire, heartbeat 20 s, expiry 60 s, poll, release)
-- [ ] **E5-S5** — Front: LockBanner (4 states) + read-only mode + takeover / read-only actions
-- [ ] **E5-S6** — Tests: atomic acquisition, heartbeat/expiry, enforcement, banner states
+- [x] **E5-S1** — Back: lock columns migration (`locked_by_id`, `locked_at`, `lock_expires_at`)
+- [x] **E5-S2** — Back: `locks.py` + acquire/renew/release endpoints (atomic) + enforcement
+- [x] **E5-S3** — Back: lock state in the note payload (for short-poll)
+- [x] **E5-S4** — Front: `useNoteLock` (acquire, heartbeat 20 s, expiry 60 s, poll, release)
+- [x] **E5-S5** — Front: LockBanner (4 states) + read-only mode + takeover / read-only actions
+- [x] **E5-S6** — Tests: atomic acquisition, heartbeat/expiry, enforcement, banner states
 
-**Status.** All `to do`.
+**Status.** All shipped.
+
+**Implementation notes (decisions taken while building):**
+- The 409 body is structured: `code: "note_locked"` (another member holds a fresh
+  lock — carries `locked_by` + `lock_expires_at`) vs `code: "lock_required"` (the
+  note is free/stale but the caller saved without a valid lock). On
+  `lock_required` the front silently re-acquires and retries the save once; on
+  `note_locked` it enters the conflict state (state 4).
+- Renewing one's own fresh lock keeps `locked_at` (the editing-session start —
+  E6's version boundary); winning a fresh/stale acquisition restamps it.
+- The read-only short-poll (~12 s) refreshes the **content** too, not just the
+  banner (« L'affichage se met à jour en temps réel »).
+- Mobile top bar: the lock states show as the centered pill; while editing, the
+  save pill keeps that slot (HANDOFF §3.2) — the « mine » banner is desktop-only.
+- The subtitle reads « Dernière édition par X » in read-only (verrou mockup) and
+  keeps « Dernière version enregistrée par X » while editing (HANDOFF §7 "Save").
+- Lock endpoints also accept the owner's own private note (harmless, invisible to
+  others); the front simply never locks private notes.
 
 ---
 
@@ -46,9 +64,9 @@ PRD FR-L1…FR-L6, claude.md §1. Visual source of truth:
 - Alembic autogenerate + `upgrade head` (3rd real migration).
 
 **Acceptance criteria**
-- [ ] The three nullable lock columns are added by a checked-in migration.
-- [ ] Existing notes migrate cleanly (all lock fields `NULL`).
-- [ ] Postgres-safe.
+- [x] The three nullable lock columns are added by a checked-in migration.
+- [x] Existing notes migrate cleanly (all lock fields `NULL`).
+- [x] Postgres-safe.
 
 **Notes.** The lock is carried by the note (≤ 1 active lock) → atomicity via a
 conditional UPDATE (ARCHITECTURE §5).
@@ -74,11 +92,11 @@ unlocked saves on public notes.
   Private notes are unaffected.
 
 **Acceptance criteria**
-- [ ] Two near-simultaneous acquisitions → exactly **one** wins; the other gets
+- [x] Two near-simultaneous acquisitions → exactly **one** wins; the other gets
   **409** + the holder's identity (server-decided, FR-L1).
-- [ ] Re-acquire by the current holder renews `lock_expires_at` (heartbeat, FR-L3).
-- [ ] After the TTL with no heartbeat, the lock is claimable by anyone (FR-L4).
-- [ ] A public-note PATCH without a held lock → **409**; with the lock → **200**.
+- [x] Re-acquire by the current holder renews `lock_expires_at` (heartbeat, FR-L3).
+- [x] After the TTL with no heartbeat, the lock is claimable by anyone (FR-L4).
+- [x] A public-note PATCH without a held lock → **409**; with the lock → **200**.
 
 **Notes.** No persistent-draft concept (out of MVP scope): on a lost conflict we
 simply inform that the latest edits could not be saved (§3.1). Never a hard error.
@@ -95,8 +113,8 @@ simply inform that the latest edits could not be saved (§3.1). Never a hard err
   show **who** is editing and whether the lock is stale.
 
 **Acceptance criteria**
-- [ ] `GET /api/notes/{id}` reports the live lock holder + expiry.
-- [ ] A stale lock is distinguishable (expiry in the past) so the front can offer
+- [x] `GET /api/notes/{id}` reports the live lock holder + expiry.
+- [x] A stale lock is distinguishable (expiry in the past) so the front can offer
   takeover.
 
 **Notes.** This is the read-only **short-poll** source (validated transport). SSE
@@ -120,11 +138,11 @@ could replace it later without changing this payload.
 - Private notes: no lock; the hook is a no-op (editing is always allowed).
 
 **Acceptance criteria**
-- [ ] Opening an already-locked public note → read-only with the holder shown.
-- [ ] The lock is renewed ~every 20 s while editing; leaving releases it promptly.
-- [ ] In read-only, the banner updates within one poll interval when the other user
+- [x] Opening an already-locked public note → read-only with the holder shown.
+- [x] The lock is renewed ~every 20 s while editing; leaving releases it promptly.
+- [x] In read-only, the banner updates within one poll interval when the other user
   releases / the lock expires.
-- [ ] The heartbeat is independent of content autosave (E4-S6).
+- [x] The heartbeat is independent of content autosave (E4-S6).
 
 **Notes.** Poll interval ~10–15 s is a deliberate MVP trade-off (calm, cheap). SSE
 is a documented later upgrade.
@@ -150,10 +168,10 @@ is a documented later upgrade.
   par X »** line on **desktop and mobile**.
 
 **Acceptance criteria**
-- [ ] All 4 states reproduce the mockup (colors + exact copy), light + dark.
-- [ ] Locked → inputs disabled; takeover button appears once the lock is free.
-- [ ] Conflict → "Passer en lecture seule" switches the loser to read-only.
-- [ ] "Dernière édition par X" shown on desktop and mobile.
+- [x] All 4 states reproduce the mockup (colors + exact copy), light + dark.
+- [x] Locked → inputs disabled; takeover button appears once the lock is free.
+- [x] Conflict → "Passer en lecture seule" switches the loser to read-only.
+- [x] "Dernière édition par X" shown on desktop and mobile.
 
 **Notes.** Banner is `role="status"` (aria-live) — verified in E8-S3. Frozen copy:
 HANDOFF §7 "Lock".
@@ -172,10 +190,10 @@ HANDOFF §7 "Lock".
   read-only disables inputs; takeover/read-only actions call the hook.
 
 **Acceptance criteria**
-- [ ] Atomic single-winner acquisition tested (FR-L1).
-- [ ] Heartbeat/expiry/reclaim tested (FR-L3/L4).
-- [ ] Public-note save enforcement tested (FR-L2).
-- [ ] 4 banner states tested; CI green.
+- [x] Atomic single-winner acquisition tested (FR-L1).
+- [x] Heartbeat/expiry/reclaim tested (FR-L3/L4).
+- [x] Public-note save enforcement tested (FR-L2).
+- [x] 4 banner states tested; CI green.
 
 **Notes.** These tests protect the "zero lost edit" metric (PRD §8).
 
@@ -183,8 +201,8 @@ HANDOFF §7 "Lock".
 
 ## Definition of "E5 done"
 
-- [ ] The 4 lock states are reproduced faithfully (yours / locked / expired / conflict).
-- [ ] Conflict decided **server-side** via atomic conditional update (no CRDT/OT).
-- [ ] Read-only updates in near real-time via short-polling; takeover after expiry.
-- [ ] Public-note saves require a held lock; private notes edit lock-free.
-- [ ] Lock concurrency tests green in CI.
+- [x] The 4 lock states are reproduced faithfully (yours / locked / expired / conflict).
+- [x] Conflict decided **server-side** via atomic conditional update (no CRDT/OT).
+- [x] Read-only updates in near real-time via short-polling; takeover after expiry.
+- [x] Public-note saves require a held lock; private notes edit lock-free.
+- [x] Lock concurrency tests green in CI.

@@ -10,9 +10,12 @@ import type { Visibility } from '../../api/notes'
 export function VisibilityToggle({
   visibility,
   onChange,
+  disabled = false,
 }: {
   visibility: Visibility
   onChange: (visibility: Visibility) => void
+  /** Read-only mode (E5): the switch is visible but inert. */
+  disabled?: boolean
 }) {
   const [confirming, setConfirming] = useState(false)
   const isPublic = visibility === 'PUBLIC'
@@ -24,7 +27,13 @@ export function VisibilityToggle({
 
   return (
     <>
-      <button type="button" className="kp-visibility" aria-pressed={isPublic} onClick={toggle}>
+      <button
+        type="button"
+        className="kp-visibility"
+        aria-pressed={isPublic}
+        disabled={disabled}
+        onClick={toggle}
+      >
         <span
           className={`kp-visibility__toggle${isPublic ? ' kp-visibility__toggle--on' : ''}`}
           aria-hidden="true"

@@ -55,10 +55,11 @@ export function useAutosave(save: () => Promise<boolean>) {
     timerRef.current = window.setTimeout(run, AUTOSAVE_DELAY_MS)
   }, [run])
 
-  /** Save now (blur / close) — no-op when there is nothing unsaved. */
-  const flush = useCallback(() => {
-    void run()
-  }, [run])
+  /** Save now (blur / close) — no-op when there is nothing unsaved. The
+   *  returned promise resolves once the write settles, so closing the editor
+   *  can wait for it before releasing the lock (E5 — a release that overtakes
+   *  the last save would 409 it). */
+  const flush = useCallback(() => run(), [run])
 
   // Editor closed with a pending edit: fire the save; the request outlives
   // the component (an in-flight save already carries the latest draft).

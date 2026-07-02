@@ -75,6 +75,13 @@ class NotePatch(BaseModel):
     visibility: Visibility | None = None
 
 
+class LockedBy(BaseModel):
+    """Who holds the single-editor lock — enough for « Bob est en cours d'édition »."""
+
+    id: str
+    display_name: str
+
+
 class NoteOut(BaseModel):
     id: str
     title: str
@@ -86,3 +93,8 @@ class NoteOut(BaseModel):
     author_name: str
     created_at: datetime
     updated_at: datetime
+    # Single-editor lock state (E5-S3) — the read-only short-poll source. A
+    # stale lock (expiry in the past) is reported as-is so the front can offer
+    # the takeover; both are null when unlocked.
+    locked_by: LockedBy | None = None
+    lock_expires_at: datetime | None = None

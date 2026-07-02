@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { NoteOut } from '../api/notes'
@@ -37,6 +37,8 @@ function note(overrides: Partial<NoteOut> = {}): NoteOut {
     author_name: 'Marie',
     created_at: '2026-07-01T10:00:00',
     updated_at: new Date(Date.now() - 5_000).toISOString(),
+    locked_by: null,
+    lock_expires_at: null,
     ...overrides,
   }
 }
@@ -60,12 +62,25 @@ function stubFetch(routes: Record<string, Handler>) {
   return mock
 }
 
+/** Lock route stub: POST grants the lock to ME, DELETE releases (E5). */
+function grantLock(current: NoteOut): Handler {
+  return (init) =>
+    init?.method === 'DELETE'
+      ? new Response(null, { status: 204 })
+      : json(200, {
+          ...current,
+          locked_by: { id: ME.id, display_name: ME.display_name },
+          lock_expires_at: new Date(Date.now() + 60_000).toISOString(),
+        })
+}
+
 /** Editor stub: GET returns the note, PATCH echoes the merged payload. */
 function stubEditor(current: NoteOut, extra: Record<string, Handler> = {}) {
   const patches: Array<Record<string, unknown>> = []
   stubFetch({
     '/api/auth/me': () => json(200, ME),
     '/api/notes?tab=mine': () => json(200, [current]),
+    [`/api/notes/${current.id}/lock`]: grantLock(current),
     [`/api/notes/${current.id}`]: (init) => {
       if (init?.method === 'PATCH') {
         const patch = JSON.parse(String(init.body)) as Record<string, unknown>
@@ -88,7 +103,11 @@ function renderEditor(id = 'n-repas') {
 }
 
 async function editorLoaded() {
-  return await screen.findByLabelText('Titre de la note')
+  // Loaded *and* editable: on a public note the fields stay disabled until the
+  // lock acquisition (E5) resolves.
+  const title = await screen.findByLabelText('Titre de la note')
+  await waitFor(() => expect(title).toBeEnabled())
+  return title
 }
 
 describe('NoteEditor', () => {
@@ -153,6 +172,7 @@ describe('NoteEditor', () => {
     const current = note()
     stubFetch({
       '/api/auth/me': () => json(200, ME),
+      [`/api/notes/${current.id}/lock`]: grantLock(current),
       [`/api/notes/${current.id}`]: (init) => {
         if (init?.method === 'PATCH') {
           return new Promise<Response>((resolve) => {

@@ -14,6 +14,8 @@ interface BlockListProps {
   onChange: (blocks: EditorBlock[]) => void
   /** Immediate save on blur (E4-S6). */
   onFlush: () => void
+  /** Read-only mode (E5): fields disabled, no checkbox insertion. */
+  readOnly?: boolean
 }
 
 function autosize(el: HTMLTextAreaElement | null) {
@@ -22,7 +24,7 @@ function autosize(el: HTMLTextAreaElement | null) {
   el.style.height = `${el.scrollHeight}px`
 }
 
-export function BlockList({ blocks, onChange, onFlush }: BlockListProps) {
+export function BlockList({ blocks, onChange, onFlush, readOnly = false }: BlockListProps) {
   const rootRef = useRef<HTMLDivElement>(null)
   // Focus follows a freshly inserted box (or the neighbor of a removed one).
   const pendingFocus = useRef<string | null>(null)
@@ -74,6 +76,7 @@ export function BlockList({ blocks, onChange, onFlush }: BlockListProps) {
             value={block.text}
             placeholder={blocks.length === 1 && block.text === '' ? 'Écris ta note…' : undefined}
             aria-label="Paragraphe"
+            disabled={readOnly}
             ref={autosize}
             onChange={(e) => {
               autosize(e.currentTarget)
@@ -88,6 +91,7 @@ export function BlockList({ blocks, onChange, onFlush }: BlockListProps) {
               className="kp-blocks__box"
               checked={block.checked}
               aria-label={block.text === '' ? 'Case à cocher' : block.text}
+              disabled={readOnly}
               onChange={(e) => replace(i, { ...block, checked: e.target.checked })}
               onBlur={onFlush}
             />
@@ -96,8 +100,9 @@ export function BlockList({ blocks, onChange, onFlush }: BlockListProps) {
               data-block={block.id}
               className={`kp-blocks__label${block.checked ? ' kp-blocks__label--done' : ''}`}
               value={block.text}
-              placeholder="Nouvel élément"
+              placeholder={readOnly ? undefined : 'Nouvel élément'}
               aria-label="Intitulé de la case"
+              disabled={readOnly}
               onChange={(e) => replace(i, { ...block, text: e.target.value })}
               onBlur={onFlush}
               onKeyDown={(e) => {
@@ -114,16 +119,18 @@ export function BlockList({ blocks, onChange, onFlush }: BlockListProps) {
         ),
       )}
 
-      <button
-        type="button"
-        className="kp-blocks__insert"
-        onClick={() => insertCheckAt(blocks.length)}
-      >
-        <span className="kp-blocks__insert-box" aria-hidden="true">
-          +
-        </span>
-        Insérer une case à cocher
-      </button>
+      {!readOnly && (
+        <button
+          type="button"
+          className="kp-blocks__insert"
+          onClick={() => insertCheckAt(blocks.length)}
+        >
+          <span className="kp-blocks__insert-box" aria-hidden="true">
+            +
+          </span>
+          Insérer une case à cocher
+        </button>
+      )}
     </div>
   )
 }

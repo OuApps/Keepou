@@ -10,7 +10,7 @@
  */
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '../auth/storage'
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? ''
+export const BASE_URL = import.meta.env.VITE_API_URL ?? ''
 
 /** Emitted when the bearer session is invalid (or the account disabled). */
 export const SESSION_EXPIRED_EVENT = 'keepou:session-expired'
