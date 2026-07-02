@@ -11,4 +11,4 @@ Quality: `uv run ruff check .` · `uv run ruff format .` · `uv run ty check` ·
 
 `requirements.txt` is generated from `uv.lock` (`uv export --no-dev`) for deployment.
 
-Scaffold; business logic is implemented epic by epic (see `../EPICS.md` and `../stories/`).
+Scaffold; business logic is implemented epic by epic (see `../docs/EPICS.md` and `../docs/stories/`).

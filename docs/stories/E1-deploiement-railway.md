@@ -36,7 +36,7 @@ Railway project "Keepou"
 
 **Status.** All **code & config** is in the repo (S2, S3, S4, S5, S6, S8): psycopg driver
 + URL normalization, strict CORS, the two `railway.json` service configs, the `serve`
-static server, and the [deployment runbook](../docs/DEPLOY.md). What remains is
+static server, and the [deployment runbook](../DEPLOY.md). What remains is
 **dashboard-only** provisioning that can't live in the repo — creating the Railway
 project + Postgres (S1), the two services and their domains (S3/S5), and enabling
 auto-deploy (S7) — plus the live verification of S3–S6 on the first deploy. Follow
@@ -167,7 +167,7 @@ header, with CORS allowing the web origin (S6).
 - [x] The API only accepts the configured web origin(s) (strict CORS, `allow_credentials=False`) — `app/main.py`, covered by `tests/test_cors.py`.
 - [ ] A disabled account is rejected on its next request (the server re-checks `status`). *(E2 — needs `get_current_user`.)*
 
-**Notes.** Decision recorded in [`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md) §8: JWT bearer for the MVP; a httpOnly same-site cookie is a **documented later upgrade** (needs a custom domain). Impacts E2 (token issuance/validation). The CORS/credentials posture is done now; the token-dependent criteria are satisfied in E2.
+**Notes.** Decision recorded in [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md) §8: JWT bearer for the MVP; a httpOnly same-site cookie is a **documented later upgrade** (needs a custom domain). Impacts E2 (token issuance/validation). The CORS/credentials posture is done now; the token-dependent criteria are satisfied in E2.
 
 ---
 

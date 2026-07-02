@@ -7,14 +7,18 @@ version history, access via an admin-managed **allowlist**. Responsive PWA
 
 > This repository starts from the mockups validated with a designer. The design is **frozen** and
 > serves as the visual source of truth. Implementation proceeds **epic by epic** — see
-> [`EPICS.md`](./EPICS.md).
+> [`docs/EPICS.md`](./docs/EPICS.md).
 
 ## Repository structure
 
 ```
 .
-├── EPICS.md          # Macro breakdown into epics (dev entry point)
-├── docs/             # Product & architecture specs (PRD, ARCHITECTURE)
+├── docs/             # Specs, epics & stories (dev entry point)
+│   ├── PRD.md               # Product requirements
+│   ├── ARCHITECTURE.md      # System design (data model, auth, lock, history, API, deploy)
+│   ├── DEPLOY.md            # Railway deployment runbook
+│   ├── EPICS.md             # Macro breakdown into epics
+│   └── stories/             # Detailed stories per epic (E0…E9)
 ├── design/           # Validated mockups + handoff (visual SOURCE OF TRUTH)
 │   ├── HANDOFF.md            # Tokens, behaviors, data model, API, French UI copy
 │   ├── claude.md            # Non-negotiable product rules
@@ -41,7 +45,8 @@ version history, access via an admin-managed **allowlist**. Responsive PWA
 | [`docs/PRD.md`](./docs/PRD.md) | Product vision, personas, scope, functional requirements |
 | [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | System design, data model, auth, locking, history, API, deployment |
 | [`docs/DEPLOY.md`](./docs/DEPLOY.md) | Railway deployment runbook: services, env variables, migrations, rollback |
-| [`EPICS.md`](./EPICS.md) | Macro breakdown into epics (dev entry point) |
+| [`docs/EPICS.md`](./docs/EPICS.md) | Macro breakdown into epics (dev entry point) |
+| [`docs/stories/`](./docs/stories/) | Detailed stories per epic (E0…E9), with acceptance criteria |
 | [`design/HANDOFF.md`](./design/HANDOFF.md) | Design tokens, behaviors, data model, API, French UI copy |
 
 ## Getting started (scaffold)

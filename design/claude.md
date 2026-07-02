@@ -3,7 +3,7 @@
 > This file is read at the start of every session. It sets the frame. The exhaustive detail of screens, tokens, and behaviors lives in **`HANDOFF.md`** — read it before writing any UI code.
 
 ## Repository language
-- **The working language of this repository is English.** All `.md` deliverables (READMEs, `EPICS.md`, stories, `docs/`, this file) and all code comments are written in **English**.
+- **The working language of this repository is English.** All `.md` deliverables (READMEs, `docs/` — incl. `docs/EPICS.md` and `docs/stories/` —, this file) and all code comments are written in **English**.
 - **Exception — the product UI copy stays French.** Keepou's users are a small francophone community, so every user-facing string in the app (and the "copy FR" section of `HANDOFF.md`) stays in **French**, verbatim. Translate the documentation, never the UI strings.
 - The design bundle transcript `design/chats/chat1.md` is a historical record of the design conversation and is kept in its original language.
 

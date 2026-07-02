@@ -2,7 +2,7 @@
 
 How to deploy, operate and troubleshoot Keepou on [Railway](https://railway.com).
 Covers epic **E1** (CD-first deployment). Read alongside
-[`stories/E1-deploiement-railway.md`](../stories/E1-deploiement-railway.md).
+[`stories/E1-deploiement-railway.md`](./stories/E1-deploiement-railway.md).
 
 > **What is code vs. dashboard.** The repository already ships everything code-side:
 > the psycopg driver, URL normalization, strict CORS, and the two `railway.json`
