@@ -6,7 +6,7 @@
 > Estimation convention: **S** (≤ ½ day), **M** (1–2 days), **L** (3+ days).
 > All these stories are `to do` (nothing is built yet).
 
-**Reference docs.** `EPICS.md` (E9), `docs/ARCHITECTURE.md` §10 (backups), PRD Goals
+**Reference docs.** `docs/EPICS.md` (E9), `docs/ARCHITECTURE.md` §10 (backups), PRD Goals
 ("data is safe"). **Depends on** E1 (the DB must be deployed). Wire it **as soon as
 the DB is live**, ideally before real user data accumulates.
 
