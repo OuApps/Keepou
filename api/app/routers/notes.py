@@ -1,7 +1,7 @@
 """
 Notes — CRUD, lock, versions, restore.
 
-Planned endpoints (handoff §5), implemented in E2 (CRUD), E4 (lock), E5 (versions):
+Planned endpoints (handoff §5), implemented in E3 (CRUD), E5 (lock), E6 (versions):
   GET    /api/notes?tab=mine|public
   POST   /api/notes
   GET    /api/notes/{id}
