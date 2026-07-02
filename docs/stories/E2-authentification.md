@@ -89,7 +89,7 @@ bearer tokens, plus the FastAPI dependencies used by every protected route.
 - [ ] `require_admin` refuses a `MEMBER` with **403**.
 
 **Notes.** `SESSION_SECRET` must be a strong value in prod (not the `.env.example`
-one — see `docs/DEPLOY.md`). No session table (stateless JWT, ARCHITECTURE §8).
+one). No session table (stateless JWT, ARCHITECTURE §8).
 
 ---
 

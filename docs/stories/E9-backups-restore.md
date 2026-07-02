@@ -67,7 +67,7 @@ exposure.
 - Provision a **Railway scheduled/cron service** (dashboard) that runs the E9-S1
   script — e.g. **daily**. It uses the project's **internal** `DATABASE_URL`
   reference (DB stays private) + the Scaleway secrets as service variables.
-- Document the schedule + the exact command in `docs/DEPLOY.md`.
+- Document the schedule + the exact command in a deployment/ops doc.
 - (Nice-to-have) a **failure alert** (Railway notification / webhook) if a run fails.
 
 **Acceptance criteria**
@@ -109,8 +109,8 @@ in the *tested* recoverability, not volume.
 once.
 
 **Tasks**
-- Write the **restore procedure** in the runbook (`docs/DEPLOY.md` or a dedicated
-  section): download a dump from Scaleway → `pg_restore`/`psql` into a **fresh**
+- Write the **restore procedure** in a dedicated ops/runbook doc: download a dump
+  from Scaleway → `pg_restore`/`psql` into a **fresh**
   database → `alembic upgrade head` if needed → verify (row counts / a smoke read).
 - **Perform it once for real** and record: the restore **time** and the **data-loss
   window** (= the backup interval).
