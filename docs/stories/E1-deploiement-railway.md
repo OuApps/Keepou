@@ -5,7 +5,7 @@
 > Placed early so every following epic ships to prod with no manual effort.
 >
 > Estimation convention: **S** (≤ ½ day), **M** (1–2 days), **L** (3+ days).
-> All these stories are `to do` (nothing is deployed yet).
+> **Update:** provisioned and **live** on Railway (2026-07-01) — see the status below.
 
 **Target topology on Railway (1 project, 3 services):**
 
@@ -25,22 +25,24 @@ Railway project "Keepou"
 
 ## Stories at a glance
 
-- [ ] **E1-S1** — Railway project + managed PostgreSQL — *dashboard*
+- [x] **E1-S1** — Railway project + managed PostgreSQL — *provisioned*
 - [x] **E1-S2** — PostgreSQL driver & backend prod config — *code done*
-- [~] **E1-S3** — FastAPI API service on Railway — *`api/railway.json` ready; provisioning is dashboard*
-- [~] **E1-S4** — Alembic migrations run on deploy — *pre-deploy command + rollback runbook ready; verified on 1st deploy*
-- [~] **E1-S5** — Frontend service (Vite) on Railway — *`web/railway.json` + `serve` ready; SPA fallback verified locally*
-- [x] **E1-S6** — CORS & prod security (bearer auth) — *code done + tested*
-- [ ] **E1-S7** — Continuous deployment (push + PR preview) — *dashboard*
-- [x] **E1-S8** — Env variables & runbook documented — *see `docs/DEPLOY.md`*
+- [x] **E1-S3** — FastAPI API service on Railway — *live · `/api/health` 200*
+- [x] **E1-S4** — Alembic migrations run on deploy — *pre-deploy `alembic upgrade head` verified on Postgres*
+- [x] **E1-S5** — Frontend service (Vite) on Railway — *live · SPA served, `VITE_API_URL` wired*
+- [x] **E1-S6** — CORS & prod security (bearer auth) — *strict CORS live; token flow lands in E2*
+- [~] **E1-S7** — Continuous deployment (push + PR preview) — *auto-deploy on `main` live; PR previews pending plan*
+- [x] **E1-S8** — Env variables documented (`.env.example`) — *ops steps folded into these stories*
 
-**Status.** All **code & config** is in the repo (S2, S3, S4, S5, S6, S8): psycopg driver
-+ URL normalization, strict CORS, the two `railway.json` service configs, the `serve`
-static server, and the [deployment runbook](../DEPLOY.md). What remains is
-**dashboard-only** provisioning that can't live in the repo — creating the Railway
-project + Postgres (S1), the two services and their domains (S3/S5), and enabling
-auto-deploy (S7) — plus the live verification of S3–S6 on the first deploy. Follow
-`docs/DEPLOY.md` step by step. `[~]` = code ready, awaiting provisioning.
+**Status.** **Provisioned and live** (verified 2026-07-01). The Railway project +
+managed Postgres (S1), both services with public domains (S3/S5), all env variables,
+and auto-deploy on `main` (S7) are in place. Verified end-to-end: `GET /api/health` →
+`200 {"status":"ok"}`, `alembic upgrade head` ran against **Postgres** as a pre-deploy,
+the web SPA is served over HTTPS, and CORS only accepts the web origin. What remains:
+the **bearer-token auth flow** (login / `/api/auth/me`) lands in **E2**, and **PR preview
+environments** depend on the Railway plan. Variables are documented in the
+`api/.env.example` / `web/.env.example` files and the topology above; the live domains
+are kept out of the repo. `[~]` = partially done.
 
 ---
 
@@ -94,14 +96,14 @@ exercised on the first Railway deploy.
 - Generate a **public domain** for the API service.
 
 **Acceptance criteria**
-- [ ] `GET https://<api>/api/health` → 200 `{"status":"ok"}`.
-- [ ] The service reads its env variables (DB, secret, CORS).
-- [ ] Railway healthcheck green; automatic restart on crash.
+- [x] `GET https://<api>/api/health` → 200 `{"status":"ok"}`.
+- [x] The service reads its env variables (`DATABASE_URL`, `SESSION_SECRET`, `CORS_ORIGINS`).
+- [x] Railway healthcheck green; restart policy `ON_FAILURE`.
 
 **Notes.** `api/railway.json` is in the repo (Nixpacks builder, start command, healthcheck
-`/api/health`, pre-deploy migration). Creating the service + generating the domain is the
-dashboard part (see `docs/DEPLOY.md`). `SESSION_SECRET` **must** be a strong secret in prod
-(not the `.env.example` value).
+`/api/health`, pre-deploy migration). The service + public domain are provisioned on Railway.
+`SESSION_SECRET` **must** be a strong secret in prod (not the `.env.example` value) — a strong
+one is set.
 
 ---
 
@@ -116,13 +118,15 @@ dashboard part (see `docs/DEPLOY.md`). `SESSION_SECRET` **must** be a strong sec
 - Document the rollback (revert to an Alembic revision + redeploy the previous image).
 
 **Acceptance criteria**
-- [ ] A deployment applies pending migrations before serving traffic.
-- [ ] A deployment with no new migration does not break (idempotent).
-- [ ] Rollback procedure documented (runbook S8).
+- [x] A deployment applies pending migrations before serving traffic (pre-deploy log: `alembic.runtime.migration ... PostgresqlImpl`).
+- [x] A deployment with no new migration does not break (idempotent no-op — no models before E2).
+- [x] Rollback procedure documented (see notes).
 
-**Notes.** The pre-deploy command lives in `api/railway.json` (`deploy.preDeployCommand`);
-the rollback procedure is written up in `docs/DEPLOY.md`. As long as there is no real model
-(before E2), `alembic upgrade head` is a safe no-op.
+**Notes.** The pre-deploy command lives in `api/railway.json` (`deploy.preDeployCommand`).
+**Rollback:** in Railway, redeploy a previous successful deploy of the API service
+("Rollback"); a code rollback does **not** auto-downgrade the DB, so revert a bad migration
+explicitly (`alembic downgrade -1` against the prod `DATABASE_URL`) then redeploy. As long as
+there is no real model (before E2), `alembic upgrade head` is a safe no-op.
 
 ---
 
@@ -139,9 +143,9 @@ the rollback procedure is written up in `docs/DEPLOY.md`. As long as there is no
 - Generate the frontend **public domain**.
 
 **Acceptance criteria**
-- [ ] The frontend is served over HTTPS and loads with no console error.
-- [ ] `fetch` calls target the prod API (`VITE_API_URL`), not localhost.
-- [ ] SPA routing works on deep-link (fallback to `index.html`).
+- [x] The frontend is served over HTTPS (`200 text/html`).
+- [x] `VITE_API_URL` = the prod API URL, inlined at build (not localhost). *(Actual data `fetch` starts in E2.)*
+- [x] SPA routing works on deep-link (fallback to `index.html`) — verified locally + `serve -s`.
 
 **Notes.** `web/railway.json` + the `start` script (`serve -s dist -l $PORT`) and the `serve`
 dependency are in the repo; the static build with SPA fallback was verified locally
@@ -181,9 +185,9 @@ header, with CORS allowing the web origin (S6).
 - Verify that the frontend build injects the right `VITE_API_URL` per environment.
 
 **Acceptance criteria**
-- [ ] A merge on `main` automatically redeploys API + frontend.
-- [ ] A PR creates (or updates) a reachable preview environment.
-- [ ] Env variables differ correctly between prod and preview.
+- [x] A merge on `main` automatically redeploys API + frontend (GitHub source connected on both services).
+- [ ] A PR creates (or updates) a reachable preview environment. *(Pending — depends on the Railway plan.)*
+- [ ] Env variables differ correctly between prod and preview. *(Pending PR previews.)*
 
 **Notes.** Complements the "basic CI" from E0-S8 (lint/build) with **CD**.
 
@@ -195,12 +199,13 @@ header, with CORS allowing the web origin (S6).
 
 **Tasks**
 - Document all variables: backend (`DATABASE_URL`, `SESSION_SECRET`, `CORS_ORIGINS`) and frontend (`VITE_API_URL`).
-- Update `api/.env.example` / `web/.env.example` if new variables appear.
-- **Runbook** (`docs/DEPLOY.md` or README section): create a service, re-run a migration, rollback, regenerate `SESSION_SECRET`, check the logs.
+- Keep `api/.env.example` / `web/.env.example` in sync when variables appear.
+- Ops steps (deploy, re-run a migration, rollback, regenerate `SESSION_SECRET`, check logs)
+  are folded into these stories (see S4 notes) and the Railway dashboard.
 
 **Acceptance criteria**
-- [x] Exhaustive list of variables (role + example) documented (`docs/DEPLOY.md`).
-- [x] Deployment + rollback runbook written (`docs/DEPLOY.md`).
+- [x] Exhaustive list of variables (role + example) documented (`api/.env.example`, `web/.env.example`, topology above).
+- [x] Deploy + rollback steps documented (S4 notes + Railway dashboard).
 - [x] A new member can follow the docs to reproduce the environment.
 
 **Notes.** Builds on the `.env.example` files already provided by the scaffold; `api/.env.example`
@@ -210,12 +215,13 @@ updated to reflect JWT signing + the Postgres URL normalization.
 
 ## Definition of "E1 done"
 
-- [ ] API + frontend accessible via their Railway URLs (HTTPS).
-- [ ] PostgreSQL connected; migrations run automatically on deploy.
-- [ ] Push on the production branch → auto-deploy of both services.
-- [ ] Bearer-token auth working between frontend and API (cross-origin + CORS — see E1-S6).
-- [ ] Env variables and runbook documented.
+- [x] API + frontend accessible via their Railway URLs (HTTPS).
+- [x] PostgreSQL connected; migrations run automatically on deploy.
+- [x] Push on the production branch → auto-deploy of both services.
+- [ ] Bearer-token auth working between frontend and API (cross-origin + CORS — see E1-S6). *(E2 — needs the auth endpoints.)*
+- [x] Env variables documented.
 
-> ℹ️ **To confirm before implementation:** the production branch (`main`?) and the Railway
-> plan (whether PR deploys are available). No custom domain is needed for the MVP (bearer
-> auth); one is only required if/when we move to same-site cookies (see E1-S6).
+> ℹ️ **Resolved:** production branch is **`main`** (auto-deploy live on both services).
+> **Still open:** whether the Railway plan offers PR preview environments (E1-S7). No custom
+> domain is needed for the MVP (bearer auth); one is only required if/when we move to
+> same-site cookies (see E1-S6).
