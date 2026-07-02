@@ -335,6 +335,8 @@ service points at a **Root Directory** and listens on `$PORT`.
   | `DATABASE_URL` | api | Postgres connection (from the Railway plugin) |
   | `SESSION_SECRET` | api | Signs the access/refresh JWTs (strong value in prod) |
   | `CORS_ORIGINS` | api | Allowed web origin(s) |
+  | `ACCESS_TOKEN_TTL_MINUTES` | api | *(optional)* access-token TTL — default 15 min |
+  | `REFRESH_TOKEN_TTL_DAYS` | api | *(optional)* refresh-token TTL — default 30 days |
   | `VITE_API_URL` | web | Public API base URL, inlined **at build time** |
 
 > `VITE_API_URL` is baked into the static build, so changing it requires a

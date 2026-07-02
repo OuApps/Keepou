@@ -17,6 +17,7 @@ dependencies = [
     # PostgreSQL driver (prod on Railway). Dev stays on SQLite; the Railway
     # `postgresql://` URL is normalized to `postgresql+psycopg://` in app/config.py.
     "psycopg[binary]>=3.2,<4.0",
+    "pyjwt>=2.9,<3.0",
 ]
 
 [dependency-groups]

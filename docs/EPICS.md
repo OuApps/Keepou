@@ -9,9 +9,9 @@
 > Non-negotiable product rules: `design/claude.md`.
 
 **Progress** — `[x]` epic shipped · `[ ]` not yet · 🔨 in progress · ✅ stories detailed · ⏳ stories TBD:
-- [ ] 🔨 **E0** — Foundations & design system · ✅ detailed → [`stories/E0-fondations.md`](./stories/E0-fondations.md) — *7/8 stories done (S3's 1st migration → E2)*
-- [ ] 🔨 **E1** — Railway deployment · ✅ detailed → [`stories/E1-deploiement-railway.md`](./stories/E1-deploiement-railway.md) — *live on Railway (S1/S3/S4/S5 done, auto-deploy on `main`); remaining: bearer-auth flow (E2) + PR previews (S7)*
-- [ ] **E2** — Authentication & allowlist · ✅ detailed → [`stories/E2-authentification.md`](./stories/E2-authentification.md)
+- [x] **E0** — Foundations & design system · ✅ detailed → [`stories/E0-fondations.md`](./stories/E0-fondations.md) — *shipped (S3's 1st migration landed with E2-S1)*
+- [ ] 🔨 **E1** — Railway deployment · ✅ detailed → [`stories/E1-deploiement-railway.md`](./stories/E1-deploiement-railway.md) — *live on Railway (S1/S3/S4/S5 done, auto-deploy on `main`); bearer-auth endpoints shipped (E2) — verify in prod after the next deploy; remaining: PR previews (S7)*
+- [x] **E2** — Authentication & allowlist · ✅ detailed → [`stories/E2-authentification.md`](./stories/E2-authentification.md) — *shipped (bootstrap admin, allowlist gate, JWT bearer, login/register/denial screens, tests)*
 - [ ] **E3** — Board & note management · ✅ detailed → [`stories/E3-board-notes.md`](./stories/E3-board-notes.md)
 - [ ] **E4** — Note editor · ✅ detailed → [`stories/E4-editeur-note.md`](./stories/E4-editeur-note.md)
 - [ ] **E5** — Single-editor lock & real-time · ✅ detailed → [`stories/E5-verrou-temps-reel.md`](./stories/E5-verrou-temps-reel.md) — *real-time = short-polling*
@@ -329,10 +329,11 @@ end-to-end at least once** (runbook written).
 
 ## Next step
 
-**All epics are now detailed** in [`stories/`](./stories/) (E0 & E1 shipped/ready;
-E2–E9 written with acceptance criteria and technical scope). The recommended build
-order follows the critical path `E2 → E3 → E4 → E5 → E6` (with **E7** parallelizable
-after E2, **E8** hardened at the end, and **E9** wired as soon as the DB is live).
+**E0, E1 (core) and E2 are shipped**; E3–E9 are detailed in [`stories/`](./stories/)
+with acceptance criteria and technical scope. Next on the critical path: **E3 —
+Board & note management**, then `E4 → E5 → E6`. **E7** (admin) is now unblocked and
+can be parallelized; **E9** (DB backups) is recommended early now that auth opens
+the door to real user data; **E8** is hardened at the end.
 
 Two points to keep in mind:
 - **E8 archive** is deliberately **design-gated** — its story is just "voir design

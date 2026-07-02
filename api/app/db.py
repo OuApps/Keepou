@@ -1,5 +1,7 @@
 from collections.abc import Generator
+from typing import Annotated
 
+from fastapi import Depends
 from sqlmodel import Session, create_engine
 
 from app.config import settings
@@ -14,3 +16,7 @@ def get_session() -> Generator[Session, None, None]:
     """FastAPI dependency: opens one DB session per request."""
     with Session(engine) as session:
         yield session
+
+
+# Reusable dependency alias for routers (FastAPI Annotated idiom).
+SessionDep = Annotated[Session, Depends(get_session)]

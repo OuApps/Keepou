@@ -167,9 +167,9 @@ header, with CORS allowing the web origin (S6).
 - HTTPS enforced (default on Railway).
 
 **Acceptance criteria**
-- [ ] Login from the prod frontend returns tokens; `GET /api/auth/me` works with the `Authorization` header. *(E2 — needs the auth endpoints.)*
+- [ ] Login from the prod frontend returns tokens; `GET /api/auth/me` works with the `Authorization` header. *(Endpoints shipped in E2 — tick after verifying on the next prod deploy.)*
 - [x] The API only accepts the configured web origin(s) (strict CORS, `allow_credentials=False`) — `app/main.py`, covered by `tests/test_cors.py`.
-- [ ] A disabled account is rejected on its next request (the server re-checks `status`). *(E2 — needs `get_current_user`.)*
+- [x] A disabled account is rejected on its next request (the server re-checks `status`) — `get_current_user` shipped in E2, covered by `tests/test_auth.py`.
 
 **Notes.** Decision recorded in [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md) §8: JWT bearer for the MVP; a httpOnly same-site cookie is a **documented later upgrade** (needs a custom domain). Impacts E2 (token issuance/validation). The CORS/credentials posture is done now; the token-dependent criteria are satisfied in E2.
 
@@ -198,7 +198,7 @@ header, with CORS allowing the web origin (S6).
 **Goal.** An ops/dev can (re)deploy and troubleshoot without guessing.
 
 **Tasks**
-- Document all variables: backend (`DATABASE_URL`, `SESSION_SECRET`, `CORS_ORIGINS`) and frontend (`VITE_API_URL`).
+- Document all variables: backend (`DATABASE_URL`, `SESSION_SECRET`, `CORS_ORIGINS`, and the optional `ACCESS_TOKEN_TTL_MINUTES` / `REFRESH_TOKEN_TTL_DAYS` from E2) and frontend (`VITE_API_URL`).
 - Keep `api/.env.example` / `web/.env.example` in sync when variables appear.
 - Ops steps (deploy, re-run a migration, rollback, regenerate `SESSION_SECRET`, check logs)
   are folded into these stories (see S4 notes) and the Railway dashboard.
@@ -218,7 +218,7 @@ updated to reflect JWT signing + the Postgres URL normalization.
 - [x] API + frontend accessible via their Railway URLs (HTTPS).
 - [x] PostgreSQL connected; migrations run automatically on deploy.
 - [x] Push on the production branch → auto-deploy of both services.
-- [ ] Bearer-token auth working between frontend and API (cross-origin + CORS — see E1-S6). *(E2 — needs the auth endpoints.)*
+- [ ] Bearer-token auth working between frontend and API (cross-origin + CORS — see E1-S6). *(Shipped in E2 — tick after verifying on the next prod deploy.)*
 - [x] Env variables documented.
 
 > ℹ️ **Resolved:** production branch is **`main`** (auto-deploy live on both services).

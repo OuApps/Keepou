@@ -1,0 +1,312 @@
+/*
+ * Keepou — auth screens (login, register, allowlist denial)
+ * Measured from `design/Keepou - Auth.dc.html`. The mockups only show the light
+ * theme; dark reuses the matching dark card-shade tokens (handoff §1) so no new
+ * palette is invented.
+ */
+
+/* Full-viewport gradient background, one shade per screen (mockup canvases). */
+.kp-auth {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+}
+
+.kp-auth--gold {
+  background: linear-gradient(170deg, #fcefcf, #f4d98c);
+}
+
+.kp-auth--avocat {
+  background: linear-gradient(170deg, #eef3d2, #d7e3a6);
+}
+
+.kp-auth--salsa {
+  background: linear-gradient(170deg, #fae0d6, #efc0ac);
+}
+
+[data-theme='dark'] .kp-auth--gold {
+  background: linear-gradient(170deg, #3a3320, #2e2a18);
+}
+
+[data-theme='dark'] .kp-auth--avocat {
+  background: linear-gradient(170deg, #2f3a22, #26301b);
+}
+
+[data-theme='dark'] .kp-auth--salsa {
+  background: linear-gradient(170deg, #3a2a22, #2e211b);
+}
+
+.kp-auth__panel {
+  width: 100%;
+  max-width: 360px;
+}
+
+.kp-auth__theme {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+/* Brand lockup above the card (mascot 72px + Fredoka wordmark). */
+.kp-auth__brand {
+  text-align: center;
+  margin-bottom: 26px;
+}
+
+.kp-auth__brand-logo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 12px rgba(46, 42, 32, 0.2));
+  margin-bottom: 12px;
+}
+
+.kp-auth__brand-name {
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 28px;
+  color: var(--ink);
+}
+
+/* Register variant: title + subtitle instead of the big brand. */
+.kp-auth__title {
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 24px;
+  color: var(--ink);
+  margin: 0;
+}
+
+.kp-auth__subtitle {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin: 4px 0 0;
+  line-height: 1.45;
+}
+
+.kp-auth__card {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 24px 22px;
+  box-shadow: 0 10px 30px -18px rgba(46, 42, 32, 0.4);
+}
+
+.kp-auth__label {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 6px;
+}
+
+.kp-auth__field {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-field);
+  padding: 0 13px;
+  margin-bottom: 15px;
+  background: var(--surface);
+}
+
+.kp-auth__field:focus-within {
+  border-color: var(--brand-gold);
+}
+
+.kp-auth__input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 11px 0;
+  font-family: var(--font-ui);
+  font-size: 14.5px;
+  color: var(--ink);
+}
+
+/* Show/hide password (eye icon on the login mockup). */
+.kp-auth__eye {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  padding: 4px;
+  margin-right: -4px;
+  cursor: pointer;
+  color: var(--ink-mute);
+}
+
+/* Submit buttons: gold gradient (login) / deep green (register). */
+.kp-auth__submit {
+  display: block;
+  width: 100%;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 15px;
+  color: #fff;
+  background: var(--grad-primary);
+  padding: 13px;
+  border-radius: var(--r-pill);
+  text-align: center;
+  box-shadow: 0 8px 18px -8px rgba(216, 144, 48, 0.7);
+  text-decoration: none;
+}
+
+.kp-auth__submit--green {
+  background: var(--brand-green);
+  box-shadow: 0 8px 18px -8px rgba(58, 81, 50, 0.6);
+}
+
+.kp-auth__submit:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+/* Bottom "switch screen" line. */
+.kp-auth__alt {
+  text-align: center;
+  margin-top: 18px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.kp-auth__alt a {
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.kp-auth__alt a:hover {
+  text-decoration: underline;
+}
+
+.kp-auth__alt--salsa a {
+  color: var(--brand-salsa);
+}
+
+.kp-auth__alt--green a {
+  color: var(--brand-green);
+}
+
+[data-theme='dark'] .kp-auth__alt--green a {
+  color: var(--brand-avocat);
+}
+
+/* Inline messages (mockup "Variantes de message"): terracotta error, gold notice. */
+.kp-auth__msg {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border-radius: var(--r-field);
+  padding: 10px 12px;
+  margin-bottom: 15px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.kp-auth__msg svg {
+  flex: none;
+}
+
+.kp-auth__msg--error {
+  background: rgba(199, 93, 67, 0.1);
+  border: 1px solid rgba(199, 93, 67, 0.25);
+  color: #a2492f;
+}
+
+.kp-auth__msg--warning {
+  background: rgba(234, 182, 76, 0.16);
+  border: 1px solid rgba(234, 182, 76, 0.4);
+  color: #9a7420;
+}
+
+[data-theme='dark'] .kp-auth__msg--error {
+  color: var(--brand-salsa);
+}
+
+[data-theme='dark'] .kp-auth__msg--warning {
+  color: var(--brand-gold);
+}
+
+/* Allowlist-denial card (« Accès non autorisé »). */
+.kp-denial {
+  background: var(--surface);
+  border-radius: 18px;
+  padding: 30px 26px;
+  box-shadow: 0 10px 30px -18px rgba(46, 42, 32, 0.4);
+  text-align: center;
+}
+
+.kp-denial__icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--r-pill);
+  background: rgba(199, 93, 67, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 18px;
+  color: var(--brand-salsa);
+}
+
+.kp-denial__title {
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 21px;
+  color: var(--ink);
+  margin: 0 0 10px;
+}
+
+.kp-denial__text {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin: 0 0 4px;
+}
+
+.kp-denial__text b {
+  color: var(--ink);
+}
+
+.kp-denial__hint {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 13px 15px;
+  margin: 18px 0;
+  text-align: left;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+.kp-denial__hint svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--brand-gold-dark);
+}
+
+@media (max-width: 640px) {
+  .kp-auth {
+    padding: 24px 16px;
+  }
+}

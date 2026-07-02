@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./keepou.db"
     session_secret: str = "dev-change-me"
     cors_origins: str = "http://localhost:5173"
+    # JWT bearer TTLs (ARCHITECTURE §8 — indicative ~15 min access / ~30 days refresh).
+    access_token_ttl_minutes: int = 15
+    refresh_token_ttl_days: int = 30
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

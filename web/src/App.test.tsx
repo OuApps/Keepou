@@ -18,14 +18,14 @@ describe('App', () => {
 
   it('renders the login screen on /login', () => {
     renderAt('/login')
-    expect(screen.getByText('Keepou')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Se connecter' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Keepou' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Se connecter' })).toBeInTheDocument()
   })
 
   it('redirects unauthenticated users from a guarded route to login', () => {
     renderAt('/')
     // No token → RequireAuth bounces / to the login screen.
-    expect(screen.getByRole('heading', { name: 'Se connecter' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Se connecter' })).toBeInTheDocument()
   })
 
   it('applies data-theme on <html> on mount', () => {
