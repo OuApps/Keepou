@@ -1,0 +1,183 @@
+import { useRef, useState, type FormEvent } from 'react'
+import { createNote, type NoteColor, type NoteOut } from '../api/notes'
+
+/**
+ * Quick composer (E3-S5) — the fastest path in the app: an input, the 5 card
+ * shades and a public toggle, faithful to `Keepou - Board.dc.html`. It only
+ * creates (POST /api/notes); full editing (blocks, autosave) is E4.
+ */
+
+// Composer swatches: the solid end-color of each light shade (Board mockup).
+const SWATCHES: Array<{ color: NoteColor; bg: string; bd: string; label: string }> = [
+  { color: 'GOLD', bg: '#F7E2AE', bd: '#EFD79E', label: 'Or' },
+  { color: 'AVOCAT', bg: '#DFEAAE', bd: '#D4E0A2', label: 'Avocat' },
+  { color: 'SALSA', bg: '#F2C7B5', bd: '#EDC0AC', label: 'Salsa' },
+  { color: 'CLAY', bg: '#ECD8BC', bd: '#E6CDA9', label: 'Argile' },
+  { color: 'TEAL', bg: '#C7DED5', bd: '#BAD7CD', label: 'Sarcelle' },
+]
+
+export function Composer({ onCreated }: { onCreated: (note: NoteOut) => void }) {
+  const [open, setOpen] = useState(false)
+  const [title, setTitle] = useState('')
+  const [color, setColor] = useState<NoteColor>('GOLD')
+  const [isPublic, setIsPublic] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const close = () => {
+    setOpen(false)
+    setTitle('')
+    setColor('GOLD')
+    setIsPublic(false)
+    setError(false)
+  }
+
+  const submit = async (e?: FormEvent) => {
+    e?.preventDefault()
+    const trimmed = title.trim()
+    if (trimmed === '' || saving) return
+    setSaving(true)
+    setError(false)
+    try {
+      const note = await createNote({
+        title: trimmed,
+        color,
+        visibility: isPublic ? 'PUBLIC' : 'PRIVATE',
+      })
+      onCreated(note)
+      close()
+      inputRef.current?.focus()
+    } catch {
+      setError(true)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    // Clicking anywhere on the composer opens it (mockup behavior) — a plain
+    // onFocus isn't enough after a create, when the input kept the focus.
+    <form
+      className="kp-composer"
+      onSubmit={submit}
+      onClick={() => {
+        setOpen(true)
+        inputRef.current?.focus()
+      }}
+    >
+      <div className="kp-composer__row">
+        <input
+          ref={inputRef}
+          className="kp-composer__input"
+          type="text"
+          placeholder="Prends une note…"
+          aria-label="Prends une note…"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onFocus={() => setOpen(true)}
+        />
+        <svg
+          className="kp-composer__hint"
+          width="20"
+          height="20"
+          viewBox="0 0 20 20"
+          aria-hidden="true"
+        >
+          <rect
+            x="3"
+            y="4"
+            width="5"
+            height="5"
+            rx="1.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          />
+          <line
+            x1="11"
+            y1="6.5"
+            x2="17"
+            y2="6.5"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+          <rect
+            x="3"
+            y="12"
+            width="5"
+            height="5"
+            rx="1.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          />
+          <line
+            x1="11"
+            y1="14.5"
+            x2="17"
+            y2="14.5"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+        </svg>
+        <button type="submit" className="kp-composer__add" disabled={saving}>
+          Ajouter
+        </button>
+      </div>
+
+      {open && (
+        <div className="kp-composer__options">
+          <div className="kp-composer__pickers">
+            <div className="kp-composer__colors" role="radiogroup" aria-label="Couleur de la note">
+              {SWATCHES.map((s) => (
+                <button
+                  key={s.color}
+                  type="button"
+                  role="radio"
+                  aria-checked={color === s.color}
+                  aria-label={s.label}
+                  className={`kp-composer__swatch${color === s.color ? ' kp-composer__swatch--active' : ''}`}
+                  style={{ background: s.bg, borderColor: s.bd }}
+                  onClick={() => setColor(s.color)}
+                />
+              ))}
+            </div>
+            <button
+              type="button"
+              className="kp-composer__visibility"
+              aria-pressed={isPublic}
+              onClick={() => setIsPublic((v) => !v)}
+            >
+              <span
+                className={`kp-composer__toggle${isPublic ? ' kp-composer__toggle--on' : ''}`}
+                aria-hidden="true"
+              >
+                <span className="kp-composer__knob" />
+              </span>
+              Public
+            </button>
+          </div>
+          <button
+            type="button"
+            className="kp-composer__close"
+            onClick={(e) => {
+              e.stopPropagation()
+              close()
+            }}
+          >
+            Fermer
+          </button>
+        </div>
+      )}
+
+      {error && (
+        <p className="kp-composer__error" role="alert">
+          La note n'a pas pu être créée. Réessaie dans un instant.
+        </p>
+      )}
+    </form>
+  )
+}

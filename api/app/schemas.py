@@ -11,7 +11,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, BeforeValidator, EmailStr, Field
 
-from app.models import Role, UserStatus
+from app.models import NoteColor, Role, UserStatus, Visibility
 
 
 def _normalize_email(value: object) -> object:
@@ -55,3 +55,34 @@ class UserOut(BaseModel):
     role: Role
     status: UserStatus
     created_at: datetime
+
+
+class NoteIn(BaseModel):
+    """Create payload — every field optional so the composer can send a title alone."""
+
+    title: str = Field(default="", max_length=200)
+    body: str = ""
+    color: NoteColor = NoteColor.GOLD
+    visibility: Visibility = Visibility.PRIVATE
+
+
+class NotePatch(BaseModel):
+    """Base update (E3): only the provided fields change; fine-grained editing is E4."""
+
+    title: str | None = Field(default=None, max_length=200)
+    body: str | None = None
+    color: NoteColor | None = None
+    visibility: Visibility | None = None
+
+
+class NoteOut(BaseModel):
+    id: str
+    title: str
+    body: str
+    color: NoteColor
+    visibility: Visibility
+    owner_id: str
+    # Display name of the owner — the Public tab shows « <auteur> · modifié <date> ».
+    author_name: str
+    created_at: datetime
+    updated_at: datetime

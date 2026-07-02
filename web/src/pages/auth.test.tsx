@@ -88,13 +88,14 @@ describe('LoginPage', () => {
           status: 'ACTIVE',
           created_at: '2026-07-02T00:00:00Z',
         }),
+      '/api/notes?tab=mine': () => json(200, []),
     })
     renderAt('/login')
     fillLogin('marie@famille-ou.fr', 'un mot de passe')
     fireEvent.click(screen.getByRole('button', { name: 'Se connecter' }))
 
     // Board reached via the guard; the avatar shows the user's initial.
-    const avatar = await screen.findByRole('button', { name: 'Se déconnecter' })
+    const avatar = await screen.findByRole('button', { name: 'Menu du compte' })
     expect(avatar).toHaveTextContent('M')
     expect(localStorage.getItem('keepou.access')).toBe('jwt-access')
     expect(localStorage.getItem('keepou.refresh')).toBe('jwt-refresh')

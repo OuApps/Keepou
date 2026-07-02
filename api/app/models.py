@@ -1,9 +1,10 @@
 """
 Keepou data model (SQLModel).
 
-Tables land story by story (E2: User + AllowlistEntry). The remaining tables
-(Note + lock, NoteVersion) and enums (NoteColor, Visibility) are **specified**
-in `design/HANDOFF.md` §4 and arrive with their epics (E3/E5/E6).
+Tables land story by story (E2: User + AllowlistEntry, E3: Note). The remaining
+table (NoteVersion) and the Note lock/archive columns are **specified** in
+`design/HANDOFF.md` §4 and arrive with their epics (E5/E6/E8) — feature-aligned
+migrations, no dead columns before their feature ships.
 
 Structural points to respect during implementation:
 - Lock carried by the Note (1 lock max) → atomic conditional update (E5).
@@ -60,3 +61,35 @@ class AllowlistEntry(SQLModel, table=True):
     email: str = Field(unique=True, index=True)
     added_by_id: str = Field(foreign_key="user.id")
     added_at: datetime = Field(default_factory=_utcnow)
+
+
+class NoteColor(StrEnum):
+    """The 5 card shades — stored as identifiers, never hex (FR-N4, handoff §1)."""
+
+    GOLD = "GOLD"
+    AVOCAT = "AVOCAT"
+    SALSA = "SALSA"
+    CLAY = "CLAY"
+    TEAL = "TEAL"
+
+
+class Visibility(StrEnum):
+    PRIVATE = "PRIVATE"
+    PUBLIC = "PUBLIC"
+
+
+class Note(SQLModel, table=True):
+    """A note: Markdown body (GFM task lists), title in its own field (handoff §3.3).
+
+    Lock columns arrive in E5, `NoteVersion` in E6, `archived` in E8 — each with
+    its own migration (feature-aligned).
+    """
+
+    id: str = Field(default_factory=_id, primary_key=True)
+    title: str = ""
+    body: str = ""  # Markdown (GFM task lists)
+    color: NoteColor = NoteColor.GOLD
+    visibility: Visibility = Visibility.PRIVATE
+    owner_id: str = Field(foreign_key="user.id", index=True)
+    created_at: datetime = Field(default_factory=_utcnow)
+    updated_at: datetime = Field(default_factory=_utcnow)  # = « dernière version enregistrée »

@@ -4,7 +4,7 @@
 > Public**; a quick composer; faithful cards (color, checklist, meta).
 >
 > Estimation convention: **S** (≤ ½ day), **M** (1–2 days), **L** (3+ days).
-> All these stories are `to do` (nothing is built yet).
+> All these stories are **done**.
 
 **Reference docs.** `design/HANDOFF.md` §3.5 (visibility) & §7, `docs/ARCHITECTURE.md`
 §3/§7, PRD FR-N1/N2/N4/N6, FR-S1/S2. Visual source of truth:
@@ -19,16 +19,16 @@ here — real editing arrives in E4.
 
 ## Stories at a glance
 
-- [ ] **E3-S1** — `Note` model & migration (core columns)
-- [ ] **E3-S2** — Notes CRUD API (`list` / `create` / `read` / `patch` / `delete`)
-- [ ] **E3-S3** — Front: board Topbar integration (search, tabs slot, avatar menu)
-- [ ] **E3-S4** — Front: TabSwitch (Mes notes / Public) + `?tab=` routing
-- [ ] **E3-S5** — Front: Composer (quick create: input + color + public toggle)
-- [ ] **E3-S6** — Front: NoteCard (5 shades, title, read-only checklist, badges)
-- [ ] **E3-S7** — Front: NoteGrid masonry (4→2) + client-side search filter
-- [ ] **E3-S8** — Tests: CRUD, tab filtering, delete permission, visibility
+- [x] **E3-S1** — `Note` model & migration (core columns)
+- [x] **E3-S2** — Notes CRUD API (`list` / `create` / `read` / `patch` / `delete`)
+- [x] **E3-S3** — Front: board Topbar integration (search, tabs slot, avatar menu)
+- [x] **E3-S4** — Front: TabSwitch (Mes notes / Public) + `?tab=` routing
+- [x] **E3-S5** — Front: Composer (quick create: input + color + public toggle)
+- [x] **E3-S6** — Front: NoteCard (5 shades, title, read-only checklist, badges)
+- [x] **E3-S7** — Front: NoteGrid masonry (4→2) + client-side search filter
+- [x] **E3-S8** — Tests: CRUD, tab filtering, delete permission, visibility
 
-**Status.** All `to do`. Reuses the E0 `Topbar`/`AppShell`/`ThemeToggle` shell.
+**Status.** All **done**. Reuses the E0 `Topbar`/`AppShell`/`ThemeToggle` shell.
 
 ---
 
@@ -44,10 +44,10 @@ here — real editing arrives in E4.
 - Alembic autogenerate + `upgrade head` (2nd real migration).
 
 **Acceptance criteria**
-- [ ] `Note` table created by a checked-in migration; color stored as an **identifier**,
+- [x] `Note` table created by a checked-in migration; color stored as an **identifier**,
   not a hex (FR-N4).
-- [ ] `owner_id` indexed; `updated_at` present (feeds "last saved version" later).
-- [ ] Migration runs clean on SQLite (dev) and is Postgres-safe.
+- [x] `owner_id` indexed; `updated_at` present (feeds "last saved version" later).
+- [x] Migration runs clean on SQLite (dev) and is Postgres-safe.
 
 **Notes.** **Feature-aligned migrations**: lock columns come in **E5**,
 `NoteVersion` in **E6**, and `archived` in **E8** (after the archive design) — each
@@ -71,11 +71,11 @@ in its own migration. No dead columns before their feature ships.
 - Pydantic `NoteIn` / `NoteOut` (include author + updated_at for the public tab).
 
 **Acceptance criteria**
-- [ ] `tab=mine` returns only the caller's notes; `tab=public` returns all members'
+- [x] `tab=mine` returns only the caller's notes; `tab=public` returns all members'
   public notes with author (FR-S2).
-- [ ] Reading a private note you don't own → **403/404**; public readable by any member.
-- [ ] `DELETE` allowed for owner or admin, refused otherwise (FR-N6).
-- [ ] Create/patch persist and echo the note back.
+- [x] Reading a private note you don't own → **403/404**; public readable by any member.
+- [x] `DELETE` allowed for owner or admin, refused otherwise (FR-N6).
+- [x] Create/patch persist and echo the note back.
 
 **Notes.** Private-note content stays shielded even from admins (ARCHITECTURE §4.2).
 Lock enforcement on public-note mutations is added in E5 (409 without a held lock).
@@ -93,9 +93,9 @@ Lock enforcement on public-note mutations is added in E5 (409 without a held loc
   **Administration** entry is added in E7 (admins only).
 
 **Acceptance criteria**
-- [ ] Topbar faithful (blur, `--border`, measurements) in light + dark.
-- [ ] Search input present; avatar menu shows the current user + logout.
-- [ ] Sticky/responsive behavior matches `Keepou - Board.dc.html`.
+- [x] Topbar faithful (blur, `--border`, measurements) in light + dark.
+- [x] Search input present; avatar menu shows the current user + logout.
+- [x] Sticky/responsive behavior matches `Keepou - Board.dc.html`.
 
 **Notes.** Reuses `ThemeToggle`/`Topbar`/`AppShell` from E0-S6.
 
@@ -110,9 +110,9 @@ Lock enforcement on public-note mutations is added in E5 (409 without a held loc
 - Drive the active board from `?tab=mine|public`; default `mine`. Fetch via E3-S2.
 
 **Acceptance criteria**
-- [ ] Switching tabs updates `?tab=` and reloads the right list.
-- [ ] Deep-linking `/?tab=public` opens the public board directly.
-- [ ] Faithful pill styling (light + dark).
+- [x] Switching tabs updates `?tab=` and reloads the right list.
+- [x] Deep-linking `/?tab=public` opens the public board directly.
+- [x] Faithful pill styling (light + dark).
 
 **Notes.** Public cards show the author badge; own cards don't need it.
 
@@ -128,9 +128,9 @@ Lock enforcement on public-note mutations is added in E5 (409 without a held loc
 - Faithful to the composer in `Keepou - Board.dc.html`.
 
 **Acceptance criteria**
-- [ ] Creating a note from the composer adds it to the board immediately.
-- [ ] Color + public toggle are applied on create.
-- [ ] Composer faithful (light + dark, desktop + mobile).
+- [x] Creating a note from the composer adds it to the board immediately.
+- [x] Color + public toggle are applied on create.
+- [x] Composer faithful (light + dark, desktop + mobile).
 
 **Notes.** Full editing (blocks, autosave) is E4; the composer only creates.
 
@@ -146,10 +146,10 @@ Lock enforcement on public-note mutations is added in E5 (409 without a held loc
   **visibility/author** badge, meta (updated_at). Click → open the editor (E4).
 
 **Acceptance criteria**
-- [ ] The 5 shades match the tokens exactly (light + dark).
-- [ ] Checkbox lines from the body render as a read-only checklist.
-- [ ] Public cards show the author; private cards don't.
-- [ ] `break-inside: avoid`; card shadow per token.
+- [x] The 5 shades match the tokens exactly (light + dark).
+- [x] Checkbox lines from the body render as a read-only checklist.
+- [x] Public cards show the author; private cards don't.
+- [x] `break-inside: avoid`; card shadow per token.
 
 **Notes.** Read-only here; the interactive editor (toggling boxes, insert) is E4.
 Parsing the body for preview can reuse `lib/markdown.ts` once E4 lands (a minimal
@@ -168,9 +168,9 @@ inline parser is fine for the card in the meantime).
   (simple text match), wired to the Topbar input.
 
 **Acceptance criteria**
-- [ ] 4 columns on desktop, 2 on mobile, matching the mockup.
-- [ ] Typing in search filters the visible cards (title + body match).
-- [ ] No layout jump / broken columns on resize.
+- [x] 4 columns on desktop, 2 on mobile, matching the mockup.
+- [x] Typing in search filters the visible cards (title + body match).
+- [x] No layout jump / broken columns on resize.
 
 **Notes.** MVP search is a **client-side filter** over the loaded set (ARCHITECTURE
 §7); a server endpoint can come later if the note count grows.
@@ -189,9 +189,9 @@ inline parser is fine for the card in the meantime).
   badge; TabSwitch changes the list; search filters.
 
 **Acceptance criteria**
-- [ ] Back tests cover tab filtering, visibility, and delete permission.
-- [ ] Front tests cover card render, tab switch, and search filter.
-- [ ] CI green.
+- [x] Back tests cover tab filtering, visibility, and delete permission.
+- [x] Front tests cover card render, tab switch, and search filter.
+- [x] CI green.
 
 **Notes.** Builds on E0-S8 + E2-S8 harnesses.
 
@@ -199,9 +199,9 @@ inline parser is fine for the card in the meantime).
 
 ## Definition of "E3 done"
 
-- [ ] You can see, create and open your notes; **Mes notes / Public** tabs work.
-- [ ] Public tab shows all members' public notes with author; visibility enforced
+- [x] You can see, create and open your notes; **Mes notes / Public** tabs work.
+- [x] Public tab shows all members' public notes with author; visibility enforced
   server-side.
-- [ ] Delete restricted to owner or admin (FR-N6).
-- [ ] Board faithful in light + dark, desktop + mobile (masonry 4→2), search filters.
-- [ ] Note CRUD + board tests green in CI.
+- [x] Delete restricted to owner or admin (FR-N6).
+- [x] Board faithful in light + dark, desktop + mobile (masonry 4→2), search filters.
+- [x] Note CRUD + board tests green in CI.
