@@ -76,7 +76,7 @@ export default function RegisterPage() {
             </div>
             <h1 className="kp-denial__title">Accès non autorisé</h1>
             <p className="kp-denial__text">
-              L’adresse <b>{deniedEmail}</b> ne figure pas sur la liste des membres autorisés de
+              L'adresse <b>{deniedEmail}</b> ne figure pas sur la liste des membres autorisés de
               cette instance Keepou.
             </p>
             <div className="kp-denial__hint">
@@ -96,7 +96,7 @@ export default function RegisterPage() {
                 />
               </svg>
               <span>
-                Demande à l’administrateur de ton instance d’ajouter ton e-mail. Tu pourras ensuite
+                Demande à l'administrateur de ton instance d'ajouter ton e-mail. Tu pourras ensuite
                 créer ton compte.
               </span>
             </div>
@@ -119,7 +119,7 @@ export default function RegisterPage() {
         <div className="kp-auth__brand">
           <h1 className="kp-auth__title">Créer un compte</h1>
           <p className="kp-auth__subtitle">
-            Keepou est une instance privée. Ton compte n’est créé que si ton e-mail figure sur la
+            Keepou est une instance privée. Ton compte n'est créé que si ton e-mail figure sur la
             liste autorisée.
           </p>
         </div>

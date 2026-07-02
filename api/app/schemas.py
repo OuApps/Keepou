@@ -7,20 +7,31 @@ HTTPException (401, 403, 409); the front only displays what the API returns
 """
 
 from datetime import datetime
+from typing import Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, BeforeValidator, EmailStr, Field
 
 from app.models import Role, UserStatus
 
 
+def _normalize_email(value: object) -> object:
+    # Emails are compared and stored lowercase (server-side allowlist match).
+    return value.strip().lower() if isinstance(value, str) else value
+
+
+NormalizedEmail = Annotated[EmailStr, BeforeValidator(_normalize_email)]
+
+
 class RegisterIn(BaseModel):
-    email: str = Field(min_length=3, max_length=254)
+    email: NormalizedEmail
+    # bcrypt_sha256 pre-hashes with SHA-256, so the whole 128 chars count
+    # (no silent truncation at bcrypt's 72-byte limit).
     password: str = Field(min_length=8, max_length=128)
     display_name: str = Field(min_length=1, max_length=80)
 
 
 class LoginIn(BaseModel):
-    email: str
+    email: NormalizedEmail
     password: str
 
 

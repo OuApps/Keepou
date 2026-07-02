@@ -25,8 +25,10 @@ def _id() -> str:
 
 
 def _utcnow() -> datetime:
-    # Timezone-aware UTC (datetime.utcnow is deprecated); stored naive-UTC in the DB.
-    return datetime.now(UTC)
+    # Naive UTC, matching the naive DateTime() columns: every timestamp in the
+    # app and the DB is UTC by convention. (datetime.utcnow is deprecated;
+    # this is its tz-safe equivalent.)
+    return datetime.now(UTC).replace(tzinfo=None)
 
 
 class Role(StrEnum):

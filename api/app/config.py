@@ -35,6 +35,18 @@ class Settings(BaseSettings):
         self.database_url = normalize_database_url(self.database_url)
         return self
 
+    @model_validator(mode="after")
+    def _require_real_secret_outside_dev(self) -> "Settings":
+        # The default secret is public (checked into .env.example): tokens signed
+        # with it are forgeable by anyone. Refuse to boot against a non-SQLite
+        # database (i.e. anything that looks like prod) without a real secret.
+        if self.session_secret == "dev-change-me" and not self.database_url.startswith("sqlite"):
+            raise ValueError(
+                "SESSION_SECRET is still the public dev default; set a strong value "
+                "before running against a non-SQLite database."
+            )
+        return self
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]

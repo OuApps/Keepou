@@ -244,7 +244,7 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
 
 | Method | Path | Purpose | Notes |
 | --- | --- | --- | --- |
-| POST | `/api/auth/register` | Create account | Allowlist-gated; bootstraps admin; `403` if not allowed; returns tokens |
+| POST | `/api/auth/register` | Create account | Allowlist-gated; bootstraps admin; `403` if not allowed; `409` if email already registered; returns tokens |
 | POST | `/api/auth/login` | Sign in | Returns `{access, refresh}`; `401` bad creds, `403` if `DISABLED` |
 | POST | `/api/auth/refresh` | Renew the access token | Takes the refresh token; `401` if invalid/expired |
 | GET | `/api/auth/me` | Current user + role | Bearer-authenticated; drives client route guards |
@@ -267,7 +267,9 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
 
 ## 8. Authentication & sessions
 
-- Passwords hashed with **bcrypt** via **passlib** — never stored in plaintext.
+- Passwords hashed with **bcrypt_sha256** via **passlib** (SHA-256 pre-hash, then
+  bcrypt) — never stored in plaintext, and long passphrases keep their full
+  entropy instead of being silently truncated at bcrypt's 72-byte limit.
 - Auth is a **stateless JWT** flow: login/register return a short-lived **access
   token** (indicative ~15 min) and a longer-lived **refresh token** (indicative
   ~30 days), both **signed** with a server secret. No session table.
@@ -348,9 +350,14 @@ service points at a **Root Directory** and listens on `$PORT`.
 - Lock, visibility and admin-role checks enforced **server-side** on every
   mutating request; the lock grant is an atomic conditional update.
 - Auth is a **signed JWT bearer token**; the API re-checks user `status` every
-  request, so **deactivation is immediate**. Tokens live in `localStorage`
-  (**XSS-exposed** — accepted MVP trade-off; a short access-token TTL bounds the
-  window). A httpOnly-cookie upgrade is documented in §8.
+  request, so **deactivation is immediate** (the disabled 403 carries
+  `code: "account_disabled"` so the client ends the session). Tokens live in
+  `localStorage` (**XSS-exposed** — accepted MVP trade-off; a short access-token
+  TTL bounds the window). A httpOnly-cookie upgrade is documented in §8.
+- The app **refuses to boot** with the public dev `SESSION_SECRET` against a
+  non-SQLite database, so a misconfigured prod deploy cannot sign forgeable
+  tokens. Login verifies against a dummy hash when the email is unknown, so
+  response latency does not reveal which accounts exist.
 - **CORS** is restricted to the exact web origin(s); no credentials are used
   (bearer token in the header), avoiding the `*`-with-credentials footgun.
 - **Last-admin guard** prevents locking everyone out of administration (FR-U5).

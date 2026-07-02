@@ -39,9 +39,17 @@ migration was deliberately delegated here). E2-S7 **replaced** the temporary
 "Entrer en mode démo" button from the E0 scaffold with the real login flow.
 Implementation notes: JWT via **PyJWT** (HS256, signed with `SESSION_SECRET`), TTLs
 configurable (`ACCESS_TOKEN_TTL_MINUTES` / `REFRESH_TOKEN_TTL_DAYS`, defaults
-15 min / 30 days); emails normalized lowercase server-side; duplicate email at
-register → **409**; the client wrapper retries a 401 once through
+15 min / 30 days); emails normalized lowercase server-side (`EmailStr`); duplicate
+email at register → **409**; the client wrapper retries a 401 once through
 `POST /api/auth/refresh` before dropping the session and returning to /login.
+Post-review hardening (PR #6): startup guard refusing the public dev
+`SESSION_SECRET` on a non-SQLite DB; passwords hashed with **bcrypt_sha256**
+(no 72-byte truncation); login timing equalized against a dummy hash (no account
+enumeration by latency); concurrent duplicate register caught (`IntegrityError`
+→ 409) and bootstrap serialized on Postgres (advisory lock); disabled-account
+403 carries `code: "account_disabled"` so the client ends the session
+mid-session too; hydration only logs out on a real 401/403 (network errors
+retry instead).
 
 ---
 

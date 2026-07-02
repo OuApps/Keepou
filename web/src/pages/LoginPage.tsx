@@ -37,7 +37,7 @@ export default function LoginPage() {
       } else if (err instanceof ApiError && err.status === 403) {
         setError({
           variant: 'warning',
-          text: 'Ton accès a été suspendu. Contacte l’administrateur.',
+          text: "Ton accès a été suspendu. Contacte l'administrateur.",
         })
       } else {
         setError({ variant: 'error', text: 'Connexion impossible. Réessaie dans un instant.' })
