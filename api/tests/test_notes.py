@@ -162,6 +162,75 @@ def test_public_note_is_editable_by_any_member(client, session) -> None:
     assert res.json()["body"] == "- [ ] Citron vert"
 
 
+def test_visibility_change_is_refused_for_non_owner_member(client, session) -> None:
+    # ARCHITECTURE §4.2: only the owner may change a note's visibility — a member
+    # editing a public note's content must not be able to flip it to private
+    # (which would remove it from everyone's board).
+    admin = bootstrap_admin(client)
+    tom = member(client, session, TOM)
+    public = create_note(client, admin, title="Sorties ciné", visibility="PUBLIC")
+
+    res = client.patch(
+        f"/api/notes/{public['id']}", json={"visibility": "PRIVATE"}, headers=auth(tom)
+    )
+    assert res.status_code == 403
+    # The note stays public and readable by the member.
+    assert client.get(f"/api/notes/{public['id']}", headers=auth(tom)).status_code == 200
+
+
+def test_visibility_change_is_refused_even_for_admin(client, session) -> None:
+    # The matrix denies visibility changes to admins too (only the owner).
+    admin = bootstrap_admin(client)
+    tom = member(client, session, TOM)
+    public = create_note(client, tom, title="Note de Tom", visibility="PUBLIC")
+
+    res = client.patch(
+        f"/api/notes/{public['id']}", json={"visibility": "PRIVATE"}, headers=auth(admin)
+    )
+    assert res.status_code == 403
+
+
+def test_member_may_echo_current_visibility_while_editing_content(client, session) -> None:
+    # Sending visibility=PUBLIC (unchanged) alongside a content edit is fine —
+    # only an actual flip by a non-owner is refused.
+    admin = bootstrap_admin(client)
+    tom = member(client, session, TOM)
+    public = create_note(client, admin, title="Liste apéro", visibility="PUBLIC")
+
+    res = client.patch(
+        f"/api/notes/{public['id']}",
+        json={"body": "- [ ] Glaçons", "visibility": "PUBLIC"},
+        headers=auth(tom),
+    )
+    assert res.status_code == 200
+    assert res.json()["body"] == "- [ ] Glaçons"
+
+
+def test_owner_can_change_visibility(client, session) -> None:
+    admin = bootstrap_admin(client)
+    public = create_note(client, admin, title="Note", visibility="PUBLIC")
+    res = client.patch(
+        f"/api/notes/{public['id']}", json={"visibility": "PRIVATE"}, headers=auth(admin)
+    )
+    assert res.status_code == 200
+    assert res.json()["visibility"] == "PRIVATE"
+
+
+def test_patch_with_explicit_null_is_ignored_not_500(client, session) -> None:
+    # Every Note column is NOT NULL: an explicit null must be treated as
+    # "leave unchanged", never written to the DB (which would 500).
+    admin = bootstrap_admin(client)
+    note = create_note(client, admin, title="Titre", body="Corps")
+    res = client.patch(
+        f"/api/notes/{note['id']}",
+        json={"title": None, "body": "Nouveau corps"},
+        headers=auth(admin),
+    )
+    assert res.status_code == 200
+    assert res.json()["title"] == "Titre"  # untouched
+    assert res.json()["body"] == "Nouveau corps"
+
+
 def test_private_note_is_not_patchable_by_others(client, session) -> None:
     admin = bootstrap_admin(client)
     tom = member(client, session, TOM)

@@ -21,8 +21,7 @@ function fold(text: string): string {
     .replace(/[\u0300-\u036f]/g, '')
 }
 
-function matches(note: NoteOut, query: string): boolean {
-  const needle = fold(query.trim())
+function matches(note: NoteOut, needle: string): boolean {
   if (needle === '') return true
   return fold(`${note.title}\n${note.body}`).includes(needle)
 }
@@ -62,7 +61,9 @@ export default function BoardPage() {
     }
   }
 
-  const visible = notes?.filter((note) => matches(note, query))
+  // Fold the query once, not once per note per keystroke.
+  const needle = fold(query.trim())
+  const visible = notes?.filter((note) => matches(note, needle))
 
   return (
     <div className="kp-app">
