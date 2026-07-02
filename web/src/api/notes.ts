@@ -27,10 +27,26 @@ export interface NoteIn {
   visibility?: Visibility
 }
 
+/** Consolidated editor update (E4-S1) — only the provided fields change. */
+export interface NotePatch {
+  title?: string
+  body?: string
+  color?: NoteColor
+  visibility?: Visibility
+}
+
 export function listNotes(tab: BoardTab): Promise<NoteOut[]> {
   return api.get<NoteOut[]>(`/api/notes?tab=${tab}`)
 }
 
 export function createNote(input: NoteIn): Promise<NoteOut> {
   return api.post<NoteOut>('/api/notes', input)
+}
+
+export function getNote(id: string): Promise<NoteOut> {
+  return api.get<NoteOut>(`/api/notes/${id}`)
+}
+
+export function patchNote(id: string, patch: NotePatch): Promise<NoteOut> {
+  return api.patch<NoteOut>(`/api/notes/${id}`, patch)
 }

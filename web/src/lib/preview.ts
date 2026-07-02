@@ -3,8 +3,8 @@
  *
  * Just enough GFM for the board card: `- [ ]` / `- [x]` lines become read-only
  * checklist rows, everything else stays text (blank lines split paragraphs).
- * The full round-trip serializer (`lib/markdown.ts`, mirror of `buildMd`)
- * arrives with the editor in E4.
+ * The full round-trip serializer is `lib/markdown.ts` (mirror of `buildMd`, E4);
+ * this lighter parser keeps the card render cheap.
  */
 
 export type PreviewBlock =

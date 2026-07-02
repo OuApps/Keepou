@@ -7,7 +7,7 @@ import { formatRelative } from '../lib/time'
  * Board card (E3-S6), faithful to `Keepou - Board.dc.html`: one of the 5 shades
  * (gradient + border tokens), Fredoka title, read-only checklist rendered from
  * the Markdown body, meta line (visibility, or author badge on the Public tab).
- * Click opens the editor (`/note/:id` — the real editor lands in E4).
+ * Click opens the editor (`/note/:id`, E4).
  */
 
 const SHADE_CLASS: Record<NoteColor, string> = {

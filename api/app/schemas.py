@@ -67,7 +67,7 @@ class NoteIn(BaseModel):
 
 
 class NotePatch(BaseModel):
-    """Base update (E3): only the provided fields change; fine-grained editing is E4."""
+    """Consolidated editor update (E4-S1): only the provided fields change."""
 
     title: str | None = Field(default=None, max_length=200)
     body: str | None = None
