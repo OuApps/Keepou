@@ -11,7 +11,8 @@ import { ThemeToggle } from './ThemeToggle'
  * (Administration / logout).
  */
 export function Topbar({ center }: { center?: ReactNode }) {
-  const { signOut } = useAuth()
+  const { user, signOut } = useAuth()
+  const initial = user?.display_name?.trim().charAt(0).toUpperCase() || '?'
 
   return (
     <header className="kp-topbar">
@@ -31,7 +32,7 @@ export function Topbar({ center }: { center?: ReactNode }) {
         title="Se déconnecter"
         aria-label="Se déconnecter"
       >
-        M
+        {initial}
       </button>
     </header>
   )

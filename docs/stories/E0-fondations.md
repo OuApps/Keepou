@@ -13,14 +13,14 @@
 
 - [x] **E0-S1** — Monorepo, structure & tooling
 - [x] **E0-S2** — Backend bootstrap FastAPI
-- [ ] **E0-S3** — Database & Alembic migrations *(scaffold ready; 1st real migration in E2)*
+- [x] **E0-S3** — Database & Alembic migrations *(1st real migration shipped with E2-S1)*
 - [x] **E0-S4** — Frontend bootstrap React/Vite + routing
 - [x] **E0-S5** — Design system: tokens & light/dark theme
 - [x] **E0-S6** — UI shell: topbar + responsive layout
-- [x] **E0-S7** — API client & typed error handling *(bearer token wired; 401/403/409 mapping in E2/E5)*
+- [x] **E0-S7** — API client & typed error handling *(bearer token wired; 401/403 mapping shipped in E2, 409 lock conflict in E5)*
 - [x] **E0-S8** — Quality: lint, format, types, tests & CI
 
-**Done: 7/8** — only S3 remains, and its first real migration is deliberately delegated to E2.
+**Done: 8/8** — S3's first real migration (deliberately delegated) shipped with E2-S1.
 
 ---
 
@@ -62,7 +62,7 @@
 
 ---
 
-## E0-S3 — Database & Alembic migrations · `to complete` · M
+## E0-S3 — Database & Alembic migrations · `done` · M
 
 **Goal.** DB layer ready, migrations operational (empty as long as there's no model).
 
@@ -74,10 +74,12 @@
 
 **Acceptance criteria**
 - [x] `alembic current` runs (env.py loads the config without error).
-- [ ] `alembic upgrade head` runs a first real migration (triggered in E2 with `User`/`AllowlistEntry`).
+- [x] `alembic upgrade head` runs a first real migration (shipped in E2-S1 with `User`/`AllowlistEntry`).
 - [x] The database URL comes from `settings.database_url` (not hardcoded).
 
-**Notes.** The Alembic scaffold is in place; the first real migration comes with the first model (E2 dependency).
+**Notes.** Done — the autogenerate → review → upgrade flow was proven end-to-end by
+E2-S1 (`migrations/versions/…_create_user_and_allowlistentry_tables.py`, upgrade **and**
+downgrade tested on SQLite, Postgres-safe enum cleanup included).
 
 ---
 
@@ -161,10 +163,12 @@ avatar is a temporary dev sign-out until E7 turns it into the real menu.
 - [x] Every request goes through the wrapper.
 - [x] Non-2xx responses raise `ApiError` with `status` + `payload`.
 - [x] The wrapper attaches the `Authorization: Bearer` token from `localStorage`.
-- [ ] 401/403/409 handling convention documented and applied (E2/E5).
+- [x] 401/403/409 handling convention documented and applied (E2 auth: 401 → refresh
+  once then back to /login, 403/409 mapped to the frozen copy; E5 adds the 409 lock
+  conflict).
 
-**Notes.** Bearer + single wrapper done; the fine-grained code handling happens in the
-relevant epics.
+**Notes.** Bearer + single wrapper done; the auth code handling landed in E2, the lock
+conflict (409) follows in E5.
 
 ---
 

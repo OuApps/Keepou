@@ -6,7 +6,7 @@
 > returns.
 >
 > Estimation convention: **S** (≤ ½ day), **M** (1–2 days), **L** (3+ days).
-> All these stories are `to do` (nothing is built yet).
+> All stories are **done** (epic shipped).
 
 **Reference docs.** `design/HANDOFF.md` §3.6 & §7 (Auth), `docs/ARCHITECTURE.md`
 §4 (access control) & §8 (auth/sessions), PRD FR-A1…FR-A5. Visual source of truth:
@@ -25,18 +25,23 @@
 
 ## Stories at a glance
 
-- [ ] **E2-S1** — Data model `User` + `AllowlistEntry` & first real migration
-- [ ] **E2-S2** — Security core: bcrypt hashing, JWT, `get_current_user` / `require_admin`
-- [ ] **E2-S3** — `POST /api/auth/register` (allowlist gate + bootstrap admin)
-- [ ] **E2-S4** — `login` / `refresh` / `me` endpoints
-- [ ] **E2-S5** — Front: Login screen (inline error states)
-- [ ] **E2-S6** — Front: Create-account screen + allowlist-denial screen
-- [ ] **E2-S7** — Front: auth wiring (context, real guard, `me`, logout, 401 redirect)
-- [ ] **E2-S8** — Tests: allowlist, bootstrap admin, login KO/disabled, immediate deactivation
+- [x] **E2-S1** — Data model `User` + `AllowlistEntry` & first real migration
+- [x] **E2-S2** — Security core: bcrypt hashing, JWT, `get_current_user` / `require_admin`
+- [x] **E2-S3** — `POST /api/auth/register` (allowlist gate + bootstrap admin)
+- [x] **E2-S4** — `login` / `refresh` / `me` endpoints
+- [x] **E2-S5** — Front: Login screen (inline error states)
+- [x] **E2-S6** — Front: Create-account screen + allowlist-denial screen
+- [x] **E2-S7** — Front: auth wiring (context, real guard, `me`, logout, 401 redirect)
+- [x] **E2-S8** — Tests: allowlist, bootstrap admin, login KO/disabled, immediate deactivation
 
-**Status.** All `to do`. E2-S1 also **completes E0-S3** (the first real Alembic
-migration was deliberately delegated here). E2-S7 **replaces** the temporary
+**Status.** All **done**. E2-S1 also **completed E0-S3** (the first real Alembic
+migration was deliberately delegated here). E2-S7 **replaced** the temporary
 "Entrer en mode démo" button from the E0 scaffold with the real login flow.
+Implementation notes: JWT via **PyJWT** (HS256, signed with `SESSION_SECRET`), TTLs
+configurable (`ACCESS_TOKEN_TTL_MINUTES` / `REFRESH_TOKEN_TTL_DAYS`, defaults
+15 min / 30 days); emails normalized lowercase server-side; duplicate email at
+register → **409**; the client wrapper retries a 401 once through
+`POST /api/auth/refresh` before dropping the session and returning to /login.
 
 ---
 
@@ -55,9 +60,9 @@ end-to-end for the first time.
   `alembic upgrade head` on SQLite (dev) and confirm it is Postgres-safe.
 
 **Acceptance criteria**
-- [ ] `User` and `AllowlistEntry` tables created by a checked-in Alembic migration.
-- [ ] `alembic upgrade head` runs the first real migration (closes E0-S3's open item).
-- [ ] `email` is unique + indexed on both tables; the DB URL still comes from
+- [x] `User` and `AllowlistEntry` tables created by a checked-in Alembic migration.
+- [x] `alembic upgrade head` runs the first real migration (closes E0-S3's open item).
+- [x] `email` is unique + indexed on both tables; the DB URL still comes from
   `settings.database_url` (no hardcoding).
 
 **Notes.** This is the **first real migration** in the project (the scaffold left
@@ -82,11 +87,11 @@ bearer tokens, plus the FastAPI dependencies used by every protected route.
   `UserOut`.
 
 **Acceptance criteria**
-- [ ] Password hash round-trip works (hash ≠ plaintext, verify true/false).
-- [ ] A valid access token resolves to the right user via `get_current_user`.
-- [ ] An expired/invalid/tampered token → **401**; a `DISABLED` user → rejected even
+- [x] Password hash round-trip works (hash ≠ plaintext, verify true/false).
+- [x] A valid access token resolves to the right user via `get_current_user`.
+- [x] An expired/invalid/tampered token → **401**; a `DISABLED` user → rejected even
   with a still-valid token (status re-checked from the DB every request).
-- [ ] `require_admin` refuses a `MEMBER` with **403**.
+- [x] `require_admin` refuses a `MEMBER` with **403**.
 
 **Notes.** `SESSION_SECRET` must be a strong value in prod (not the `.env.example`
 one). No session table (stateless JWT, ARCHITECTURE §8).
@@ -107,10 +112,10 @@ bootstrap.
 - Reject duplicate email (already registered) cleanly.
 
 **Acceptance criteria**
-- [ ] First-ever register → user created with `role=ADMIN`, even off-allowlist (FR-A1).
-- [ ] A later register with an allowlisted email → `role=MEMBER`, **201** + tokens.
-- [ ] A register with a non-allowlisted email → **403**, **no** user row created (FR-A2).
-- [ ] Passwords are stored hashed only (FR-A3).
+- [x] First-ever register → user created with `role=ADMIN`, even off-allowlist (FR-A1).
+- [x] A later register with an allowlisted email → `role=MEMBER`, **201** + tokens.
+- [x] A register with a non-allowlisted email → **403**, **no** user row created (FR-A2).
+- [x] Passwords are stored hashed only (FR-A3).
 
 **Notes.** No "request access" flow, no in-app admin contact (claude.md §4). The
 allowlist is populated by admins in E7.
@@ -129,10 +134,10 @@ allowlist is populated by admins in E7.
   — drives the client route guards and the admin-menu visibility.
 
 **Acceptance criteria**
-- [ ] Correct credentials → tokens; wrong password/unknown email → **401**.
-- [ ] A `DISABLED` account → **403** at login (FR-A5).
-- [ ] `refresh` swaps a valid refresh token for a fresh access token; invalid → **401**.
-- [ ] `GET /api/auth/me` returns the authenticated user (incl. `role`).
+- [x] Correct credentials → tokens; wrong password/unknown email → **401**.
+- [x] A `DISABLED` account → **403** at login (FR-A5).
+- [x] `refresh` swaps a valid refresh token for a fresh access token; invalid → **401**.
+- [x] `GET /api/auth/me` returns the authenticated user (incl. `role`).
 
 **Notes.** Logout is client-side (drop the tokens). Frozen copy: HANDOFF §7 "Auth".
 
@@ -152,9 +157,9 @@ allowlist is populated by admins in E7.
   l'administrateur. »** (gold).
 
 **Acceptance criteria**
-- [ ] Login screen matches the mockup (light + dark, desktop + mobile).
-- [ ] 401 → terracotta inline error; 403 disabled → gold inline message.
-- [ ] Successful login stores tokens and lands on the board.
+- [x] Login screen matches the mockup (light + dark, desktop + mobile).
+- [x] 401 → terracotta inline error; 403 disabled → gold inline message.
+- [x] Successful login stores tokens and lands on the board.
 
 **Notes.** French UI copy stays verbatim (HANDOFF §7). Link to `/register`.
 
@@ -169,15 +174,16 @@ allowlist is populated by admins in E7.
   submit → `POST /api/auth/register`.
 - **Allowlist-denial** screen on **403**: **« Accès non autorisé »** + **« L'adresse
   <email> ne figure pas sur la liste des membres autorisés de cette instance
-  Keepou. »** + button **« Retour à la connexion »** (denial gradient
-  `linear-gradient(150deg,#D86A50,#C04A30)`).
+  Keepou. »** + button **« Retour à la connexion »** (primary gold gradient, per the
+  mockup — the salsa shade colors the screen background; the terracotta lock icon
+  marks the denial).
 - On success (201): store tokens, redirect to `/`.
 
 **Acceptance criteria**
-- [ ] Register screen faithful (light + dark, desktop + mobile).
-- [ ] 403 → the **Accès non autorisé** screen with the exact copy and the
+- [x] Register screen faithful (light + dark, desktop + mobile).
+- [x] 403 → the **Accès non autorisé** screen with the exact copy and the
   **Retour à la connexion** button (no account created).
-- [ ] 201 → session established, redirect to the board.
+- [x] 201 → session established, redirect to the board.
 
 **Notes.** No in-app "request access" (claude.md §4). Frozen copy: HANDOFF §7.
 
@@ -197,10 +203,10 @@ allowlist is populated by admins in E7.
   `refresh` once before giving up. Logout action clears tokens.
 
 **Acceptance criteria**
-- [ ] A fresh visit with no/invalid token → redirected to `/login`.
-- [ ] After login, `me` populates the context; the avatar menu reflects the user.
-- [ ] A 401 from any endpoint drops the session and returns to `/login`.
-- [ ] The temporary demo-mode button is gone.
+- [x] A fresh visit with no/invalid token → redirected to `/login`.
+- [x] After login, `me` populates the context; the avatar menu reflects the user.
+- [x] A 401 from any endpoint drops the session and returns to `/login`.
+- [x] The temporary demo-mode button is gone.
 
 **Notes.** The authoritative check stays server-side; the guard is a UX convenience.
 Fine-grained 403/409 mapping continues in E5/E7.
@@ -219,9 +225,9 @@ Fine-grained 403/409 mapping continues in E5/E7.
   guard redirect when unauthenticated.
 
 **Acceptance criteria**
-- [ ] Back tests cover FR-A1/A2/A3/A5 and the per-request `status` re-check.
-- [ ] Front tests cover the two inline errors + the denial screen + the guard.
-- [ ] CI (`api` + `web` jobs) green.
+- [x] Back tests cover FR-A1/A2/A3/A5 and the per-request `status` re-check.
+- [x] Front tests cover the two inline errors + the denial screen + the guard.
+- [x] CI (`api` + `web` jobs) green.
 
 **Notes.** Extends the E0-S8 harness; these are the first business-rule tests.
 
@@ -229,9 +235,9 @@ Fine-grained 403/409 mapping continues in E5/E7.
 
 ## Definition of "E2 done"
 
-- [ ] First user bootstraps as admin; later sign-ups are allowlist-gated server-side.
-- [ ] Login OK/KO and disabled account handled with the exact inline copy.
-- [ ] Bearer session established (`access`/`refresh`), `refresh` + `me` working.
-- [ ] Deactivation is effective immediately (status re-checked every request).
-- [ ] Real guard replaces the demo shortcut; 401 returns to login.
-- [ ] Auth business-rule tests green in CI.
+- [x] First user bootstraps as admin; later sign-ups are allowlist-gated server-side.
+- [x] Login OK/KO and disabled account handled with the exact inline copy.
+- [x] Bearer session established (`access`/`refresh`), `refresh` + `me` working.
+- [x] Deactivation is effective immediately (status re-checked every request).
+- [x] Real guard replaces the demo shortcut; 401 returns to login.
+- [x] Auth business-rule tests green in CI.
