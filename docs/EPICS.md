@@ -12,7 +12,7 @@
 - [x] **E0** — Foundations & design system · ✅ detailed → [`stories/E0-fondations.md`](./stories/E0-fondations.md) — *shipped (S3's 1st migration landed with E2-S1)*
 - [ ] 🔨 **E1** — Railway deployment · ✅ detailed → [`stories/E1-deploiement-railway.md`](./stories/E1-deploiement-railway.md) — *live on Railway (S1/S3/S4/S5 done, auto-deploy on `main`); bearer-auth endpoints shipped (E2) — verify in prod after the next deploy; remaining: PR previews (S7)*
 - [x] **E2** — Authentication & allowlist · ✅ detailed → [`stories/E2-authentification.md`](./stories/E2-authentification.md) — *shipped (bootstrap admin, allowlist gate, JWT bearer, login/register/denial screens, tests)*
-- [ ] **E3** — Board & note management · ✅ detailed → [`stories/E3-board-notes.md`](./stories/E3-board-notes.md)
+- [x] **E3** — Board & note management · ✅ detailed → [`stories/E3-board-notes.md`](./stories/E3-board-notes.md) — *shipped (Note model + CRUD API, Mes notes/Public tabs, composer, faithful cards, masonry 4→2, client-side search, tests)*
 - [ ] **E4** — Note editor · ✅ detailed → [`stories/E4-editeur-note.md`](./stories/E4-editeur-note.md)
 - [ ] **E5** — Single-editor lock & real-time · ✅ detailed → [`stories/E5-verrou-temps-reel.md`](./stories/E5-verrou-temps-reel.md) — *real-time = short-polling*
 - [ ] **E6** — History & versions · ✅ detailed → [`stories/E6-historique-versions.md`](./stories/E6-historique-versions.md)
@@ -329,10 +329,10 @@ end-to-end at least once** (runbook written).
 
 ## Next step
 
-**E0, E1 (core) and E2 are shipped**; E3–E9 are detailed in [`stories/`](./stories/)
-with acceptance criteria and technical scope. Next on the critical path: **E3 —
-Board & note management**, then `E4 → E5 → E6`. **E7** (admin) is now unblocked and
-can be parallelized; **E9** (DB backups) is recommended early now that auth opens
+**E0, E1 (core), E2 and E3 are shipped**; E4–E9 are detailed in [`stories/`](./stories/)
+with acceptance criteria and technical scope. Next on the critical path: **E4 —
+Note editor**, then `E5 → E6`. **E7** (admin) is unblocked and can be
+parallelized; **E9** (DB backups) is recommended early now that auth opens
 the door to real user data; **E8** is hardened at the end.
 
 Two points to keep in mind:
