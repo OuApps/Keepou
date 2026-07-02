@@ -6,7 +6,7 @@ Endpoints (handoff §5):
                                       PUBLIC notes (author + updated_at). Newest-first.
   POST   /api/notes                   create (owner = caller)
   GET    /api/notes/{id}              visibility-checked
-  PATCH  /api/notes/{id}              base update (title, body, color, visibility)
+  PATCH  /api/notes/{id}              consolidated editor update (E4-S1)
   DELETE /api/notes/{id}              owner or admin only (FR-N6)
 
 Permissions (server-side, ARCHITECTURE §4.2):

@@ -1,20 +1,12 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { createNote, type NoteColor, type NoteOut } from '../api/notes'
+import { SWATCHES } from '../lib/colors'
 
 /**
  * Quick composer (E3-S5) — the fastest path in the app: an input, the 5 card
  * shades and a public toggle, faithful to `Keepou - Board.dc.html`. It only
  * creates (POST /api/notes); full editing (blocks, autosave) is E4.
  */
-
-// Composer swatches: the solid end-color of each light shade (Board mockup).
-const SWATCHES: Array<{ color: NoteColor; bg: string; bd: string; label: string }> = [
-  { color: 'GOLD', bg: '#F7E2AE', bd: '#EFD79E', label: 'Or' },
-  { color: 'AVOCAT', bg: '#DFEAAE', bd: '#D4E0A2', label: 'Avocat' },
-  { color: 'SALSA', bg: '#F2C7B5', bd: '#EDC0AC', label: 'Salsa' },
-  { color: 'CLAY', bg: '#ECD8BC', bd: '#E6CDA9', label: 'Argile' },
-  { color: 'TEAL', bg: '#C7DED5', bd: '#BAD7CD', label: 'Sarcelle' },
-]
 
 export function Composer({ onCreated }: { onCreated: (note: NoteOut) => void }) {
   const [open, setOpen] = useState(false)

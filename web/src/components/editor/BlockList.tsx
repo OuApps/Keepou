@@ -1,0 +1,129 @@
+import { useEffect, useRef } from 'react'
+import { blockId, type EditorBlock } from './blocks'
+
+/**
+ * The mixed editing surface (E4-S4): an ordered flow of paragraphs and
+ * checkboxes, faithful to `Keepou - Éditeur canonique.dc.html`. Boxes are real
+ * `<input type=checkbox>` (HANDOFF §8); the « Insérer une case à cocher »
+ * affordance sits at the BOTTOM of the flow (§3.3, never in the middle).
+ * Enter in a box inserts the next one; Backspace in an empty box removes it.
+ */
+
+interface BlockListProps {
+  blocks: EditorBlock[]
+  onChange: (blocks: EditorBlock[]) => void
+  /** Immediate save on blur (E4-S6). */
+  onFlush: () => void
+}
+
+function autosize(el: HTMLTextAreaElement | null) {
+  if (el === null) return
+  el.style.height = 'auto'
+  el.style.height = `${el.scrollHeight}px`
+}
+
+export function BlockList({ blocks, onChange, onFlush }: BlockListProps) {
+  const rootRef = useRef<HTMLDivElement>(null)
+  // Focus follows a freshly inserted box (or the neighbor of a removed one).
+  const pendingFocus = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (pendingFocus.current === null) return
+    rootRef.current?.querySelector<HTMLElement>(`[data-block="${pendingFocus.current}"]`)?.focus()
+    pendingFocus.current = null
+  })
+
+  // Textarea heights are content-driven: recompute them when the viewport
+  // width changes (modal ⇄ full screen, phone rotation), or they stay clipped.
+  useEffect(() => {
+    const onResize = () => {
+      rootRef.current?.querySelectorAll<HTMLTextAreaElement>('.kp-blocks__text').forEach(autosize)
+    }
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  const replace = (index: number, next: EditorBlock) => {
+    onChange(blocks.map((block, i) => (i === index ? next : block)))
+  }
+
+  const insertCheckAt = (index: number) => {
+    const id = blockId()
+    pendingFocus.current = id
+    onChange([
+      ...blocks.slice(0, index),
+      { id, type: 'check', checked: false, text: '' },
+      ...blocks.slice(index),
+    ])
+  }
+
+  const removeAt = (index: number) => {
+    pendingFocus.current = blocks[index - 1]?.id ?? null
+    onChange(blocks.filter((_, i) => i !== index))
+  }
+
+  return (
+    <div className="kp-blocks" ref={rootRef}>
+      {blocks.map((block, i) =>
+        block.type === 'text' ? (
+          <textarea
+            key={block.id}
+            data-block={block.id}
+            className="kp-blocks__text"
+            rows={1}
+            value={block.text}
+            placeholder={blocks.length === 1 && block.text === '' ? 'Écris ta note…' : undefined}
+            aria-label="Paragraphe"
+            ref={autosize}
+            onChange={(e) => {
+              autosize(e.currentTarget)
+              replace(i, { ...block, text: e.target.value })
+            }}
+            onBlur={onFlush}
+          />
+        ) : (
+          <div key={block.id} className="kp-blocks__row">
+            <input
+              type="checkbox"
+              className="kp-blocks__box"
+              checked={block.checked}
+              aria-label={block.text === '' ? 'Case à cocher' : block.text}
+              onChange={(e) => replace(i, { ...block, checked: e.target.checked })}
+              onBlur={onFlush}
+            />
+            <input
+              type="text"
+              data-block={block.id}
+              className={`kp-blocks__label${block.checked ? ' kp-blocks__label--done' : ''}`}
+              value={block.text}
+              placeholder="Nouvel élément"
+              aria-label="Intitulé de la case"
+              onChange={(e) => replace(i, { ...block, text: e.target.value })}
+              onBlur={onFlush}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  insertCheckAt(i + 1)
+                } else if (e.key === 'Backspace' && block.text === '') {
+                  e.preventDefault()
+                  removeAt(i)
+                }
+              }}
+            />
+          </div>
+        ),
+      )}
+
+      <button
+        type="button"
+        className="kp-blocks__insert"
+        onClick={() => insertCheckAt(blocks.length)}
+      >
+        <span className="kp-blocks__insert-box" aria-hidden="true">
+          +
+        </span>
+        Insérer une case à cocher
+      </button>
+    </div>
+  )
+}

@@ -206,6 +206,44 @@ def test_member_may_echo_current_visibility_while_editing_content(client, sessio
     assert res.json()["body"] == "- [ ] Glaçons"
 
 
+def test_public_to_private_removes_from_others_public_tab(client, session) -> None:
+    # FR-N5 / E4-S1: once the owner flips a public note back to private, it no
+    # longer matches tab=public — it disappears from the other members' board.
+    admin = bootstrap_admin(client)
+    tom = member(client, session, TOM)
+    note = create_note(client, admin, title="Fête des voisins", visibility="PUBLIC")
+    before = client.get("/api/notes?tab=public", headers=auth(tom)).json()
+    assert [n["title"] for n in before] == ["Fête des voisins"]
+
+    res = client.patch(
+        f"/api/notes/{note['id']}", json={"visibility": "PRIVATE"}, headers=auth(admin)
+    )
+    assert res.status_code == 200
+    assert client.get("/api/notes?tab=public", headers=auth(tom)).json() == []
+    # ...and the note itself is shielded again (404, ARCHITECTURE §4.2).
+    assert client.get(f"/api/notes/{note['id']}", headers=auth(tom)).status_code == 404
+
+
+def test_body_persists_markdown_verbatim(client) -> None:
+    # E4-S1: the editor's GFM body round-trips through the API untouched —
+    # blank lines, task-list markers and checked state included.
+    admin = bootstrap_admin(client)
+    note = create_note(client, admin, title="Repas de quartier")
+    body = (
+        "Pour le repas de quartier on se répartit les tâches.\n"
+        "\n"
+        "- [x] Réserver la salle\n"
+        "- [ ] Liste des plats par famille\n"
+        "- [ ] Tables & chaises\n"
+        "\n"
+        "Penser à ramener une rallonge et des gobelets réutilisables."
+    )
+    res = client.patch(f"/api/notes/{note['id']}", json={"body": body}, headers=auth(admin))
+    assert res.status_code == 200
+    assert res.json()["body"] == body
+    assert client.get(f"/api/notes/{note['id']}", headers=auth(admin)).json()["body"] == body
+
+
 def test_owner_can_change_visibility(client, session) -> None:
     admin = bootstrap_admin(client)
     public = create_note(client, admin, title="Note", visibility="PUBLIC")

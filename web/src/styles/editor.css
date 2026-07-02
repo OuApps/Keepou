@@ -1,0 +1,532 @@
+/*
+ * Keepou — Note editor (E4)
+ * Desktop modal / mobile full screen, measured from
+ * `design/Keepou - Éditeur canonique.dc.html`. The mockup's chrome accents are
+ * green because its sample note is avocat; here the bar/footer tints are
+ * neutral ink washes (via --tint) so all 5 shades and both themes work.
+ */
+
+.kp-editor-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgba(46, 42, 32, 0.42);
+  backdrop-filter: blur(1.5px);
+  -webkit-backdrop-filter: blur(1.5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.kp-editor {
+  position: relative;
+  width: 580px;
+  max-width: 100%;
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-modal);
+  box-shadow: var(--sh-modal);
+  overflow: hidden;
+  /* Chrome tints + content inks over the colored shade. */
+  --tint: rgba(46, 42, 32, 0.07);
+  --tint-line: rgba(46, 42, 32, 0.14);
+  --body-ink: #4a4636;
+}
+
+[data-theme='dark'] .kp-editor {
+  --tint: rgba(243, 236, 221, 0.06);
+  --tint-line: rgba(243, 236, 221, 0.16);
+  --body-ink: var(--ink-soft);
+}
+
+.kp-editor--gold {
+  background: var(--c-gold);
+  border: 1px solid var(--c-gold-bd);
+}
+
+.kp-editor--avocat {
+  background: var(--c-avo);
+  border: 1px solid var(--c-avo-bd);
+}
+
+.kp-editor--salsa {
+  background: var(--c-salsa);
+  border: 1px solid var(--c-salsa-bd);
+}
+
+.kp-editor--clay {
+  background: var(--c-clay);
+  border: 1px solid var(--c-clay-bd);
+}
+
+.kp-editor--teal {
+  background: var(--c-teal);
+  border: 1px solid var(--c-teal-bd);
+}
+
+/* Loading / not-found card inside the overlay. */
+.kp-editor__fallback {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-modal);
+  box-shadow: var(--sh-modal);
+  padding: 32px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+/* --- Top bar: LockBanner slot (E5) + session save state --- */
+.kp-editor__bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 10px 18px;
+  background: var(--tint);
+  border-bottom: 1px solid var(--tint-line);
+}
+
+/* Mobile-only chrome (back chevron / OK). */
+.kp-editor__back,
+.kp-editor__ok {
+  display: none;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--ink);
+  align-items: center;
+  justify-content: center;
+}
+
+.kp-editor__ok {
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* --- Session save state (Modifié / Enregistrement… / Enregistré) --- */
+.kp-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.kp-save__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  flex: none;
+}
+
+.kp-save--dirty .kp-save__dot {
+  background: var(--brand-gold);
+}
+
+.kp-save--saving .kp-save__dot {
+  background: #9dae6c;
+}
+
+.kp-save--saved svg {
+  color: var(--check);
+  flex: none;
+}
+
+/* --- Body: title, "last saved version" subtitle, block flow --- */
+.kp-editor__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 22px 14px;
+}
+
+.kp-editor__title {
+  width: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  padding: 0;
+  margin: 0 0 5px;
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 21px;
+  color: var(--ink);
+}
+
+.kp-editor__title::placeholder {
+  color: var(--ink-mute);
+}
+
+.kp-editor__sub {
+  margin: 0 0 16px;
+  font-size: 12px;
+  color: var(--ink-mute);
+}
+
+.kp-editor__sub b {
+  color: var(--ink-soft);
+}
+
+/* --- Block flow (paragraphs + checkboxes) --- */
+.kp-blocks {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.kp-blocks__text {
+  width: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  padding: 0;
+  resize: none;
+  overflow: hidden;
+  font-family: var(--font-ui);
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--body-ink);
+}
+
+.kp-blocks__text::placeholder {
+  color: var(--ink-mute);
+}
+
+.kp-blocks__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Real checkbox (HANDOFF §8), drawn like the mockup's 18px box. */
+.kp-blocks__box {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+  flex: none;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--r-check);
+  border: 1.7px solid var(--checktx);
+  background: transparent;
+}
+
+.kp-blocks__box:checked {
+  border-color: var(--check);
+  background: var(--check)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M2 5.2 L4 7.2 L8 2.6' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    center / 11px 11px no-repeat;
+}
+
+.kp-blocks__label {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  padding: 0;
+  font-family: var(--font-ui);
+  font-size: 14.5px;
+  color: var(--body-ink);
+}
+
+.kp-blocks__label::placeholder {
+  color: var(--ink-mute);
+}
+
+.kp-blocks__label--done {
+  text-decoration: line-through;
+  color: var(--checktx);
+}
+
+/* « Insérer une case à cocher » — at the BOTTOM of the flow (HANDOFF §3.3). */
+.kp-blocks__insert {
+  margin-top: 13px;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: none;
+  background: none;
+  padding: 5px 0;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--check);
+}
+
+.kp-blocks__insert-box {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--r-check);
+  border: 1.7px dashed var(--checktx);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* --- Footer: color swatches · visibility · Terminé --- */
+.kp-editor__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--tint-line);
+}
+
+.kp-editor__tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.kp-editor__colors {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.kp-editor__swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-pill);
+  border: 1px solid transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.kp-editor__swatch--active {
+  border: 2px solid var(--check);
+}
+
+.kp-editor__sep {
+  width: 1px;
+  height: 20px;
+  background: var(--tint-line);
+}
+
+.kp-visibility {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.kp-visibility__toggle {
+  width: 32px;
+  height: 19px;
+  border-radius: var(--r-pill);
+  background: var(--track);
+  position: relative;
+  transition: background 0.15s;
+  flex: none;
+}
+
+.kp-visibility__toggle--on {
+  background: var(--check);
+}
+
+.kp-visibility__knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 15px;
+  height: 15px;
+  border-radius: var(--r-pill);
+  background: var(--ink-mute);
+  transition:
+    left 0.15s,
+    background 0.15s;
+}
+
+.kp-visibility__toggle--on .kp-visibility__knob {
+  left: 15px;
+  background: #fff;
+}
+
+.kp-editor__done {
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 14px;
+  color: #fff;
+  background: var(--brand-green);
+  padding: 9px 20px;
+  border-radius: var(--r-pill);
+}
+
+/* --- Public → private confirmation (frozen copy, HANDOFF §7) --- */
+.kp-confirm {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(46, 42, 32, 0.35);
+}
+
+.kp-confirm__card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-panel);
+  box-shadow: var(--sh-card);
+  padding: 18px 20px;
+  max-width: 340px;
+  text-align: center;
+}
+
+.kp-confirm__text {
+  margin: 0 0 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.kp-confirm__actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.kp-confirm__cancel {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-brand);
+  font-size: 13px;
+  color: var(--ink-mute);
+  padding: 8px 12px;
+}
+
+.kp-confirm__ok {
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 13px;
+  color: #fff;
+  background: var(--brand-green);
+  padding: 8px 16px;
+  border-radius: var(--r-pill);
+}
+
+/* --- Mobile (<640px): full screen (frozen decision, HANDOFF §2) --- */
+@media (max-width: 640px) {
+  .kp-editor-overlay {
+    padding: 0;
+    background: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .kp-editor {
+    width: 100%;
+    height: 100dvh;
+    max-height: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .kp-editor__bar {
+    justify-content: space-between;
+    padding: 14px 18px;
+    background: none;
+  }
+
+  /* The save state becomes the centered pill of the mobile top bar. */
+  .kp-editor__bar .kp-save {
+    background: var(--tint);
+    padding: 5px 11px;
+    border-radius: var(--r-pill);
+    font-size: 11.5px;
+  }
+
+  /* ≥44px hit targets (HANDOFF §8). */
+  .kp-editor__back,
+  .kp-editor__ok {
+    display: inline-flex;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .kp-editor__body {
+    padding: 6px 20px 14px;
+  }
+
+  .kp-editor__title {
+    font-size: 22px;
+  }
+
+  .kp-blocks {
+    gap: 12px;
+  }
+
+  .kp-blocks__text,
+  .kp-blocks__label {
+    font-size: 15px;
+  }
+
+  .kp-blocks__row {
+    gap: 11px;
+  }
+
+  .kp-blocks__box {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+  }
+
+  .kp-blocks__insert {
+    margin-top: auto;
+    padding-top: 16px;
+    font-size: 14px;
+    gap: 8px;
+  }
+
+  .kp-blocks__insert-box {
+    width: 20px;
+    height: 20px;
+    font-size: 14px;
+  }
+
+  .kp-editor__footer {
+    padding: 14px 18px;
+  }
+
+  .kp-editor__swatch {
+    width: 26px;
+    height: 26px;
+  }
+
+  .kp-editor__done {
+    display: none;
+  }
+}
