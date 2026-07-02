@@ -30,6 +30,8 @@ function note(overrides: Partial<NoteOut>): NoteOut {
     author_name: 'Marie',
     created_at: '2026-07-01T10:00:00',
     updated_at: new Date(Date.now() - 5_000).toISOString(),
+    locked_by: null,
+    lock_expires_at: null,
     ...overrides,
   }
 }

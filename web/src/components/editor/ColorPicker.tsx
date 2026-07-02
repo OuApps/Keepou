@@ -8,9 +8,12 @@ import { SWATCHES } from '../../lib/colors'
 export function ColorPicker({
   value,
   onChange,
+  disabled = false,
 }: {
   value: NoteColor
   onChange: (color: NoteColor) => void
+  /** Read-only mode (E5): the swatches are visible but inert. */
+  disabled?: boolean
 }) {
   return (
     <div className="kp-editor__colors" role="radiogroup" aria-label="Couleur de la note">
@@ -21,6 +24,7 @@ export function ColorPicker({
           role="radio"
           aria-checked={value === s.color}
           aria-label={s.label}
+          disabled={disabled}
           className={`kp-editor__swatch${value === s.color ? ' kp-editor__swatch--active' : ''}`}
           style={{ background: s.bg, borderColor: value === s.color ? undefined : s.bd }}
           onClick={() => onChange(s.color)}

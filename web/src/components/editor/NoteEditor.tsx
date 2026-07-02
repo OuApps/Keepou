@@ -1,13 +1,22 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { lockConflictOf } from '../../api/locks'
 import { getNote, patchNote, type NoteColor, type NoteOut, type Visibility } from '../../api/notes'
 import { useAuth } from '../../auth/AuthContext'
 import { useAutosave } from '../../hooks/useAutosave'
+import { useNoteLock, type LockStatus } from '../../hooks/useNoteLock'
 import { parse, serialize } from '../../lib/markdown'
 import { formatRelative } from '../../lib/time'
 import { BlockList } from './BlockList'
 import { blockId, withIds, type EditorBlock } from './blocks'
 import { ColorPicker } from './ColorPicker'
+import {
+  LockBanner,
+  LockConflictPanel,
+  LockLiveDot,
+  LockReadOnlyNote,
+  LockTakeoverBar,
+} from './LockBanner'
 import { SaveStatus } from './SaveStatus'
 import { VisibilityToggle } from './VisibilityToggle'
 
@@ -15,8 +24,12 @@ import { VisibilityToggle } from './VisibilityToggle'
  * The canonical editor (E4-S3): desktop modal / mobile full screen — the
  * frozen format from `Keepou - Éditeur canonique.dc.html` (HANDOFF §2).
  * Title + block flow + color + visibility, autosaved (~1.5 s debounce,
- * immediate flush on blur/close). The LockBanner slot in the top bar and the
- * lock lifecycle arrive in E5; a version is born on session end in E6.
+ * immediate flush on blur/close).
+ *
+ * E5 adds the single-editor lock on public notes: the top strip becomes the
+ * LockBanner (4 states), read-only mode disables every control, and the
+ * short-poll refreshes the content in near real-time while someone else
+ * edits. A version is born on session end in E6.
  */
 
 const SHADE_CLASS: Record<NoteColor, string> = {
@@ -32,6 +45,17 @@ interface Draft {
   blocks: EditorBlock[]
   color: NoteColor
   visibility: Visibility
+}
+
+function draftOf(note: NoteOut): Draft {
+  const parsed = withIds(parse(note.body))
+  return {
+    title: note.title,
+    // An empty note still shows a paragraph to type into.
+    blocks: parsed.length > 0 ? parsed : [{ id: blockId(), type: 'text', text: '' }],
+    color: note.color,
+    visibility: note.visibility,
+  }
 }
 
 export function NoteEditor({ noteId }: { noteId: string }) {
@@ -51,42 +75,97 @@ export function NoteEditor({ noteId }: { noteId: string }) {
   const isOwnerRef = useRef(isOwner)
   isOwnerRef.current = isOwner
 
+  // Lock plumbing: the hook is created below (it needs `note`), while the
+  // autosave callback and the refresh callback need it — refs bridge the gap.
+  const lockRef = useRef<ReturnType<typeof useNoteLock> | null>(null)
+  const lockStatusRef = useRef<LockStatus>('pending')
+
+  const applyServer = useCallback((fresh: NoteOut) => {
+    setNote(fresh)
+    const next = draftOf(fresh)
+    draftRef.current = next
+    setDraft(next)
+    setLastSaved({ by: fresh.author_name, at: fresh.updated_at })
+  }, [])
+
+  const afterSave = (updated: NoteOut) => {
+    // Server-confirmed state (visibility drives the lock lifecycle) — the
+    // draft keeps the local keystrokes.
+    setNote(updated)
+    setLastSaved({ by: user?.display_name ?? updated.author_name, at: updated.updated_at })
+  }
+
+  const editableRef = useRef(false)
+
   const { state, queue, flush } = useAutosave(async () => {
     const current = draftRef.current
-    if (current === null) return true
+    if (current === null || !editableRef.current) return true
+    const payload = {
+      title: current.title,
+      body: serialize(current.blocks),
+      color: current.color,
+      // Only the owner may flip visibility (FR-N5) — a member editing a
+      // shared note must not even echo it, in case the owner just changed it.
+      ...(isOwnerRef.current ? { visibility: current.visibility } : {}),
+    }
     try {
-      const updated = await patchNote(noteId, {
-        title: current.title,
-        body: serialize(current.blocks),
-        color: current.color,
-        // Only the owner may flip visibility (FR-N5) — a member editing a
-        // shared note must not even echo it, in case the owner just changed it.
-        ...(isOwnerRef.current ? { visibility: current.visibility } : {}),
-      })
-      setLastSaved({ by: user?.display_name ?? updated.author_name, at: updated.updated_at })
+      afterSave(await patchNote(noteId, payload))
       return true
-    } catch {
-      return false
+    } catch (error) {
+      const conflict = lockConflictOf(error)
+      if (conflict === null) return false // transient: useAutosave re-arms
+      if (conflict.code === 'lock_required' && lockRef.current !== null) {
+        // Our lock silently went stale (laptop asleep…) but nobody took it:
+        // one re-acquire + retry. Losing that race is the conflict state.
+        if (await lockRef.current.tryAcquire('conflict')) {
+          try {
+            const latest = draftRef.current ?? current
+            afterSave(
+              await patchNote(noteId, {
+                ...payload,
+                title: latest.title,
+                body: serialize(latest.blocks),
+                color: latest.color,
+              }),
+            )
+            return true
+          } catch (retryError) {
+            const again = lockConflictOf(retryError)
+            if (again === null) return false
+            lockRef.current.notifyConflict(again.locked_by?.display_name ?? null)
+          }
+        }
+        return true
+      }
+      // Someone else holds the lock: server-decided conflict — we inform that
+      // the latest edits could not be saved (HANDOFF §3.1), never a hard error.
+      lockRef.current?.notifyConflict(conflict.locked_by?.display_name ?? null)
+      return true
     }
   })
+
+  const lock = useNoteLock({
+    noteId,
+    note,
+    myId: user?.id,
+    onRefresh: (fresh) => {
+      // Fresh server data (short-poll or acquisition). Never clobber the local
+      // draft while we are the editor — the save-retry path lands here too.
+      if (lockStatusRef.current !== 'mine') applyServer(fresh)
+    },
+  })
+  lockRef.current = lock
+  lockStatusRef.current = lock.status
+
+  const editable = lock.status === 'none' || lock.status === 'mine'
+  editableRef.current = editable
+  const readOnly = !editable
 
   useEffect(() => {
     let cancelled = false
     getNote(noteId)
       .then((loaded) => {
-        if (cancelled) return
-        const parsed = withIds(parse(loaded.body))
-        const next: Draft = {
-          title: loaded.title,
-          // An empty note still shows a paragraph to type into.
-          blocks: parsed.length > 0 ? parsed : [{ id: blockId(), type: 'text', text: '' }],
-          color: loaded.color,
-          visibility: loaded.visibility,
-        }
-        draftRef.current = next
-        setDraft(next)
-        setNote(loaded)
-        setLastSaved({ by: loaded.author_name, at: loaded.updated_at })
+        if (!cancelled) applyServer(loaded)
       })
       .catch(() => {
         if (!cancelled) setFailed(true)
@@ -94,21 +173,21 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     return () => {
       cancelled = true
     }
-  }, [noteId])
+  }, [noteId, applyServer])
 
   const edit = (patch: Partial<Draft>, immediate = false) => {
-    if (draftRef.current === null) return
+    if (draftRef.current === null || !editableRef.current) return
     const next = { ...draftRef.current, ...patch }
     draftRef.current = next
     setDraft(next)
     queue()
-    if (immediate) flush()
+    if (immediate) void flush()
   }
 
-  // Close = back to the board; unsaved keystrokes are flushed on the way out
-  // (the lock release hook slots in here in E5).
-  const close = () => {
-    flush()
+  // Close = back to the board. The pending edit is flushed *before* leaving so
+  // the unmount lock release never overtakes the last save (which would 409).
+  const close = async () => {
+    await flush()
     navigate('/')
   }
   const closeRef = useRef(close)
@@ -116,7 +195,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeRef.current()
+      if (e.key === 'Escape') void closeRef.current()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -145,8 +224,16 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     )
   }
 
+  const barModifier =
+    lock.status === 'mine' ||
+    lock.status === 'locked' ||
+    lock.status === 'available' ||
+    lock.status === 'conflict'
+      ? ` kp-editor__bar--${lock.status}`
+      : ''
+
   return (
-    <div className="kp-editor-overlay" onClick={close}>
+    <div className="kp-editor-overlay" onClick={() => void close()}>
       <section
         className={`kp-editor ${SHADE_CLASS[draft.color]}`}
         role="dialog"
@@ -154,11 +241,11 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         aria-label={draft.title || 'Note sans titre'}
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="kp-editor__bar">
+        <header className={`kp-editor__bar${barModifier}`}>
           <button
             type="button"
             className="kp-editor__back"
-            onClick={close}
+            onClick={() => void close()}
             aria-label="Retour au board"
           >
             <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true">
@@ -172,48 +259,76 @@ export function NoteEditor({ noteId }: { noteId: string }) {
               />
             </svg>
           </button>
-          {/* LockBanner slot (E5) — the session save state for now. */}
-          <SaveStatus state={state} savedAt={lastSaved.at} />
-          <button type="button" className="kp-editor__ok" onClick={close}>
+          <LockBanner status={lock.status} holder={lock.holder} />
+          {editable || lock.status === 'pending' ? (
+            <SaveStatus state={state} savedAt={lastSaved.at} />
+          ) : lock.status === 'locked' ? (
+            <LockLiveDot />
+          ) : null}
+          <button type="button" className="kp-editor__ok" onClick={() => void close()}>
             OK
           </button>
         </header>
 
-        <div className="kp-editor__body">
-          <input
-            className="kp-editor__title"
-            type="text"
-            value={draft.title}
-            placeholder="Titre"
-            aria-label="Titre de la note"
-            maxLength={200}
-            onChange={(e) => edit({ title: e.target.value })}
-            onBlur={flush}
-          />
-          <p className="kp-editor__sub">
-            Dernière version enregistrée par <b>{lastSaved.by}</b> · {formatRelative(lastSaved.at)}
-          </p>
-          <BlockList
-            blocks={draft.blocks}
-            onChange={(blocks) => edit({ blocks })}
-            onFlush={flush}
-          />
-        </div>
+        {lock.status === 'conflict' ? (
+          <LockConflictPanel holder={lock.holder} onGoReadOnly={lock.goReadOnly} />
+        ) : (
+          <div className={`kp-editor__body${readOnly ? ' kp-editor__body--readonly' : ''}`}>
+            <input
+              className="kp-editor__title"
+              type="text"
+              value={draft.title}
+              placeholder={readOnly ? undefined : 'Titre'}
+              aria-label="Titre de la note"
+              maxLength={200}
+              disabled={readOnly}
+              onChange={(e) => edit({ title: e.target.value })}
+              onBlur={() => void flush()}
+            />
+            <p className="kp-editor__sub">
+              {readOnly ? (
+                <>
+                  Dernière édition par <b>{lastSaved.by}</b> · {formatRelative(lastSaved.at)}
+                </>
+              ) : (
+                <>
+                  Dernière version enregistrée par <b>{lastSaved.by}</b> ·{' '}
+                  {formatRelative(lastSaved.at)}
+                </>
+              )}
+            </p>
+            <BlockList
+              blocks={draft.blocks}
+              onChange={(blocks) => edit({ blocks })}
+              onFlush={() => void flush()}
+              readOnly={readOnly}
+            />
+            {lock.status === 'locked' && <LockReadOnlyNote holder={lock.holder} />}
+            {lock.status === 'available' && (
+              <LockTakeoverBar onTakeover={() => void lock.tryAcquire()} />
+            )}
+          </div>
+        )}
 
         <footer className="kp-editor__footer">
           <div className="kp-editor__tools">
-            <ColorPicker value={draft.color} onChange={(color) => edit({ color }, true)} />
+            <ColorPicker
+              value={draft.color}
+              onChange={(color) => edit({ color }, true)}
+              disabled={readOnly}
+            />
             {isOwner && (
               <>
                 <span className="kp-editor__sep" aria-hidden="true" />
                 <VisibilityToggle
                   visibility={draft.visibility}
                   onChange={(visibility) => edit({ visibility }, true)}
+                  disabled={readOnly}
                 />
               </>
             )}
           </div>
-          <button type="button" className="kp-editor__done" onClick={close}>
+          <button type="button" className="kp-editor__done" onClick={() => void close()}>
             Terminé
           </button>
         </footer>

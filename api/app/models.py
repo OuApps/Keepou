@@ -80,8 +80,8 @@ class Visibility(StrEnum):
 class Note(SQLModel, table=True):
     """A note: Markdown body (GFM task lists), title in its own field (handoff §3.3).
 
-    Lock columns arrive in E5, `NoteVersion` in E6, `archived` in E8 — each with
-    its own migration (feature-aligned).
+    `NoteVersion` arrives in E6, `archived` in E8 — each with its own migration
+    (feature-aligned).
     """
 
     id: str = Field(default_factory=_id, primary_key=True)
@@ -92,3 +92,10 @@ class Note(SQLModel, table=True):
     owner_id: str = Field(foreign_key="user.id", index=True)
     created_at: datetime = Field(default_factory=_utcnow)
     updated_at: datetime = Field(default_factory=_utcnow)  # = "last saved version"
+    # Single-editor lock (E5) — at most one active lock, carried by the note so
+    # acquisition is an atomic conditional UPDATE (ARCHITECTURE §5). All three
+    # are NULL when the note is unlocked; a lock past `lock_expires_at` is stale
+    # and claimable by anyone.
+    locked_by_id: str | None = Field(default=None, foreign_key="user.id")
+    locked_at: datetime | None = None
+    lock_expires_at: datetime | None = None

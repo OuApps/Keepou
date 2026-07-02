@@ -109,6 +109,197 @@
   font-size: 13px;
 }
 
+/* --- Single-editor lock (E5) --- */
+/* The 4 states of `Keepou - Éditeur & verrou.dc.html`. Each bar modifier
+ * carries the state's wash/line/ink as variables so the strip (desktop) and
+ * the pill (mobile) share them. */
+.kp-editor__bar--mine {
+  --lock-tint: rgba(58, 81, 50, 0.1);
+  --lock-line: rgba(58, 81, 50, 0.16);
+  --lock-ink: #3a5132;
+}
+
+.kp-editor__bar--locked {
+  --lock-tint: rgba(199, 93, 67, 0.12);
+  --lock-line: rgba(199, 93, 67, 0.25);
+  --lock-ink: #c75d43;
+}
+
+.kp-editor__bar--available {
+  --lock-tint: rgba(234, 182, 76, 0.18);
+  --lock-line: rgba(234, 182, 76, 0.4);
+  --lock-ink: #9a7420;
+}
+
+.kp-editor__bar--conflict {
+  --lock-tint: #f1eadb;
+  --lock-line: #e3d9c4;
+  --lock-ink: #6a6354;
+}
+
+/* Dark: same washes lifted for dark shades (the mockups only fix light). */
+[data-theme='dark'] .kp-editor__bar--mine {
+  --lock-tint: rgba(157, 184, 78, 0.12);
+  --lock-line: rgba(157, 184, 78, 0.24);
+  --lock-ink: #9db84e;
+}
+
+[data-theme='dark'] .kp-editor__bar--locked {
+  --lock-tint: rgba(199, 93, 67, 0.18);
+  --lock-line: rgba(199, 93, 67, 0.34);
+  --lock-ink: #e0906f;
+}
+
+[data-theme='dark'] .kp-editor__bar--available {
+  --lock-tint: rgba(234, 182, 76, 0.14);
+  --lock-line: rgba(234, 182, 76, 0.3);
+  --lock-ink: #d9b25f;
+}
+
+[data-theme='dark'] .kp-editor__bar--conflict {
+  --lock-tint: rgba(243, 236, 221, 0.08);
+  --lock-line: rgba(243, 236, 221, 0.18);
+  --lock-ink: var(--ink-soft);
+}
+
+.kp-editor__bar--mine,
+.kp-editor__bar--locked,
+.kp-editor__bar--available,
+.kp-editor__bar--conflict {
+  background: var(--lock-tint);
+  border-bottom-color: var(--lock-line);
+}
+
+.kp-lock {
+  margin-right: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--lock-ink);
+}
+
+.kp-lock__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: currentColor;
+  box-shadow: 0 0 0 3px var(--lock-line);
+  flex: none;
+}
+
+/* « en direct » — right side while another member edits. */
+.kp-lock__live {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  color: var(--lock-ink);
+}
+
+.kp-lock__live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-pill);
+  background: currentColor;
+  flex: none;
+}
+
+/* Read-only subtext box under the content (locked state). */
+.kp-lock__note {
+  margin: 14px 0 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ink-mute);
+  background: var(--tint);
+  border-radius: 9px;
+  padding: 8px 11px;
+}
+
+/* Takeover (state 3): « Modifier la note ». */
+.kp-lock__takeover {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.kp-lock__takeover-btn {
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 13.5px;
+  color: #fff;
+  background: var(--grad-primary);
+  padding: 9px 18px;
+  border-radius: var(--r-pill);
+  white-space: nowrap;
+}
+
+/* Conflict panel (state 4): centered message + « Passer en lecture seule ». */
+.kp-lock__conflict {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px 22px;
+  text-align: center;
+}
+
+.kp-lock__conflict-text {
+  margin: 0;
+  max-width: 380px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.kp-lock__conflict-btn {
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--bg);
+  background: var(--ink);
+  padding: 9px 22px;
+  border-radius: var(--r-pill);
+}
+
+/* Read-only: dimmed content (mockup opacity .62), legible disabled fields. */
+.kp-editor__body--readonly .kp-editor__title,
+.kp-editor__body--readonly .kp-blocks {
+  opacity: 0.62;
+}
+
+.kp-editor__body--readonly .kp-editor__title:disabled {
+  color: var(--ink);
+  -webkit-text-fill-color: var(--ink);
+}
+
+.kp-editor__body--readonly .kp-blocks__text:disabled,
+.kp-editor__body--readonly .kp-blocks__label:disabled {
+  color: var(--body-ink);
+  -webkit-text-fill-color: var(--body-ink);
+}
+
+.kp-editor__body--readonly .kp-blocks__box:disabled {
+  cursor: default;
+}
+
+.kp-editor__swatch:disabled,
+.kp-visibility:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
 /* --- Session save state (Modifié / Enregistrement… / Enregistré) --- */
 .kp-save {
   display: inline-flex;
@@ -467,6 +658,33 @@
     padding: 5px 11px;
     border-radius: var(--r-pill);
     font-size: 11.5px;
+  }
+
+  /* Lock states: no full-width strip on mobile — the tint moves to the pill
+   * (`Keepou - Éditeur & verrou.dc.html`, mobile frame). While editing, the
+   * save pill keeps the center slot (HANDOFF §3.2); the read-only states show
+   * the lock pill instead. */
+  .kp-editor__bar--mine,
+  .kp-editor__bar--locked,
+  .kp-editor__bar--available,
+  .kp-editor__bar--conflict {
+    background: none;
+    border-bottom-color: var(--tint-line);
+  }
+
+  .kp-editor__bar .kp-lock {
+    margin-right: 0;
+    min-width: 0;
+    background: var(--lock-tint);
+    padding: 5px 11px;
+    border-radius: var(--r-pill);
+    font-size: 11.5px;
+    text-align: center;
+  }
+
+  .kp-lock--mine,
+  .kp-lock__live {
+    display: none;
   }
 
   /* ≥44px hit targets (HANDOFF §8). */

@@ -30,6 +30,13 @@ def create_note(client, tokens, **fields):
     return res.json()
 
 
+def lock_note(client, tokens, note_id):
+    """Acquire the single-editor lock — required before patching a PUBLIC note (E5)."""
+    res = client.post(f"/api/notes/{note_id}/lock", headers=auth(tokens))
+    assert res.status_code == 200
+    return res.json()
+
+
 # --- create / read / patch (echo + persistence) ---
 
 
@@ -149,11 +156,12 @@ def test_public_note_is_readable_by_any_member(client, session) -> None:
 
 
 def test_public_note_is_editable_by_any_member(client, session) -> None:
-    # The single-editor lock guards these mutations from E5 onward; in E3 any
-    # member may patch a public note (shared board).
+    # Any member may patch a public note (shared board) — holding the
+    # single-editor lock, which guards these mutations since E5.
     admin = bootstrap_admin(client)
     tom = member(client, session, TOM)
     public = create_note(client, admin, title="Liste apéro", visibility="PUBLIC")
+    lock_note(client, tom, public["id"])
 
     res = client.patch(
         f"/api/notes/{public['id']}", json={"body": "- [ ] Citron vert"}, headers=auth(tom)
@@ -196,6 +204,7 @@ def test_member_may_echo_current_visibility_while_editing_content(client, sessio
     admin = bootstrap_admin(client)
     tom = member(client, session, TOM)
     public = create_note(client, admin, title="Liste apéro", visibility="PUBLIC")
+    lock_note(client, tom, public["id"])
 
     res = client.patch(
         f"/api/notes/{public['id']}",
@@ -215,6 +224,7 @@ def test_public_to_private_removes_from_others_public_tab(client, session) -> No
     before = client.get("/api/notes?tab=public", headers=auth(tom)).json()
     assert [n["title"] for n in before] == ["Fête des voisins"]
 
+    lock_note(client, admin, note["id"])
     res = client.patch(
         f"/api/notes/{note['id']}", json={"visibility": "PRIVATE"}, headers=auth(admin)
     )
@@ -247,6 +257,7 @@ def test_body_persists_markdown_verbatim(client) -> None:
 def test_owner_can_change_visibility(client, session) -> None:
     admin = bootstrap_admin(client)
     public = create_note(client, admin, title="Note", visibility="PUBLIC")
+    lock_note(client, admin, public["id"])
     res = client.patch(
         f"/api/notes/{public['id']}", json={"visibility": "PRIVATE"}, headers=auth(admin)
     )

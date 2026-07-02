@@ -200,6 +200,15 @@ active lock.
   for that session (see §6).
 - **UX** — when blocked, the UI shows a calm banner identifying who's editing and
   inviting the reader to try again shortly (FR-L5). Never a hard error page.
+- **409 body** — structured `detail`: `code: "note_locked"` (someone else holds a
+  fresh lock; carries `locked_by {id, display_name}` + `lock_expires_at`) or
+  `code: "lock_required"` (the note is free/stale but the caller saved without a
+  valid lock — re-acquiring is enough).
+- **Read-side state & transport** — `GET /api/notes/:id` carries `locked_by` and
+  `lock_expires_at` (a stale lock is reported as-is, expiry in the past). Readers
+  **short-poll** it every ~12s to refresh the banner and the content in near
+  real-time — the validated MVP transport; SSE could replace the poll later
+  without changing this payload.
 
 ```mermaid
 sequenceDiagram
