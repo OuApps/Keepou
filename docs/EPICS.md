@@ -16,7 +16,7 @@
 - [x] **E4** — Note editor · ✅ detailed → [`stories/E4-editeur-note.md`](./stories/E4-editeur-note.md) — *shipped (consolidated PATCH, `lib/markdown.ts` blocks ⇄ GFM, modal/full-screen editor, BlockList + « Insérer une case à cocher », 3-state autosave + flush on blur/close, color picker, public→private confirmation, tests)*
 - [x] **E5** — Single-editor lock & real-time · ✅ detailed → [`stories/E5-verrou-temps-reel.md`](./stories/E5-verrou-temps-reel.md) — *shipped (lock columns migration, atomic acquire/renew/release + PATCH enforcement with structured 409, lock state in the note payload, `useNoteLock` heartbeat 20 s / poll ~12 s / release on close & `beforeunload`, LockBanner 4 states + read-only, tests back & front)*
 - [x] **E6** — History & versions · ✅ detailed → [`stories/E6-historique-versions.md`](./stories/E6-historique-versions.md) — *shipped (`NoteVersion` migration, creation root « Créée par X », one version per session on lock release / editor close with a no-op guard, newest-first visibility-gated `GET .../versions`, restore = new version — lock-checked, visibility owner-only —, HistoryPanel desktop + mobile 2-screen flow, tests back & front)*
-- [ ] **E7** — Access administration · ✅ detailed → [`stories/E7-administration.md`](./stories/E7-administration.md)
+- [x] **E7** — Access administration · ✅ detailed → [`stories/E7-administration.md`](./stories/E7-administration.md) — *shipped (admin-only members listing registered vs pending, allowlist add / pending-only remove, role & status PATCH with the last-admin guard, AccessManager tabs + counters + member ⋯ menu, « Administration » avatar-menu entry for admins, tests back & front)*
 - [ ] **E8** — Polish (PWA, a11y, archive, i18n, quality) · ✅ detailed → [`stories/E8-polish-pwa-a11y-i18n.md`](./stories/E8-polish-pwa-a11y-i18n.md) — *archive story = "voir design avec designer" (design-gated)*
 - [ ] **E9** — Database cold backups & restore · ✅ detailed → [`stories/E9-backups-restore.md`](./stories/E9-backups-restore.md) — *Scaleway Object Storage + Railway cron*
 
@@ -329,11 +329,11 @@ end-to-end at least once** (runbook written).
 
 ## Next step
 
-**E0, E1 (core), E2, E3, E4, E5 and E6 are shipped** — the whole critical path
-`E0 → … → E6` is done; E7–E9 are detailed in [`stories/`](./stories/) with
-acceptance criteria and technical scope. Next: **E7 — access administration**
-(unblocked since E2). **E9** (DB backups) is recommended early now that real
-user data accumulates; **E8** is hardened at the end.
+**E0, E1 (core), E2, E3, E4, E5, E6 and E7 are shipped** — the whole critical
+path plus access administration are done; E8–E9 are detailed in
+[`stories/`](./stories/) with acceptance criteria and technical scope. Next:
+**E9 — DB cold backups**, recommended now that real user data accumulates;
+**E8** (polish) is hardened at the end.
 
 Two points to keep in mind:
 - **E8 archive** is deliberately **design-gated** — its story is just "voir design

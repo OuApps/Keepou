@@ -57,6 +57,35 @@ class UserOut(BaseModel):
     created_at: datetime
 
 
+class MemberOut(BaseModel):
+    """One row of the admin listing (E7-S1): a registered member (has a `User`)
+    or a pending invitee (allowlisted email, no account yet)."""
+
+    email: str
+    pending: bool
+    # Registered members only (null while pending):
+    user_id: str | None = None
+    display_name: str | None = None
+    role: Role | None = None
+    status: UserStatus | None = None
+    created_at: datetime | None = None
+    # Allowlist side (a registered bootstrap admin has no entry):
+    allowlist_id: str | None = None
+    added_at: datetime | None = None
+
+
+class AllowlistIn(BaseModel):
+    email: NormalizedEmail
+
+
+class AdminUserPatch(BaseModel):
+    """Role/status change (E7-S3) — only the provided fields change; there is
+    deliberately no way to delete a user (claude.md §5)."""
+
+    role: Role | None = None
+    status: UserStatus | None = None
+
+
 class NoteIn(BaseModel):
     """Create payload — every field optional so the composer can send a title alone."""
 
