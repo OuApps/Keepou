@@ -1,0 +1,388 @@
+/*
+ * Keepou — administration (access management)
+ * Measured from `design/Keepou - Admin.dc.html`. The mockup only shows the
+ * light theme; dark reuses the surface/ink tokens plus the brand accents that
+ * stay readable on dark (avocado for green, gold as-is) — handoff §1.
+ */
+
+.kp-admin {
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.kp-admin__title {
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 26px;
+  color: var(--ink);
+  margin: 0;
+}
+
+.kp-admin__subtitle {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin: 2px 0 0;
+}
+
+/* --- Add to the allowlist (field + green pill button) --- */
+.kp-admin__add {
+  margin-top: 18px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 9px 9px 9px 16px;
+  box-shadow: 0 4px 14px -10px rgba(46, 42, 32, 0.3);
+}
+
+.kp-admin__add:focus-within {
+  border-color: var(--brand-gold);
+}
+
+.kp-admin__add > svg {
+  flex: none;
+  color: var(--ink-mute);
+}
+
+.kp-admin__add-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-ui);
+  font-size: 14.5px;
+  color: var(--ink);
+}
+
+.kp-admin__add-input::placeholder {
+  color: var(--ink-mute);
+}
+
+.kp-admin__add-btn {
+  flex: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 13.5px;
+  color: #fff;
+  background: var(--brand-green);
+  padding: 10px 20px;
+  border-radius: var(--r-pill);
+}
+
+.kp-admin__add-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+/* --- Tabs (Membres / Invités en attente) with counters --- */
+.kp-admin__tabs {
+  display: flex;
+  gap: 24px;
+  margin-top: 22px;
+  border-bottom: 1px solid var(--border);
+}
+
+.kp-admin__tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink-mute);
+  padding: 0 2px 12px;
+  border-bottom: 2.5px solid transparent;
+  margin-bottom: -1px;
+}
+
+.kp-admin__tab--active {
+  color: var(--ink);
+  border-bottom-color: var(--brand-green);
+}
+
+[data-theme='dark'] .kp-admin__tab--active {
+  border-bottom-color: var(--brand-avocat);
+}
+
+.kp-admin__count {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  background: var(--track);
+  color: var(--ink-mute);
+}
+
+.kp-admin__tab--active .kp-admin__count {
+  background: rgba(58, 81, 50, 0.14);
+  color: var(--brand-green);
+}
+
+[data-theme='dark'] .kp-admin__tab--active .kp-admin__count {
+  background: rgba(157, 184, 78, 0.16);
+  color: var(--brand-avocat);
+}
+
+/* --- Rows (member / pending invitee) --- */
+.kp-admin__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kp-admin__row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.kp-admin__avatar {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* Pending invitee: dashed circle + mail glyph (no account yet). */
+.kp-admin__avatar--pending {
+  border: 1.6px dashed var(--ink-mute);
+  color: var(--ink-mute);
+}
+
+.kp-admin__id {
+  flex: 1;
+  min-width: 0;
+}
+
+.kp-admin__name-line {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.kp-admin__name {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 14.5px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kp-admin__badge-admin {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--brand-green);
+  background: rgba(58, 81, 50, 0.12);
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+}
+
+[data-theme='dark'] .kp-admin__badge-admin {
+  color: var(--brand-avocat);
+  background: rgba(157, 184, 78, 0.16);
+}
+
+.kp-admin__meta {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  color: var(--ink-mute);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Status pills: Actif (green) · Désactivé / En attente (gold) — handoff §3.7. */
+.kp-admin__status {
+  flex: none;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 5px 13px;
+  border-radius: var(--r-pill);
+}
+
+.kp-admin__status--active {
+  color: var(--brand-green);
+  background: rgba(58, 81, 50, 0.12);
+}
+
+[data-theme='dark'] .kp-admin__status--active {
+  color: var(--brand-avocat);
+  background: rgba(157, 184, 78, 0.16);
+}
+
+.kp-admin__status--warn {
+  color: #9a7420;
+  background: rgba(234, 182, 76, 0.18);
+}
+
+[data-theme='dark'] .kp-admin__status--warn {
+  color: var(--brand-gold);
+  background: rgba(234, 182, 76, 0.14);
+}
+
+/* ⋯ member menu trigger + panel (reuses the .kp-menu topbar panel). */
+.kp-admin__actions {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kp-admin__more {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 20px;
+  line-height: 1;
+  color: var(--ink-mute);
+  padding: 8px 6px;
+  border-radius: 8px;
+}
+
+.kp-admin__more:hover {
+  background: var(--track);
+}
+
+.kp-admin__menu-item:disabled {
+  color: var(--ink-mute);
+  cursor: default;
+}
+
+.kp-admin__menu-item:disabled:hover {
+  background: none;
+}
+
+/* Guard footnote inside the menu (last active admin). */
+.kp-admin__menu-note {
+  padding: 7px 10px 5px;
+  border-top: 1px solid var(--border);
+  margin-top: 5px;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--ink-mute);
+}
+
+/* « Retirer » a pending entry (terracotta text action). */
+.kp-admin__remove {
+  flex: none;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--brand-salsa);
+  padding: 8px 6px;
+  border-radius: 8px;
+}
+
+.kp-admin__remove:hover {
+  background: rgba(199, 93, 67, 0.1);
+}
+
+.kp-admin__remove:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Empty tab + « Désactiver, jamais supprimer » note card. */
+.kp-admin__empty {
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  color: var(--ink-mute);
+  padding: 26px 4px;
+}
+
+.kp-admin__note {
+  margin-top: 22px;
+  background: var(--surface);
+  border-radius: var(--r-panel);
+  box-shadow: var(--sh-card);
+  padding: 18px 20px;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+
+.kp-admin__note b {
+  color: var(--ink);
+}
+
+@media (max-width: 640px) {
+  .kp-admin__add {
+    padding: 6px 6px 6px 13px;
+  }
+
+  .kp-admin__add-btn {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  /* Short labels on mobile (mockup: « Ajouter », « En attente »). */
+  .kp-admin__long {
+    display: none;
+  }
+
+  .kp-admin__tabs {
+    gap: 18px;
+  }
+
+  .kp-admin__tab {
+    font-size: 13.5px;
+    padding-bottom: 10px;
+  }
+
+  .kp-admin__avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 12px;
+  }
+
+  .kp-admin__status {
+    font-size: 11px;
+    padding: 5px 11px;
+  }
+
+  /* Hit targets ≥ 44px (handoff §8). */
+  .kp-admin__more,
+  .kp-admin__remove {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+@media (min-width: 641px) {
+  .kp-admin__short {
+    display: none;
+  }
+}
