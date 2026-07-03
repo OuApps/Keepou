@@ -27,6 +27,7 @@ FR-P1 / FR-P2, claude.md. **Depends on** all feature epics (E2–E7).
 - [ ] **E8-S5** — Quality hardening (tests + green CI)
 - [ ] **E8-S6** — Mobile keyboard: keep focused inputs/buttons above the on-screen keyboard
 - [ ] **E8-S7** — Password-manager autofill (Bitwarden): recognizable login form
+- [ ] **E8-S8** — Dark-mode legibility pass (contrast fixes — « on voit pas bien »)
 
 **Status.** All `to do`. E8-S2 is **blocked on design** — see the warning above.
 
@@ -229,6 +230,48 @@ markup/semantics only. Complements E8-S3's "all fields labeled".
 
 ---
 
+## E8-S8 — Dark-mode legibility pass · M
+
+**Goal.** Fix the **dark theme** where things are hard to read (« on voit pas
+bien ») — low-contrast text, washed-out note shades, faint borders/placeholders —
+so dark mode is as legible as light across every screen.
+
+**Current state.** The theme is driven by `data-theme="light|dark"` + CSS token
+variables (E0, ARCHITECTURE §9). Both themes ship, but several dark surfaces read
+poorly in practice — likely the **5 card shades** (light-tuned pastels that lose
+contrast on a dark background), **secondary/muted text** (timestamps, meta,
+placeholders), and **borders/dividers** that vanish. This story is the **audit +
+token/contrast fixes**, not a redesign.
+
+**Tasks**
+- **Audit each screen in dark mode** (board cards, editor, lock banners, history,
+  admin, auth, and the E10 import review view) and list the low-contrast spots.
+- **Fix via the dark token set** in `design/HANDOFF.md` §1 first — adjust the dark
+  values for the offending tokens (card shades, muted text, borders, placeholders)
+  rather than sprinkling per-component overrides. Update the tokens in HANDOFF §1
+  **and** the CSS variables so the two stay in sync (design = source of truth).
+- **Verify contrast** against WCAG AA (≥ 4.5:1 body text, ≥ 3:1 large text / UI
+  borders) on every dark surface, including **title text on each of the 5 card
+  shades**.
+- Re-check the **light** theme didn't regress (shared tokens) and both `prefers-
+  color-scheme` default + the manual toggle still land on the fixed values.
+
+**Acceptance criteria**
+- [ ] The reported "hard to read in dark mode" cases are fixed; no dark surface
+  falls below WCAG AA (body ≥ 4.5:1, large/UI ≥ 3:1), card-title-on-shade included.
+- [ ] Fixes live in the **dark token set** (HANDOFF §1 + CSS variables), not
+  scattered component hacks; light theme unchanged.
+- [ ] Verified across board, editor, lock, history, admin, auth (+ E10 import) in
+  dark, desktop **and** mobile.
+
+**Notes.** Pairs with E8-S3 (a11y contrast) — this is the **dark-specific** slice.
+If a card shade can't reach contrast by tweaking the pastel alone, adjust the **text
+token** used on it (e.g. a darker Fredoka title on dark cards) rather than breaking
+the fixed 5-shade identity. Keep `design/HANDOFF.md` §1 the source of truth — the
+mockups' dark values change with it.
+
+---
+
 ## Definition of "E8 done"
 
 - [ ] App installable (valid manifest, mascot icons, minimal SW) and **pinnable to
@@ -238,5 +281,6 @@ markup/semantics only. Complements E8-S3's "all fields labeled".
 - [ ] A11y verified (labeled inputs, aria-live status, contrast, 44px targets).
 - [ ] Mobile keyboard never covers the focused input or its primary button (E8-S6).
 - [ ] Bitwarden/built-in password managers autofill the login and offer to save (E8-S7).
+- [ ] **Dark mode legible everywhere** (WCAG AA), fixed via the dark token set (E8-S8).
 - [ ] UI strings centralized (French verbatim), ready for later i18n.
 - [ ] Test suite green in CI across both apps.

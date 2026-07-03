@@ -137,6 +137,9 @@ notes, and a full history of who changed what.
 - **FR-I2** Import parses the Takeout archive **server-side**: title, text, and
   **checklist items** become a note (GFM Markdown body); Keep colors map to the
   fixed 5-shade palette.
+- **FR-I2b** Before anything is created, the member sees a **review/selection view**
+  listing every parsed note and **checks/unchecks the ones to keep** (a cleanup
+  pass); **only the checked notes are imported**. Trashed notes are pre-unchecked.
 - **FR-I3** Imported notes are **private** and owned by the importer (the owner can
   make any of them public afterwards, FR-N5).
 - **FR-I4** The **original Keep dates** (created / last-edited) are **preserved**,

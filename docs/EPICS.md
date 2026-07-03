@@ -281,6 +281,7 @@ vs pending), roles, **enable/disable** — **never delete**.
 - **PWA**: manifest (icon = mascot), favicon, apple-touch metadata, minimal SW — **installable + pinnable to the mobile home screen** (Android install prompt / iOS "Ajouter à l'écran d'accueil").
 - **Archive** (FR-N8): **starts with a design phase** — there is no mockup yet, so first **design the archive UI** (per the design-driven workflow in `design/claude.md` / `HANDOFF.md`), then implement archive / unarchive (hide from the board without deleting) + the `?archived=` board filter + the `Note.archived` field.
 - **A11y**: real `<input type=checkbox>` + labels, labeled fields, `role="status"`/aria-live lock banners, contrasts OK, mobile hit targets ≥ 44px.
+- **Dark-mode legibility**: fix the "on voit pas bien" cases (low-contrast text, washed-out card shades, faint borders) via the **dark token set** (HANDOFF §1) to WCAG AA.
 - **Mobile keyboard**: keep the focused input and its primary button above the on-screen keyboard (auth, composer, editor, admin).
 - **Password-manager autofill**: recognizable login form so Bitwarden (and built-in managers) autofill and offer to save the password.
 - **i18n**: centralize the FR copy (HANDOFF §7).
@@ -288,7 +289,7 @@ vs pending), roles, **enable/disable** — **never delete**.
 
 **Mockups.** All (state & responsive verification).
 
-**Done when.** App installable **and pinnable to the home screen**, archive **designed then built** (hide/restore + filter), a11y verified, mobile keyboard never hides inputs/buttons, password managers autofill the login, strings centralized, test suite green in CI.
+**Done when.** App installable **and pinnable to the home screen**, archive **designed then built** (hide/restore + filter), a11y verified, **dark mode legible everywhere (WCAG AA)**, mobile keyboard never hides inputs/buttons, password managers autofill the login, strings centralized, test suite green in CI.
 
 ---
 
@@ -340,19 +341,25 @@ leaving Keep doesn't mean abandoning years of notes.
   Markdown** (same shape as `web/src/lib/markdown.ts`), a **color mapping** (Keep's
   ~12 colors → the 5 shades), **µs timestamps → `created_at`/`updated_at`**, skip
   `isTrashed`, drop images/labels/pin.
-- `POST /api/import/keep`: bearer-auth **ZIP upload**, unzip, bulk-create the
-  caller's notes in **one transaction** (forced `PRIVATE`, `owner_id` = caller),
-  each with its « Créée par X » **creation version** at the imported date; returns a
-  summary (imported / skipped-trashed / duplicate / failed).
+- **Two endpoints** for a preview-then-confirm flow (deterministic file order → a
+  **stable index**): `POST /api/import/keep/preview` (unzip + parse, **no writes**,
+  returns the parsed notes) and `POST /api/import/keep` (same ZIP **+ selected
+  indices** → bulk-create **only the selected** in **one transaction**, forced
+  `PRIVATE`, `owner_id` = caller, each with its « Créée par X » **creation version**
+  at the imported date). Returns a summary (imported / duplicate / failed).
 
 **Scope — Front (design-gated)**
-- Avatar-menu entry « Importer depuis Google Keep », an upload screen (help text +
-  Takeout link + `.zip` picker + loading state) and a **result summary**. No mockup
-  yet → a short design pass first (design-driven workflow), French copy centralized.
+- Avatar-menu entry « Importer depuis Google Keep », a **3-screen flow**: upload
+  (help text + Takeout link + `.zip` picker) → **review/selection view (« mode
+  tunnel »)** where the member **checks/unchecks the notes to keep** (trashed
+  pre-unchecked, « Tout cocher / décocher », live count) → **result summary**. No
+  mockup yet → a short design pass first (design-driven workflow), French copy
+  centralized.
 
-**Key decisions (validated).** Parsing is **server-side** · **images ignored**
-(MVP; Keepou has no image support) · **original Keep dates preserved** · imported
-notes are **PRIVATE** (owner can flip them public afterwards).
+**Key decisions (validated).** Parsing is **server-side** · a **review/selection
+step** lets the member do their cleanup and import **only the checked notes** ·
+**images ignored** (MVP; Keepou has no image support) · **original Keep dates
+preserved** · imported notes are **PRIVATE** (owner can flip them public afterwards).
 
 **Depends on.** E3 (the `Note` model + creation version) — imports go through the
 same create + versioning path as any note. No schema change (dates already exist on
@@ -362,10 +369,12 @@ same create + versioning path as any note. No schema change (dates already exist
 migration) · visibility is **owner-only** (imported private) · UI copy stays
 **French**, docs in English.
 
-**Done when.** A member exports from Takeout and imports their notes in a few
-clicks; title/text/checklists faithful, colors mapped, **Keep dates preserved**;
-trashed skipped, images/labels ignored; each note gets its history root at the Keep
-date; import screen matches the design system; back tests + a user how-to written.
+**Done when.** A member exports from Takeout, **reviews the parsed notes and
+checks/unchecks** the ones to keep (« mode tunnel »), and imports **only the checked
+ones** in a few clicks; title/text/checklists faithful, colors mapped, **Keep dates
+preserved**; trashed pre-unchecked, images/labels ignored; each note gets its
+history root at the Keep date; the flow matches the design system; back tests + a
+user how-to written.
 
 ➡️ **Detailed stories: [`stories/E10-import-keep.md`](./stories/E10-import-keep.md)**
 
