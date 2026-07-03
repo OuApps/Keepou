@@ -275,15 +275,17 @@ vs pending), roles, **enable/disable** — **never delete**.
 **Goal.** Harden and finalize: installable, accessible, centralized strings, tested.
 
 **Scope**
-- **PWA**: manifest (icon = mascot), favicon, responsive.
+- **PWA**: manifest (icon = mascot), favicon, apple-touch metadata, minimal SW — **installable + pinnable to the mobile home screen** (Android install prompt / iOS "Ajouter à l'écran d'accueil").
 - **Archive** (FR-N8): **starts with a design phase** — there is no mockup yet, so first **design the archive UI** (per the design-driven workflow in `design/claude.md` / `HANDOFF.md`), then implement archive / unarchive (hide from the board without deleting) + the `?archived=` board filter + the `Note.archived` field.
 - **A11y**: real `<input type=checkbox>` + labels, labeled fields, `role="status"`/aria-live lock banners, contrasts OK, mobile hit targets ≥ 44px.
+- **Mobile keyboard**: keep the focused input and its primary button above the on-screen keyboard (auth, composer, editor, admin).
+- **Password-manager autofill**: recognizable login form so Bitwarden (and built-in managers) autofill and offer to save the password.
 - **i18n**: centralize the FR copy (HANDOFF §7).
 - **Quality**: back tests (allowlist, atomic lock, versioning), key front tests, CI lint/build/test.
 
 **Mockups.** All (state & responsive verification).
 
-**Done when.** App installable, archive **designed then built** (hide/restore + filter), a11y verified, strings centralized, test suite green in CI.
+**Done when.** App installable **and pinnable to the home screen**, archive **designed then built** (hide/restore + filter), a11y verified, mobile keyboard never hides inputs/buttons, password managers autofill the login, strings centralized, test suite green in CI.
 
 ---
 
