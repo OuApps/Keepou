@@ -19,6 +19,7 @@
 - [ ] **E7** — Access administration · ✅ detailed → [`stories/E7-administration.md`](./stories/E7-administration.md)
 - [ ] **E8** — Polish (PWA, a11y, archive, i18n, quality) · ✅ detailed → [`stories/E8-polish-pwa-a11y-i18n.md`](./stories/E8-polish-pwa-a11y-i18n.md) — *archive story = "voir design avec designer" (design-gated)*
 - [ ] **E9** — Database cold backups & restore · ✅ detailed → [`stories/E9-backups-restore.md`](./stories/E9-backups-restore.md) — *Scaleway Object Storage + Railway cron*
+- [ ] **E10** — Import from Google Keep · ✅ detailed → [`stories/E10-import-keep.md`](./stories/E10-import-keep.md) — *Google Takeout ZIP → server-side parse → private notes (dates preserved, images ignored)*
 
 ---
 
@@ -36,6 +37,7 @@
 | **E7** | Access administration | Allowlist, members/pending, roles, enable/disable | E2 |
 | **E8** | Polish: PWA, a11y, i18n, quality | Manifest, accessibility, **archive**, copy centralization, tests/CI | all |
 | **E9** | Database cold backups & restore | Scheduled off-site `pg_dump`, retention, tested restore | E1 |
+| **E10** | Import from Google Keep | Takeout ZIP upload, server-side parse/mapping, bulk-create private notes | E3 |
 
 **Recommended critical path:** `E0 → E1 → E2 → E3 → E4 → E5 → E6`. **E1 (Railway)** is placed
 early on purpose: as soon as the scaffold runs, we wire up continuous deployment so **each
@@ -48,6 +50,7 @@ E0 ──▶ E1 (continuous deploy) ──▶ E2 ──▶ E3 ──▶ E4 ─�
                                └────────────▶ E7   (in parallel once E2 is done)
 E8: cross-cutting, hardened at the end
 E9: DB cold backups, once the DB is live (after E1)
+E10: import from Google Keep, in parallel once E3 (Note model) is done
 ```
 
 ---
@@ -320,6 +323,54 @@ end-to-end at least once** (runbook written).
 
 ---
 
+## E10 — Import from Google Keep
+
+**Goal.** Let a member **bring their existing Google Keep notes into Keepou**, so
+leaving Keep doesn't mean abandoning years of notes.
+
+**Scope — Source**
+- **Google Takeout** is the import source (the only realistic path): the Keep REST
+  API is **Workspace-only** and unusable on personal Gmail; the unofficial
+  `gkeepapi` is fragile and ToS-grey. Each user runs their **own** Takeout and
+  imports their **own** notes. A Takeout export gives one **JSON per note** under
+  `Takeout/Keep/` (title, `textContent`, `listContent[]`, color, timestamps, flags).
+
+**Scope — Back**
+- `services/keep_import.py`: pure mapping Keep JSON → Keepou fields — body as **GFM
+  Markdown** (same shape as `web/src/lib/markdown.ts`), a **color mapping** (Keep's
+  ~12 colors → the 5 shades), **µs timestamps → `created_at`/`updated_at`**, skip
+  `isTrashed`, drop images/labels/pin.
+- `POST /api/import/keep`: bearer-auth **ZIP upload**, unzip, bulk-create the
+  caller's notes in **one transaction** (forced `PRIVATE`, `owner_id` = caller),
+  each with its « Créée par X » **creation version** at the imported date; returns a
+  summary (imported / skipped-trashed / duplicate / failed).
+
+**Scope — Front (design-gated)**
+- Avatar-menu entry « Importer depuis Google Keep », an upload screen (help text +
+  Takeout link + `.zip` picker + loading state) and a **result summary**. No mockup
+  yet → a short design pass first (design-driven workflow), French copy centralized.
+
+**Key decisions (validated).** Parsing is **server-side** · **images ignored**
+(MVP; Keepou has no image support) · **original Keep dates preserved** · imported
+notes are **PRIVATE** (owner can flip them public afterwards).
+
+**Depends on.** E3 (the `Note` model + creation version) — imports go through the
+same create + versioning path as any note. No schema change (dates already exist on
+`Note`; the MVP dedups by content match, no new column).
+
+**Related rules (claude.md).** Bodies are **GFM Markdown** from the MVP (no
+migration) · visibility is **owner-only** (imported private) · UI copy stays
+**French**, docs in English.
+
+**Done when.** A member exports from Takeout and imports their notes in a few
+clicks; title/text/checklists faithful, colors mapped, **Keep dates preserved**;
+trashed skipped, images/labels ignored; each note gets its history root at the Keep
+date; import screen matches the design system; back tests + a user how-to written.
+
+➡️ **Detailed stories: [`stories/E10-import-keep.md`](./stories/E10-import-keep.md)**
+
+---
+
 ## Cross-cutting (present in each epic)
 
 - **Visual fidelity**: exact tokens; light **and** dark; desktop **and** mobile.
@@ -342,3 +393,5 @@ Two points to keep in mind:
   avec designer"; implementation stories come after the archive UI is designed.
 - **E9** uses **Scaleway Object Storage** (off-site) + a **Railway cron** service; the
   live provisioning is dashboard-only (like E1).
+- **E10** (import from Google Keep) is unblocked (E3 is shipped) and can be picked up
+  independently — a **Google Takeout ZIP** parsed server-side into private notes.
