@@ -57,6 +57,38 @@ class UserOut(BaseModel):
     created_at: datetime
 
 
+class MemberOut(BaseModel):
+    """One row of the admin access list (E7-S1).
+
+    Either a **registered** member (`pending=False`, the `user_*` fields are
+    set) or a **pending** invitee (`pending=True`, allowlisted email with no
+    account yet — the `allowlist_*` fields are set).
+    """
+
+    email: str
+    pending: bool
+    # Registered members (pending=False)
+    user_id: str | None = None
+    display_name: str | None = None
+    role: Role | None = None
+    status: UserStatus | None = None
+    registered_at: datetime | None = None  # « inscrit le … »
+    # Pending invitees (pending=True)
+    allowlist_id: str | None = None
+    allowed_at: datetime | None = None  # « Autorisé le … »
+
+
+class AllowlistIn(BaseModel):
+    email: NormalizedEmail
+
+
+class UserAdminPatch(BaseModel):
+    """Admin update (E7-S3): role and/or status — there is no delete (FR-U4)."""
+
+    role: Role | None = None
+    status: UserStatus | None = None
+
+
 class NoteIn(BaseModel):
     """Create payload — every field optional so the composer can send a title alone."""
 

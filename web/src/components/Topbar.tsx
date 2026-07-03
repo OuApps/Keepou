@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { ThemeToggle } from './ThemeToggle'
 
 /**
  * App topbar — sticky, blurred, faithful to `Keepou - Board.dc.html`: logo +
  * brand, a central slot (the Board's search), a `tabs` slot (segmented pill),
- * theme toggle, avatar + menu (display name + « Se déconnecter »; the
- * « Administration » entry is added in E7 for admins).
+ * theme toggle, avatar + menu (display name + « Administration » for admins
+ * only — the real /admin guard is the API, E7 — + « Se déconnecter »).
  */
 export function Topbar({ center, tabs }: { center?: ReactNode; tabs?: ReactNode }) {
   const { user, signOut } = useAuth()
+  const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const initial = user?.display_name?.trim().charAt(0).toUpperCase() || '?'
@@ -60,6 +62,19 @@ export function Topbar({ center, tabs }: { center?: ReactNode; tabs?: ReactNode 
               <span className="kp-menu__name">{user?.display_name}</span>
               <span className="kp-menu__email">{user?.email}</span>
             </div>
+            {user?.role === 'ADMIN' && (
+              <button
+                type="button"
+                className="kp-menu__item"
+                role="menuitem"
+                onClick={() => {
+                  setMenuOpen(false)
+                  navigate('/admin')
+                }}
+              >
+                Administration
+              </button>
+            )}
             <button type="button" className="kp-menu__item" role="menuitem" onClick={signOut}>
               Se déconnecter
             </button>

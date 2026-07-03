@@ -4,6 +4,7 @@
 @import './board.css';
 @import './editor.css';
 @import './history.css';
+@import './admin.css';
 
 * {
   box-sizing: border-box;
