@@ -279,7 +279,8 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
 | POST | `/api/admin/allowlist` | Add allowed email | Admin |
 | DELETE | `/api/admin/allowlist/:id` | Remove allowed email | Admin; pending entries only |
 | PATCH | `/api/admin/users/:id` | Set `role` or `status` | Admin; last-admin guard; never deletes |
-| POST | `/api/import/keep` | Import a Google Takeout export | Bearer; ZIP upload → bulk-create the caller's notes (private, dates preserved); returns a summary (E10) |
+| POST | `/api/import/keep/preview` | Parse a Takeout export | Bearer; ZIP upload → parsed notes with a stable index, **no writes** — feeds the review/selection view (E10) |
+| POST | `/api/import/keep` | Import selected notes | Bearer; same ZIP + selected indices → create only the checked notes (private, dates preserved); returns a summary (E10) |
 
 > **Search** is a **client-side filter** over the loaded board in the MVP (FR-S1);
 > a dedicated server endpoint can be added later if the note count grows.
@@ -397,9 +398,18 @@ constrained by how Keep lets data out:
   `textContent`, `listContent[]`, `color`, `createdTimestampUsec`,
   `userEditedTimestampUsec`, `isTrashed`, plus flags/attachments we ignore). Each
   user runs their **own** Takeout and imports their **own** notes.
-- **Server-side parse.** The client uploads the Takeout **ZIP** to
-  `POST /api/import/keep` (bearer-authenticated, size-limited). The API unzips it,
-  and a pure mapper (`services/keep_import.py`) turns each note into Keepou fields:
+- **Server-side parse, two-step flow.** Import is **preview → review → confirm** so
+  the member can clean up on the way in, never a blind bulk-import:
+  - `POST /api/import/keep/preview` (bearer, size-limited) unzips the archive and
+    returns the **parsed notes with a stable index** (files iterated in a
+    deterministic order) — **no DB writes**.
+  - The front shows a **review/selection view (« mode tunnel »)**: every note as a
+    checkbox card, trashed **pre-unchecked**, « Tout cocher / décocher ».
+  - `POST /api/import/keep` re-sends the **same ZIP + the selected indices**; the
+    server re-parses deterministically and creates **only the selected notes**.
+    Re-sending the ZIP keeps parsing authoritative (no trust in client-echoed
+    content) without a server-side staging table — the export is small text.
+  The pure mapper (`services/keep_import.py`) turns each note into Keepou fields:
   - `textContent` + `listContent[]` → **GFM Markdown** body (same serialization as
     `web/src/lib/markdown.ts`, so imports look identical to native notes);
   - Keep's ~12 colors → the **5 shades** via a fixed table (unknown → `GOLD`);
