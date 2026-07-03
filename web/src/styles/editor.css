@@ -558,6 +558,25 @@
   background: #fff;
 }
 
+.kp-editor__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* « Historique » — the footer text entry to /note/:id/history (E6, mockup
+ * `Keepou - Éditeur & verrou.dc.html`). */
+.kp-editor__history {
+  border: none;
+  background: none;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
 .kp-editor__done {
   border: none;
   cursor: pointer;

@@ -98,3 +98,19 @@ class NoteOut(BaseModel):
     # the takeover; both are null when unlocked.
     locked_by: LockedBy | None = None
     lock_expires_at: datetime | None = None
+
+
+class VersionOut(BaseModel):
+    """One history entry (E6): who + when + the full snapshot, re-rendered
+    as-is by the front (no visual diff, claude.md §3)."""
+
+    id: str
+    note_id: str
+    author_id: str
+    # Display name behind « Modifié par X » / « Créée par X » (HANDOFF §7).
+    author_name: str
+    title: str
+    body: str
+    color: NoteColor
+    visibility: Visibility
+    created_at: datetime

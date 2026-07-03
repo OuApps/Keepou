@@ -1,16 +1,22 @@
 """
-Notes — board CRUD (E3) + single-editor lock (E5). Versions/restore land in E6.
+Notes — board CRUD (E3) + single-editor lock (E5) + history & versions (E6).
 
 Endpoints (handoff §5):
   GET    /api/notes?tab=mine|public   mine = caller's notes; public = all members'
                                       PUBLIC notes (author + updated_at). Newest-first.
-  POST   /api/notes                   create (owner = caller)
+  POST   /api/notes                   create (owner = caller) — writes the
+                                      creation version (« Créée par X »)
   GET    /api/notes/{id}              visibility-checked; carries the lock state
   PATCH  /api/notes/{id}              consolidated editor update (E4-S1);
                                       on a PUBLIC note requires a fresh lock (FR-L2)
   DELETE /api/notes/{id}              owner or admin only (FR-N6)
   POST   /api/notes/{id}/lock         acquire / renew (heartbeat) — 409 + holder if held
-  DELETE /api/notes/{id}/lock         release (idempotent; E6 writes the version here)
+  DELETE /api/notes/{id}/lock         end of editing session: releases the lock
+                                      (public) / close signal (private) — writes
+                                      the session's version (1 session = 1 version)
+  GET    /api/notes/{id}/versions     history, newest-first, visibility-gated (FR-H2)
+  POST   /api/notes/{id}/restore/{version_id}
+                                      re-apply a snapshot + append a NEW version (FR-H4)
 
 Permissions (server-side, ARCHITECTURE §4.2):
 - A private note is invisible to non-owners — including admins — and answers 404
@@ -25,17 +31,19 @@ Permissions (server-side, ARCHITECTURE §4.2):
 from enum import StrEnum
 
 from fastapi import APIRouter, HTTPException, status
+from sqlalchemy import delete
 from sqlmodel import Session, col, select
 
 from app.db import SessionDep
-from app.models import Note, Role, User, Visibility, _utcnow
-from app.schemas import LockedBy, NoteIn, NoteOut, NotePatch
+from app.models import Note, NoteVersion, Role, User, Visibility, _utcnow
+from app.schemas import LockedBy, NoteIn, NoteOut, NotePatch, VersionOut
 from app.security import CurrentUser
-from app.services import locks
+from app.services import locks, versions
 
 router = APIRouter(prefix="/api/notes", tags=["notes"])
 
 DETAIL_NOTE_NOT_FOUND = "Note introuvable."
+DETAIL_VERSION_NOT_FOUND = "Version introuvable."
 DETAIL_DELETE_FORBIDDEN = "Seul l'auteur de la note ou un admin peut la supprimer."
 DETAIL_VISIBILITY_FORBIDDEN = "Seul l'auteur de la note peut changer sa visibilité."
 
@@ -129,6 +137,8 @@ def create_note(data: NoteIn, user: CurrentUser, session: SessionDep) -> NoteOut
     session.add(note)
     session.commit()
     session.refresh(note)
+    # The history root (E6): every note starts with its « Créée par X » version.
+    versions.record_creation(session, note)
     return _note_out(note, user, session)
 
 
@@ -204,13 +214,91 @@ def lock_note(note_id: str, user: CurrentUser, session: SessionDep) -> NoteOut:
 
 @router.delete("/{note_id}/lock", status_code=status.HTTP_204_NO_CONTENT)
 def unlock_note(note_id: str, user: CurrentUser, session: SessionDep) -> None:
-    """Release the caller's lock — idempotent, and never touches someone else's.
+    """End of editing session — releases the lock, and writes the version.
 
-    Releasing ends the editing session: E6 will create the note's version
-    exactly here (one session = one version).
+    The release stays idempotent and never touches someone else's lock. The
+    session's version (E6-S2, 1 session = 1 version) is recorded when:
+    - a lock was actually released (public note) — a double release or a
+      non-holder's call records nothing;
+    - the note is private (readable ⇒ owner): there is no lock, the call is
+      the editor-close signal. `record_session_version` skips no-op sessions,
+      so repeated close signals stay version-free.
     """
     note = _get_readable_note(note_id, user, session)
-    locks.release(session, note.id, user.id)
+    released = locks.release(session, note.id, user.id)
+    if released or note.visibility != Visibility.PUBLIC:
+        versions.record_session_version(session, note, user.id)
+
+
+@router.get("/{note_id}/versions", response_model=list[VersionOut])
+def list_note_versions(note_id: str, user: CurrentUser, session: SessionDep) -> list[VersionOut]:
+    """History, newest-first — gated exactly like reading the note (FR-H2):
+    a private note's history stays owner-only (same shielding 404)."""
+    note = _get_readable_note(note_id, user, session)
+    rows = session.exec(
+        select(NoteVersion, User)
+        .where(NoteVersion.note_id == note.id, NoteVersion.author_id == User.id)
+        .order_by(col(NoteVersion.created_at).desc())
+    ).all()
+    return [
+        VersionOut(
+            id=version.id,
+            note_id=version.note_id,
+            author_id=version.author_id,
+            author_name=author.display_name,
+            title=version.title,
+            body=version.body,
+            color=version.color,
+            visibility=version.visibility,
+            created_at=version.created_at,
+        )
+        for version, author in rows
+    ]
+
+
+@router.post("/{note_id}/restore/{version_id}", response_model=NoteOut)
+def restore_version(
+    note_id: str, version_id: str, user: CurrentUser, session: SessionDep
+) -> NoteOut:
+    """Re-apply a snapshot and append a NEW version — nothing overwritten (FR-H4).
+
+    Access mirrors editing (E6-S3): on a public note the restore briefly takes
+    the single-editor lock (atomic conditional UPDATE — an active editor wins
+    the 409); a private note restores owner-only, lock-free. Visibility is a
+    sharing setting, owner-only (ARCHITECTURE §4.2): a member's restore
+    re-applies the content and leaves the current visibility untouched.
+    """
+    note = _get_readable_note(note_id, user, session)
+    version = session.get(NoteVersion, version_id)
+    if version is None or version.note_id != note.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=DETAIL_VERSION_NOT_FOUND)
+    borrowed_lock = note.visibility == Visibility.PUBLIC and not locks.holds_valid_lock(
+        note, user.id
+    )
+    if borrowed_lock and not locks.acquire(session, note.id, user.id):
+        session.refresh(note)  # re-read who holds it
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=_lock_conflict_detail(note, session)
+        )
+    try:
+        note.title = version.title
+        note.body = version.body
+        note.color = version.color
+        if note.owner_id == user.id:
+            note.visibility = version.visibility
+        note.updated_at = _utcnow()
+        session.add(note)
+        session.commit()
+        # Appended (no-op-guarded), author = the restorer, fresh timestamp —
+        # the previously-current version stays in the history untouched.
+        versions.record_session_version(session, note, user.id)
+    finally:
+        if borrowed_lock:
+            locks.release(session, note.id, user.id)
+    session.refresh(note)
+    author = session.get(User, note.owner_id)
+    assert author is not None
+    return _note_out(note, author, session)
 
 
 @router.delete("/{note_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -226,5 +314,8 @@ def delete_note(note_id: str, user: CurrentUser, session: SessionDep) -> None:
                 status_code=status.HTTP_403_FORBIDDEN, detail=DETAIL_DELETE_FORBIDDEN
             )
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=DETAIL_NOTE_NOT_FOUND)
+    # The history belongs to the note: deleting the note takes its versions
+    # along (nothing else references them).
+    session.connection().execute(delete(NoteVersion).where(col(NoteVersion.note_id) == note.id))
     session.delete(note)
     session.commit()
