@@ -1,9 +1,9 @@
 """
 Keepou data model (SQLModel).
 
-Tables land story by story (E2: User + AllowlistEntry, E3: Note). The remaining
-table (NoteVersion) and the Note lock/archive columns are **specified** in
-`design/HANDOFF.md` §4 and arrive with their epics (E5/E6/E8) — feature-aligned
+Tables land story by story (E2: User + AllowlistEntry, E3: Note, E6:
+NoteVersion). The remaining Note.archived column is **specified** in
+`design/HANDOFF.md` §4 and arrives with its epic (E8) — feature-aligned
 migrations, no dead columns before their feature ships.
 
 Structural points to respect during implementation:
@@ -17,6 +17,7 @@ import uuid
 from datetime import UTC, datetime
 from enum import StrEnum
 
+from sqlalchemy import Index
 from sqlmodel import Field, SQLModel  # noqa: F401  (re-export for Alembic / metadata)
 
 
@@ -99,3 +100,28 @@ class Note(SQLModel, table=True):
     locked_by_id: str | None = Field(default=None, foreign_key="user.id")
     locked_at: datetime | None = None
     lock_expires_at: datetime | None = None
+
+
+class NoteVersion(SQLModel, table=True):
+    """Append-only full snapshot of a note (E6) — 1 editing session = 1 version.
+
+    One row per session end (lock release / editor close), plus the creation
+    snapshot (the « Créée par X » history root). Restore appends a new row,
+    nothing is ever overwritten (FR-H4); all versions are kept (ARCHITECTURE
+    §6, no pruning in MVP).
+    """
+
+    __table_args__ = (
+        # The history read path — a note's versions, newest first. The
+        # composite index also covers plain note_id lookups (FK side).
+        Index("ix_noteversion_note_id_created_at", "note_id", "created_at"),
+    )
+
+    id: str = Field(default_factory=_id, primary_key=True)
+    note_id: str = Field(foreign_key="note.id")
+    author_id: str = Field(foreign_key="user.id")
+    title: str
+    body: str  # Markdown snapshot
+    color: NoteColor
+    visibility: Visibility
+    created_at: datetime = Field(default_factory=_utcnow)

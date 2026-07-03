@@ -190,6 +190,14 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     await flush()
     navigate('/')
   }
+
+  // « Historique » (E6): same flush-first discipline; the unmount then ends
+  // the editing session (lock release / close signal), so the history the
+  // user lands on already contains this session's version.
+  const openHistory = async () => {
+    await flush()
+    navigate(`/note/${noteId}/history`)
+  }
   const closeRef = useRef(close)
   closeRef.current = close
 
@@ -328,9 +336,14 @@ export function NoteEditor({ noteId }: { noteId: string }) {
               </>
             )}
           </div>
-          <button type="button" className="kp-editor__done" onClick={() => void close()}>
-            Terminé
-          </button>
+          <div className="kp-editor__actions">
+            <button type="button" className="kp-editor__history" onClick={() => void openHistory()}>
+              Historique
+            </button>
+            <button type="button" className="kp-editor__done" onClick={() => void close()}>
+              Terminé
+            </button>
+          </div>
         </footer>
       </section>
     </div>

@@ -236,14 +236,23 @@ sequenceDiagram
   color + visibility + `author_id` + timestamp), created when the session ends —
   i.e. when the **lock is released** on a public note, or the editor is closed on
   a private note (FR-H1). Not one version per keystroke or per checkbox toggle.
+  `DELETE /api/notes/:id/lock` is the single end-of-session signal: it releases
+  the lock (public) and doubles as the editor-close signal on a private note
+  (no lock to release). A session that changed nothing records no version.
+- **Creation root**: `POST /api/notes` writes the note's first version (stamped
+  with the note's own `created_at`), which the front renders as « Créée par X ».
 - **Viewing**: `GET /api/notes/:id/versions` returns the versions newest-first,
   gated by the same visibility rules as the note itself (FR-H2). The history
   lists **who** and **when**; selecting a version re-displays it read-only
   (FR-H3). There is no visual diff — a version is shown as-is.
-- **Restore**: `POST /api/notes/:id/restore/:version_id` creates a **new**
-  version whose content equals the chosen one. Nothing is ever overwritten
-  (FR-H4).
+- **Restore**: `POST /api/notes/:id/restore/:version_id` re-applies the snapshot
+  and appends a **new** version. Nothing is ever overwritten (FR-H4). On a
+  public note the restore briefly takes the single-editor lock (atomic — an
+  active editor wins the `409`); **visibility stays owner-only** (§4.2), so a
+  member's restore re-applies the content and leaves the current visibility
+  untouched.
 - **Retention**: all versions are kept (snapshots are small Markdown text).
+  Deleting a note deletes its versions with it.
 
 ## 7. API surface (REST, JSON)
 

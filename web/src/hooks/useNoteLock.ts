@@ -54,6 +54,9 @@ export function useNoteLock({ noteId, note, myId, onRefresh }: UseNoteLockInput)
   // a stale closure; `statusRef` is written synchronously on every transition.
   const statusRef = useRef(status)
   const heldRef = useRef(false) // do we hold the server-side lock right now?
+  // Private-note editing session in progress (no lock, but leaving must still
+  // signal the end of the session so the server records its version, E6-S2).
+  const privateSessionRef = useRef(false)
   const heartbeatRef = useRef<number>()
   const pollRef = useRef<number>()
   const onRefreshRef = useRef(onRefresh)
@@ -179,7 +182,14 @@ export function useNoteLock({ noteId, note, myId, onRefresh }: UseNoteLockInput)
       // PATCH is confirmed; the previous run's cleanup released the lock.)
       transition('none')
       setHolder(null)
-      return
+      privateSessionRef.current = true
+      return () => {
+        // End-of-session signal (E6): DELETE /lock doubles as the private
+        // editor-close signal — the server records the session's version
+        // (and skips it when nothing changed).
+        privateSessionRef.current = false
+        releaseLock(noteId).catch(() => {})
+      }
     }
     const current = noteRef.current
     const heldByOther =
@@ -206,7 +216,7 @@ export function useNoteLock({ noteId, note, myId, onRefresh }: UseNoteLockInput)
   // Closed tab / hard navigation: `keepalive` lets the release outlive the page.
   useEffect(() => {
     const onBeforeUnload = () => {
-      if (heldRef.current) releaseLockOnUnload(noteId)
+      if (heldRef.current || privateSessionRef.current) releaseLockOnUnload(noteId)
     }
     window.addEventListener('beforeunload', onBeforeUnload)
     return () => window.removeEventListener('beforeunload', onBeforeUnload)

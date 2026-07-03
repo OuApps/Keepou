@@ -3,6 +3,7 @@
 @import './auth.css';
 @import './board.css';
 @import './editor.css';
+@import './history.css';
 
 * {
   box-sizing: border-box;
