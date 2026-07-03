@@ -1,5 +1,5 @@
 """
-Notes — board CRUD (E3) + single-editor lock (E5). Versions/restore land in E6.
+Notes — board CRUD (E3) + single-editor lock (E5) + history & versions (E6).
 
 Endpoints (handoff §5):
   GET    /api/notes?tab=mine|public   mine = caller's notes; public = all members'
@@ -10,7 +10,10 @@ Endpoints (handoff §5):
                                       on a PUBLIC note requires a fresh lock (FR-L2)
   DELETE /api/notes/{id}              owner or admin only (FR-N6)
   POST   /api/notes/{id}/lock         acquire / renew (heartbeat) — 409 + holder if held
-  DELETE /api/notes/{id}/lock         release (idempotent; E6 writes the version here)
+  DELETE /api/notes/{id}/lock         release (idempotent; a PUBLIC note versions here)
+  POST   /api/notes/{id}/versions     PRIVATE note session-end → snapshot a version
+  GET    /api/notes/{id}/versions     history, newest-first, visibility-gated (FR-H2)
+  POST   /api/notes/{id}/restore/{v}  restore a version → appends a NEW version (FR-H4)
 
 Permissions (server-side, ARCHITECTURE §4.2):
 - A private note is invisible to non-owners — including admins — and answers 404
@@ -28,16 +31,17 @@ from fastapi import APIRouter, HTTPException, status
 from sqlmodel import Session, col, select
 
 from app.db import SessionDep
-from app.models import Note, Role, User, Visibility, _utcnow
-from app.schemas import LockedBy, NoteIn, NoteOut, NotePatch
+from app.models import Note, NoteVersion, Role, User, Visibility, _utcnow
+from app.schemas import LockedBy, NoteIn, NoteOut, NotePatch, VersionOut
 from app.security import CurrentUser
-from app.services import locks
+from app.services import locks, versions
 
 router = APIRouter(prefix="/api/notes", tags=["notes"])
 
 DETAIL_NOTE_NOT_FOUND = "Note introuvable."
 DETAIL_DELETE_FORBIDDEN = "Seul l'auteur de la note ou un admin peut la supprimer."
 DETAIL_VISIBILITY_FORBIDDEN = "Seul l'auteur de la note peut changer sa visibilité."
+DETAIL_VERSION_NOT_FOUND = "Version introuvable."
 
 
 class Tab(StrEnum):
@@ -65,6 +69,20 @@ def _note_out(note: Note, author: User, session: Session) -> NoteOut:
         # lets a reader offer the takeover (E5-S3).
         locked_by=locked_by,
         lock_expires_at=note.lock_expires_at,
+    )
+
+
+def _version_out(version: NoteVersion, author: User) -> VersionOut:
+    return VersionOut(
+        id=version.id,
+        note_id=version.note_id,
+        author_id=version.author_id,
+        author_name=author.display_name,
+        title=version.title,
+        body=version.body,
+        color=version.color,
+        visibility=version.visibility,
+        created_at=version.created_at,
     )
 
 
@@ -126,6 +144,10 @@ def create_note(data: NoteIn, user: CurrentUser, session: SessionDep) -> NoteOut
         visibility=data.visibility,
         owner_id=user.id,
     )
+    # A brand-new note's "last saved version" == its creation: keeping the two
+    # equal lets E6 tell an untouched note from an edited one (no first version
+    # for a mere open-and-close, FR-H1).
+    note.updated_at = note.created_at
     session.add(note)
     session.commit()
     session.refresh(note)
@@ -206,11 +228,84 @@ def lock_note(note_id: str, user: CurrentUser, session: SessionDep) -> NoteOut:
 def unlock_note(note_id: str, user: CurrentUser, session: SessionDep) -> None:
     """Release the caller's lock — idempotent, and never touches someone else's.
 
-    Releasing ends the editing session: E6 will create the note's version
-    exactly here (one session = one version).
+    Releasing ends a PUBLIC note's editing session, so a version is snapshotted
+    here (one session = one version, E6-S2). A double-release (no lock actually
+    dropped) stays version-free, and a no-op session is skipped by
+    `snapshot_if_changed`.
     """
     note = _get_readable_note(note_id, user, session)
-    locks.release(session, note.id, user.id)
+    if locks.release(session, note.id, user.id):
+        versions.snapshot_if_changed(session, note.id, user.id)
+
+
+@router.post(
+    "/{note_id}/versions", status_code=status.HTTP_201_CREATED, response_model=VersionOut | None
+)
+def end_session(note_id: str, user: CurrentUser, session: SessionDep) -> VersionOut | None:
+    """End a PRIVATE note's editing session → snapshot a version (E6-S2).
+
+    A private note carries no lock, so the client signals the session end on
+    editor close. Public notes version on lock release instead, so this is a
+    no-op for them. Returns the new version, or `null` when nothing changed.
+    """
+    note = _get_readable_note(note_id, user, session)
+    if note.visibility == Visibility.PUBLIC:
+        return None
+    version = versions.snapshot_if_changed(session, note.id, user.id)
+    return _version_out(version, user) if version is not None else None
+
+
+@router.get("/{note_id}/versions", response_model=list[VersionOut])
+def list_versions(note_id: str, user: CurrentUser, session: SessionDep) -> list[VersionOut]:
+    """History of a note, newest-first — visibility-gated exactly like the note
+    (private-note history is owner-only, FR-H2). Each entry carries the author's
+    display name for « Modifié par X » / « Créée par X »."""
+    _get_readable_note(note_id, user, session)  # 404s a private note for non-owners
+    rows = session.exec(
+        select(NoteVersion, User)
+        .where(NoteVersion.author_id == User.id)
+        .where(NoteVersion.note_id == note_id)
+        .order_by(col(NoteVersion.created_at).desc(), col(NoteVersion.id).desc())
+    ).all()
+    return [_version_out(version, author) for version, author in rows]
+
+
+@router.post("/{note_id}/restore/{version_id}", response_model=NoteOut)
+def restore_version(
+    note_id: str, version_id: str, user: CurrentUser, session: SessionDep
+) -> NoteOut:
+    """Restore a version: the note's content becomes the chosen snapshot and a
+    **new** version is appended — nothing is overwritten (FR-H4).
+
+    Access mirrors editing: a PUBLIC note is lock-checked (the restore grabs the
+    single-editor lock atomically, 409 if someone else holds it, then releases
+    it); a PRIVATE note is owner-only (enforced by readability). Flipping
+    visibility stays owner-only, so a non-owner restore keeps the current one.
+    """
+    note = _get_readable_note(note_id, user, session)
+    version = session.get(NoteVersion, version_id)
+    if version is None or version.note_id != note_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=DETAIL_VERSION_NOT_FOUND
+        )
+    grabbed_lock = False
+    if note.visibility == Visibility.PUBLIC:
+        if not locks.acquire(session, note.id, user.id):
+            session.refresh(note)
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail=_lock_conflict_detail(note, session)
+            )
+        grabbed_lock = True
+        session.refresh(note)
+    versions.restore(
+        session, note, version, user.id, apply_visibility=(note.owner_id == user.id)
+    )
+    if grabbed_lock:
+        locks.release(session, note.id, user.id)  # the restore already wrote the version
+    session.refresh(note)
+    author = session.get(User, note.owner_id)
+    assert author is not None
+    return _note_out(note, author, session)
 
 
 @router.delete("/{note_id}", status_code=status.HTTP_204_NO_CONTENT)

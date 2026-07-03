@@ -236,6 +236,9 @@ sequenceDiagram
   color + visibility + `author_id` + timestamp), created when the session ends —
   i.e. when the **lock is released** on a public note, or the editor is closed on
   a private note (FR-H1). Not one version per keystroke or per checkbox toggle.
+  A private note carries no lock, so the client signals its session end with
+  `POST /api/notes/:id/versions`. A **no-op session** (nothing changed since the
+  last version, or an untouched note) writes no version.
 - **Viewing**: `GET /api/notes/:id/versions` returns the versions newest-first,
   gated by the same visibility rules as the note itself (FR-H2). The history
   lists **who** and **when**; selecting a version re-displays it read-only
@@ -263,9 +266,10 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
 | PATCH | `/api/notes/:id` | Update note | `title`, `body`, `color`, `visibility`, `archived` (E8); lock-checked for public |
 | DELETE | `/api/notes/:id` | Delete note | Owner or admin |
 | POST | `/api/notes/:id/lock` | Acquire / heartbeat lock | `409` if held by another |
-| DELETE | `/api/notes/:id/lock` | Release lock | Ends the session → writes a version |
-| GET | `/api/notes/:id/versions` | Version history | Visibility-checked |
-| POST | `/api/notes/:id/restore/:version_id` | Restore a version | Creates a new version |
+| DELETE | `/api/notes/:id/lock` | Release lock | Ends a public session → writes a version |
+| POST | `/api/notes/:id/versions` | End a private session | Snapshots a version (no-op if unchanged); public notes version on release |
+| GET | `/api/notes/:id/versions` | Version history | Visibility-checked, newest-first |
+| POST | `/api/notes/:id/restore/:version_id` | Restore a version | Appends a new version; lock-checked for public |
 | GET | `/api/admin/members` | Members (registered + allowed/pending) | Admin; `User` ⟕ `AllowlistEntry` |
 | POST | `/api/admin/allowlist` | Add allowed email | Admin |
 | DELETE | `/api/admin/allowlist/:id` | Remove allowed email | Admin; pending entries only |

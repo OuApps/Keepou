@@ -1,9 +1,9 @@
 """
 Keepou data model (SQLModel).
 
-Tables land story by story (E2: User + AllowlistEntry, E3: Note). The remaining
-table (NoteVersion) and the Note lock/archive columns are **specified** in
-`design/HANDOFF.md` §4 and arrive with their epics (E5/E6/E8) — feature-aligned
+Tables land story by story (E2: User + AllowlistEntry, E3: Note, E6:
+NoteVersion). The Note `archived` column is **specified** in
+`design/HANDOFF.md` §4 and arrives with its epic (E8) — feature-aligned
 migrations, no dead columns before their feature ships.
 
 Structural points to respect during implementation:
@@ -17,6 +17,7 @@ import uuid
 from datetime import UTC, datetime
 from enum import StrEnum
 
+from sqlalchemy import Index
 from sqlmodel import Field, SQLModel  # noqa: F401  (re-export for Alembic / metadata)
 
 
@@ -80,8 +81,8 @@ class Visibility(StrEnum):
 class Note(SQLModel, table=True):
     """A note: Markdown body (GFM task lists), title in its own field (handoff §3.3).
 
-    `NoteVersion` arrives in E6, `archived` in E8 — each with its own migration
-    (feature-aligned).
+    History lives in `NoteVersion` (E6); `archived` arrives in E8 with its own
+    migration (feature-aligned).
     """
 
     id: str = Field(default_factory=_id, primary_key=True)
@@ -99,3 +100,25 @@ class Note(SQLModel, table=True):
     locked_by_id: str | None = Field(default=None, foreign_key="user.id")
     locked_at: datetime | None = None
     lock_expires_at: datetime | None = None
+
+
+class NoteVersion(SQLModel, table=True):
+    """One editing session = one version (E6, handoff §3.4).
+
+    Append-only snapshot of the note (title/body/color/visibility) plus who and
+    when — the history list re-renders a version *as-is*, there is no diff. A
+    version is born when the session ends (public: lock release; private: editor
+    close) and on restore (which appends a new version, never overwrites). All
+    versions are kept — snapshots are small Markdown text (ARCHITECTURE §6).
+    """
+
+    __table_args__ = (Index("ix_noteversion_note_id_created_at", "note_id", "created_at"),)
+
+    id: str = Field(default_factory=_id, primary_key=True)
+    note_id: str = Field(foreign_key="note.id", index=True)
+    author_id: str = Field(foreign_key="user.id")
+    title: str
+    body: str  # Markdown snapshot
+    color: NoteColor
+    visibility: Visibility
+    created_at: datetime = Field(default_factory=_utcnow)  # history timestamp

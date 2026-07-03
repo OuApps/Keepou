@@ -82,6 +82,25 @@ class LockedBy(BaseModel):
     display_name: str
 
 
+class VersionOut(BaseModel):
+    """A history entry (E6): the snapshot + who wrote it and when.
+
+    The full content (title/body/color/visibility) travels so the front can
+    re-render the version read-only — there is no diff, a version is shown as-is.
+    """
+
+    id: str
+    note_id: str
+    author_id: str
+    # Display name for « Modifié par X » / « Créée par X » (the first version).
+    author_name: str
+    title: str
+    body: str
+    color: NoteColor
+    visibility: Visibility
+    created_at: datetime
+
+
 class NoteOut(BaseModel):
     id: str
     title: str

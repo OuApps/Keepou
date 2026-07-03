@@ -9,6 +9,20 @@ export function parseApiDate(iso: string): Date {
   return new Date(hasZone ? iso : `${iso}Z`)
 }
 
+/**
+ * History-row timestamp (« Aujourd'hui · 14:32 », « Hier · 18:42 »,
+ * « 12 juin · 20:10 ») — cf. `Keepou - Historique.dc.html`. Day label + HH:MM.
+ */
+export function formatVersionWhen(iso: string, now: Date = new Date()): string {
+  const date = parseApiDate(iso)
+  const time = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+  const midnight = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+  const days = Math.round((midnight(now) - midnight(date)) / 86_400_000)
+  if (days <= 0) return `Aujourd'hui · ${time}`
+  if (days === 1) return `Hier · ${time}`
+  return `${date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} · ${time}`
+}
+
 export function formatRelative(iso: string, now: Date = new Date()): string {
   const date = parseApiDate(iso)
   const seconds = Math.max(0, (now.getTime() - date.getTime()) / 1000)

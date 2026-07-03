@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { lockConflictOf } from '../../api/locks'
+import { lockConflictOf, releaseLock } from '../../api/locks'
 import { getNote, patchNote, type NoteColor, type NoteOut, type Visibility } from '../../api/notes'
+import { endPrivateSession } from '../../api/versions'
 import { useAuth } from '../../auth/AuthContext'
 import { useAutosave } from '../../hooks/useAutosave'
 import { useNoteLock, type LockStatus } from '../../hooks/useNoteLock'
@@ -184,12 +185,24 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     if (immediate) void flush()
   }
 
-  // Close = back to the board. The pending edit is flushed *before* leaving so
-  // the unmount lock release never overtakes the last save (which would 409).
-  const close = async () => {
+  // Leaving the editor ends the session. The pending edit is flushed *before*
+  // leaving so the unmount lock release never overtakes the last save (which
+  // would 409). A PUBLIC note versions on that lock release (E6); a PRIVATE note
+  // has no lock, so we signal its session end here so the server can snapshot.
+  const leave = async (to: string) => {
     await flush()
-    navigate('/')
+    // End the session *before* leaving so the version exists when we land (e.g.
+    // on the history). A PRIVATE note has no lock → signal its close; a PUBLIC
+    // note we hold → release now (the unmount release then no-ops, no double
+    // version). Read-only viewers hold nothing and skip both.
+    if (note?.visibility === 'PRIVATE') {
+      await endPrivateSession(noteId).catch(() => {})
+    } else if (lockStatusRef.current === 'mine') {
+      await releaseLock(noteId).catch(() => {})
+    }
+    navigate(to)
   }
+  const close = () => leave('/')
   const closeRef = useRef(close)
   closeRef.current = close
 
@@ -327,6 +340,41 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                 />
               </>
             )}
+            <span className="kp-editor__sep" aria-hidden="true" />
+            <button
+              type="button"
+              className="kp-editor__history"
+              onClick={() => void leave(`/note/${noteId}/history`)}
+              aria-label="Historique des versions"
+            >
+              <svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true">
+                <path
+                  d="M10 5.5 L10 10 L13 12"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M3.5 8 A6.7 6.7 0 1 1 4 12.5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M3.4 5 L3.4 8 L6.4 8"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <span>Historique</span>
+            </button>
           </div>
           <button type="button" className="kp-editor__done" onClick={() => void close()}>
             Terminé

@@ -332,4 +332,31 @@ describe('NoteEditor', () => {
     expect(await screen.findByText('Note introuvable.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Retour au board' })).toBeInTheDocument()
   })
+
+  it('signals the session end on a private note close (E6 version trigger)', async () => {
+    // A private note carries no lock, so closing posts to /versions so the
+    // server can snapshot the session's version.
+    const ends: string[] = []
+    const patches = stubEditor(note({ visibility: 'PRIVATE' }), {
+      '/api/notes/n-repas/versions': (init) => {
+        if (init?.method === 'POST') {
+          ends.push('end')
+          return new Response(null, { status: 201 })
+        }
+        return json(200, [])
+      },
+    })
+    renderEditor()
+    const title = await editorLoaded()
+
+    fireEvent.change(title, { target: { value: 'Journal du jour' } })
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Terminé' }))
+    })
+
+    // Flushed the edit, then signalled end-of-session, then left for the board.
+    expect(patches).toHaveLength(1)
+    expect(ends).toEqual(['end'])
+    expect(await screen.findByLabelText('Prends une note…')).toBeInTheDocument()
+  })
 })
