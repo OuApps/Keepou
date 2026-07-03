@@ -24,6 +24,7 @@ notes, and a full history of who changed what.
 - The app is **installable** and pleasant on both phone and desktop.
 - A single instance is **trivial to self-host** (one database, a small API + static front).
 - **Data is safe**: regular off-site backups with a tested restore (see E9) — no lost notes.
+- A new member can **bring their existing Google Keep notes in** (Takeout import) instead of starting empty (see E10).
 
 ### Non-goals (out of scope — Keepou stays small)
 - ❌ Real-time collaborative co-editing (multiple live cursors, CRDT merge).
@@ -129,7 +130,21 @@ notes, and a full history of who changed what.
 - **FR-S2** Two boards: **"My notes"** (the member's own) and **"Public"** (all
   public notes, with author shown).
 
-### 5.7 Platform (PWA)
+### 5.7 Import from Google Keep
+- **FR-I1** A member can **import their Google Keep notes** into Keepou from a
+  **Google Takeout** export (the only viable export path — the Keep API is
+  Workspace-only). Each member imports their own notes.
+- **FR-I2** Import parses the Takeout archive **server-side**: title, text, and
+  **checklist items** become a note (GFM Markdown body); Keep colors map to the
+  fixed 5-shade palette.
+- **FR-I3** Imported notes are **private** and owned by the importer (the owner can
+  make any of them public afterwards, FR-N5).
+- **FR-I4** The **original Keep dates** (created / last-edited) are **preserved**,
+  and each imported note gets its history root (« Créée par X ») at that date.
+- **FR-I5** **Trashed** Keep notes are skipped; **images and labels are ignored**
+  (MVP — Keepou has no rich media). The member sees a summary of what was imported.
+
+### 5.8 Platform (PWA)
 - **FR-P1** The app is a **responsive PWA**: usable on phone and desktop, with a
   web app manifest and installability.
 - **FR-P2** Layout adapts (multi-column masonry on desktop, 1–2 columns on mobile).

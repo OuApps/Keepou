@@ -279,6 +279,7 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
 | POST | `/api/admin/allowlist` | Add allowed email | Admin |
 | DELETE | `/api/admin/allowlist/:id` | Remove allowed email | Admin; pending entries only |
 | PATCH | `/api/admin/users/:id` | Set `role` or `status` | Admin; last-admin guard; never deletes |
+| POST | `/api/import/keep` | Import a Google Takeout export | Bearer; ZIP upload → bulk-create the caller's notes (private, dates preserved); returns a summary (E10) |
 
 > **Search** is a **client-side filter** over the loaded board in the MVP (FR-S1);
 > a dedicated server endpoint can be added later if the note count grows.
@@ -383,3 +384,42 @@ service points at a **Root Directory** and listens on `$PORT`.
   owner or an admin (FR-N6).
 - Private-note content is shielded **even from admins** (§4.2).
 - AGPL-3.0: running a modified network service obliges offering source to users.
+
+## 12. Import from Google Keep (E10)
+
+Members can bring their existing Google Keep notes into Keepou. The design is
+constrained by how Keep lets data out:
+
+- **Source = Google Takeout.** The Keep REST API is **Workspace-only** (service
+  account + domain-wide delegation) and unusable on personal Gmail; the unofficial
+  `gkeepapi` is fragile and ToS-grey. So the import consumes a **Google Takeout
+  export**: a `Takeout/Keep/` folder with **one JSON per note** (`title`,
+  `textContent`, `listContent[]`, `color`, `createdTimestampUsec`,
+  `userEditedTimestampUsec`, `isTrashed`, plus flags/attachments we ignore). Each
+  user runs their **own** Takeout and imports their **own** notes.
+- **Server-side parse.** The client uploads the Takeout **ZIP** to
+  `POST /api/import/keep` (bearer-authenticated, size-limited). The API unzips it,
+  and a pure mapper (`services/keep_import.py`) turns each note into Keepou fields:
+  - `textContent` + `listContent[]` → **GFM Markdown** body (same serialization as
+    `web/src/lib/markdown.ts`, so imports look identical to native notes);
+  - Keep's ~12 colors → the **5 shades** via a fixed table (unknown → `GOLD`);
+  - `createdTimestampUsec` / `userEditedTimestampUsec` (µs) → `created_at` /
+    `updated_at`, **preserving the original Keep dates**;
+  - `isTrashed` notes are **skipped**; images, labels, pin, and collaborators are
+    **dropped** (MVP — Keepou has no rich media; `isArchived` can map to
+    `Note.archived` once E8 ships).
+- **Creation path.** Notes are created in **one transaction**, forced to
+  `visibility = PRIVATE` with `owner_id` = the caller (visibility is owner-only,
+  §4.2 — the owner can flip them public afterwards). Each gets its
+  `versions.record_creation` **history root** stamped with the imported
+  `created_at`, so history reads « Créée par X » at the real Keep date. The
+  endpoint returns a summary (`imported` / `skipped_trashed` / `skipped_duplicate`
+  / `failed[]`); a malformed single note is reported, not fatal.
+- **No schema change.** `Note.created_at` / `updated_at` already exist; the import
+  path just sets them explicitly (the public `POST /api/notes` does not). The MVP
+  dedups by a content match (`owner_id, title, body`) rather than a new
+  `imported_from` column — a durable source marker is a post-MVP option.
+
+> The mapper is isolated from the endpoint, so a second importer (Standard Notes,
+> Evernote, a plain Markdown folder) could be added later without touching the
+> upload plumbing.
