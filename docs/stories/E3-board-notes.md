@@ -27,6 +27,7 @@ here — real editing arrives in E4.
 - [x] **E3-S6** — Front: NoteCard (5 shades, title, read-only checklist, badges)
 - [x] **E3-S7** — Front: NoteGrid masonry (4→2) + client-side search filter
 - [x] **E3-S8** — Tests: CRUD, tab filtering, delete permission, visibility
+- [x] **E3-S9** — Composer visibility defaults to the active tab (Public tab → public note)
 
 **Status.** All **done**. Reuses the E0 `Topbar`/`AppShell`/`ThemeToggle` shell.
 
@@ -194,6 +195,39 @@ inline parser is fine for the card in the meantime).
 - [x] CI green.
 
 **Notes.** Builds on E0-S8 + E2-S8 harnesses.
+
+---
+
+## E3-S9 — Composer visibility follows the active tab · S
+
+**Goal.** Creating a note from the **Public** tab produces a **public** note by
+default. The composer's visibility toggle is pre-armed from the board tab it was
+opened on, instead of always starting private — so a note created while browsing
+« Public » lands on the Public board, not silently in « Mes notes ».
+
+**Context.** Reported after testing: on the **Public** tab, hitting *Ajouter*
+created a **private** note (the toggle always defaulted to off), which was
+surprising. The fix ties the default to the tab of origin.
+
+**Tasks**
+- `components/Composer.tsx`: add a `defaultPublic?: boolean` prop; initialize the
+  `isPublic` toggle from it and reset to it on close. Keep it in step with the
+  active tab while the composer is **idle** (closed) via an effect — **without**
+  overriding a toggle the user set mid-edit.
+- `pages/BoardPage.tsx`: pass `defaultPublic={tab === 'public'}`.
+
+**Acceptance criteria**
+- [x] On the **Public** tab, opening the composer shows the toggle already **on**
+  (`aria-pressed="true"`); *Ajouter* with no toggle interaction creates a
+  `PUBLIC` note.
+- [x] On **Mes notes**, the toggle still defaults **off** (private) as before.
+- [x] Switching tabs while the composer is closed re-arms the default; a manual
+  toggle made while the composer is open is preserved across a tab switch.
+- [x] The user can still flip the toggle either way before creating.
+
+**Notes.** UX-only change on top of E3-S5; no API change (visibility was already
+sent on create). The reversible visibility rule (`design/claude.md` §7) is
+unaffected — this only sets the **initial** value of an existing toggle.
 
 ---
 

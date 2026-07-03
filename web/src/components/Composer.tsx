@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { createNote, type NoteColor, type NoteOut } from '../api/notes'
 import { SWATCHES } from '../lib/colors'
 
@@ -6,22 +6,39 @@ import { SWATCHES } from '../lib/colors'
  * Quick composer (E3-S5) — the fastest path in the app: an input, the 5 card
  * shades and a public toggle, faithful to `Keepou - Board.dc.html`. It only
  * creates (POST /api/notes); full editing (blocks, autosave) is E4.
+ *
+ * `defaultPublic` (E3-S9) pre-selects the visibility toggle from the active
+ * board tab: opening the composer on « Public » starts the note public, on
+ * « Mes notes » it starts private — so a note created from the Public tab
+ * lands where you expect it.
  */
 
-export function Composer({ onCreated }: { onCreated: (note: NoteOut) => void }) {
+export function Composer({
+  onCreated,
+  defaultPublic = false,
+}: {
+  onCreated: (note: NoteOut) => void
+  defaultPublic?: boolean
+}) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState('')
   const [color, setColor] = useState<NoteColor>('GOLD')
-  const [isPublic, setIsPublic] = useState(false)
+  const [isPublic, setIsPublic] = useState(defaultPublic)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Follow the active tab while the composer is idle (closed) — switching to
+  // « Public » pre-arms Public — without clobbering a toggle set mid-edit.
+  useEffect(() => {
+    if (!open) setIsPublic(defaultPublic)
+  }, [defaultPublic, open])
 
   const close = () => {
     setOpen(false)
     setTitle('')
     setColor('GOLD')
-    setIsPublic(false)
+    setIsPublic(defaultPublic)
     setError(false)
   }
 
