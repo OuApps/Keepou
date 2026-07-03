@@ -96,7 +96,7 @@ export default function BoardPage() {
       />
 
       <main className="kp-container">
-        <Composer onCreated={onCreated} />
+        <Composer onCreated={onCreated} defaultPublic={tab === 'public'} />
 
         {failed && (
           <p className="kp-board__status" role="alert">

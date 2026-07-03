@@ -201,4 +201,37 @@ describe('BoardPage', () => {
     // The composer resets after a successful create.
     expect(screen.getByLabelText('Prends une note…')).toHaveValue('')
   })
+
+  it('defaults the composer to Public when created from the Public tab (E3-S9)', async () => {
+    const created = note({
+      id: 'n-fete',
+      title: 'Fête des voisins',
+      color: 'GOLD',
+      visibility: 'PUBLIC',
+      author_name: 'Marie',
+    })
+    stubBoard({
+      '/api/notes': (init) => {
+        expect(init?.method).toBe('POST')
+        // No toggle click below — Public comes from the active tab.
+        expect(JSON.parse(String(init?.body))).toEqual({
+          title: 'Fête des voisins',
+          color: 'GOLD',
+          visibility: 'PUBLIC',
+        })
+        return json(201, created)
+      },
+    })
+    renderBoard('/?tab=public')
+    await screen.findByRole('button', { name: 'Sorties ciné' })
+
+    const input = screen.getByLabelText('Prends une note…')
+    fireEvent.focus(input)
+    // The toggle reflects the tab before any interaction.
+    expect(screen.getByRole('button', { name: 'Public' })).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.change(input, { target: { value: 'Fête des voisins' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Ajouter' }))
+
+    expect(await screen.findByRole('button', { name: 'Fête des voisins' })).toBeInTheDocument()
+  })
 })
