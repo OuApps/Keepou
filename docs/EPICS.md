@@ -392,7 +392,7 @@ user how-to written.
 ## Next step
 
 **E0, E1 (core), E2, E3, E4, E5, E6 and E7 are shipped** — the whole critical
-path plus access administration are done; E8–E9 are detailed in
+path plus access administration are done; E8–E10 are detailed in
 [`stories/`](./stories/) with acceptance criteria and technical scope. Next:
 **E9 — DB cold backups**, recommended now that real user data accumulates;
 **E8** (polish) is hardened at the end.
