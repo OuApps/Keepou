@@ -80,6 +80,7 @@ These 5 shades are a note's color picker. Store an identifier (`gold|avocat|sals
 | `Keepou - Historique.dc.html` | History panel + read-only preview + restore (desktop & 2-screen mobile flow) | Version history, author + date, preview, restore |
 | `Keepou - Auth.dc.html` | Login, account creation, **allowlist denial**, inline variants | Login, register gated on the allowlist, error messages, disabled account |
 | `Keepou - Admin.dc.html` | Access management: allowlist, **Members / Pending**, statuses, member menu, entry point | Allowlist, registered members vs pending invitees, roles, activation/deactivation |
+| `Keepou - Import Keep.dc.html` | **Import from Google Keep**: upload modal → **review/selection grid (« mode tunnel »)** → summary, light+dark+mobile | Takeout upload, per-note check/uncheck (trashed pre-unchecked), select all/none, live count, import summary (FR-I*) |
 | `Board - 3 directions.dc.html` | Archive of the 3 explored directions (A chosen) | — (historical reference) |
 
 **Frozen format decisions:** editor as a **modal** ≥ tablet, **full screen** below ~640px. History as a **side panel** on desktop, **2-screen flow** (list → preview) on mobile.
@@ -240,6 +241,7 @@ Decoupled **React SPA** front (Vite); **FastAPI** back. The front consumes the A
 | `/note/:id` | Editor — modal ≥ tablet / mobile full-screen page | authenticated + note access |
 | `/note/:id/history` | History (desktop panel / mobile screen) | authenticated + note access |
 | `/admin` | Administration | **admin only** (the real guard is the API) |
+| `/import` | Import from Google Keep (upload → review → summary, own full-page shell) | authenticated |
 
 ### FastAPI endpoints (indicative)
 ```
@@ -343,6 +345,13 @@ Key front hooks: `useAutosave(noteId)` (debounce 1.5 s + flush on blur), `useNot
 **Auth**: « Se connecter » · « Créer mon compte » · login error « E-mail ou mot de passe incorrect. » · disabled « Ton accès a été suspendu. Contacte l'administrateur. » · allowlist denial « Accès non autorisé » + « L'adresse <email> ne figure pas sur la liste des membres autorisés de cette instance Keepou. » + button « Retour à la connexion ».
 
 **Admin**: tabs « Membres » / « Invités en attente » · « Ajouter à la liste » · statuses « Actif » / « Désactivé » / « En attente » · menu « Promouvoir admin » / « Désactiver le compte » · note « Désactiver, jamais supprimer ».
+
+**Import** (Google Keep, E10 — validated in `Keepou - Import Keep.dc.html`):
+- Menu entry: « Importer depuis Google Keep »
+- Upload: « Récupère d'abord tes notes auprès de Google, puis dépose l'archive ici — tu choisiras ensuite note par note ce qui entre dans Keepou. » · steps « Ouvre Google Takeout, ne coche que Keep, et crée l'export (format .zip). » / « Télécharge l'archive takeout-….zip reçue par e-mail — sans la décompresser. » / « Dépose-la ci-dessous puis Continuer. » · « Dépose ton export ici, ou parcourir… » · « Archive .zip · 20 Mo maximum » · « Aucune note n'est créée à cette étape — tu passes d'abord en revue. » · buttons « Continuer » / « Annuler » · loading « Analyse de l'archive… »
+- Review: « N notes trouvées dans ton export » · « N fichier(s) illisible(s) sera/seront ignoré(s) » · « Les notes importées seront privées — tu pourras les rendre publiques ensuite. » · « Tout cocher » / « Tout décocher » · chip « Corbeille » · counter « N sélectionnées sur M » · primary « Importer les N notes » (singular « Importer la note »)
+- Summary: « N notes importées » · « N doublons ignorés » · « N fichier(s) illisible(s) » · « Tes notes Keep gardent leur date d'origine et restent privées. » · button « Voir mes notes »
+- Server errors (API detail, displayed as-is): « Le fichier n'est pas une archive ZIP valide. » · « Archive trop volumineuse (20 Mo maximum). » · « Aucune note Google Keep trouvée dans l'archive. »
 
 ---
 

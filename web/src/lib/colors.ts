@@ -5,6 +5,15 @@
  */
 import type { NoteColor } from '../api/notes'
 
+/** Shade → card CSS class (board cards E3, import review cards E10). */
+export const SHADE_CLASS: Record<NoteColor, string> = {
+  GOLD: 'kp-note--gold',
+  AVOCAT: 'kp-note--avocat',
+  SALSA: 'kp-note--salsa',
+  CLAY: 'kp-note--clay',
+  TEAL: 'kp-note--teal',
+}
+
 export const SWATCHES: Array<{ color: NoteColor; bg: string; bd: string; label: string }> = [
   { color: 'GOLD', bg: '#F7E2AE', bd: '#EFD79E', label: 'Or' },
   { color: 'AVOCAT', bg: '#DFEAAE', bd: '#D4E0A2', label: 'Avocat' },

@@ -60,14 +60,17 @@ function isAccountDisabled(payload: unknown): boolean {
 
 function doFetch(method: string, path: string, body?: unknown): Promise<Response> {
   const headers: Record<string, string> = {}
-  if (body !== undefined) headers['Content-Type'] = 'application/json'
+  // A FormData body goes through as-is: the browser sets the multipart
+  // Content-Type (with its boundary) itself (Keep import upload, E10).
+  const isForm = body instanceof FormData
+  if (body !== undefined && !isForm) headers['Content-Type'] = 'application/json'
   const token = getAccessToken()
   if (token) headers['Authorization'] = `Bearer ${token}`
 
   return fetch(`${BASE_URL}${path}`, {
     method,
     headers: Object.keys(headers).length > 0 ? headers : undefined,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
   })
 }
 

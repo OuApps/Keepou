@@ -7,6 +7,7 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import BoardPage from './pages/BoardPage'
 import AdminPage from './pages/AdminPage'
+import ImportKeepPage from './pages/ImportKeepPage'
 import NoteEditorPage from './pages/NoteEditorPage'
 import HistoryPage from './pages/HistoryPage'
 import NotFoundPage from './pages/NotFoundPage'
@@ -33,6 +34,8 @@ export default function App() {
             <Route element={<AppShell />}>
               <Route path="/admin" element={<AdminPage />} />
             </Route>
+            {/* The import flow brings its own full-page shell (E10-S3). */}
+            <Route path="/import" element={<ImportKeepPage />} />
             <Route path="/note/:id" element={<NoteEditorPage />} />
             <Route path="/note/:id/history" element={<HistoryPage />} />
           </Route>

@@ -5,6 +5,7 @@
 @import './editor.css';
 @import './history.css';
 @import './admin.css';
+@import './import.css';
 
 * {
   box-sizing: border-box;
