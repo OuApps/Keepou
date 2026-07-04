@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
-import type { NoteColor, NoteOut } from '../api/notes'
+import type { NoteOut } from '../api/notes'
+import { SHADE_CLASS } from '../lib/colors'
 import { parsePreview } from '../lib/preview'
 import { formatRelative } from '../lib/time'
 
@@ -9,14 +10,6 @@ import { formatRelative } from '../lib/time'
  * the Markdown body, meta line (visibility, or author badge on the Public tab).
  * Click opens the editor (`/note/:id`, E4).
  */
-
-const SHADE_CLASS: Record<NoteColor, string> = {
-  GOLD: 'kp-note--gold',
-  AVOCAT: 'kp-note--avocat',
-  SALSA: 'kp-note--salsa',
-  CLAY: 'kp-note--clay',
-  TEAL: 'kp-note--teal',
-}
 
 // Author-badge backgrounds, picked deterministically (Board mockup shows
 // terracotta / gold / green / teal chips depending on the member).

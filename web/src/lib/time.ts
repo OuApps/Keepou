@@ -72,3 +72,12 @@ export function formatVersionMoment(iso: string, now: Date = new Date()): string
 export function formatDayMonth(iso: string): string {
   return dayOf(parseApiDate(iso))
 }
+
+/** « 13 sept. 2020 » — Keep dates on the import review cards (E10, mono uppercase via CSS). */
+export function formatImportDate(iso: string): string {
+  return parseApiDate(iso).toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+}

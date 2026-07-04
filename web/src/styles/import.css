@@ -1,0 +1,433 @@
+/*
+ * Import from Google Keep (E10-S3) — faithful to `Keepou - Import Keep.dc.html`:
+ * upload modal card, review/selection grid of checkable note cards
+ * (« mode tunnel »), sticky action bar, summary card. Tokens from tokens.css.
+ */
+
+.kp-imp {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+/* --- Sticky header (brand + selection actions) --- */
+.kp-imp__bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 20px;
+  background: var(--topbar);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+
+.kp-imp__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 17px;
+  color: var(--ink);
+}
+
+.kp-imp__logo {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.kp-imp__linkbtn {
+  background: none;
+  border: none;
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--check);
+  cursor: pointer;
+  padding: 6px 8px;
+}
+
+.kp-imp__bardot {
+  color: var(--border);
+}
+
+/* --- Upload screen (modal card over the scrim'd page) --- */
+.kp-imp__center {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 38px 16px 60px;
+}
+
+.kp-imp__modal {
+  width: 100%;
+  max-width: 560px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-modal);
+  padding: 26px 28px 24px;
+  box-shadow: var(--sh-modal);
+}
+
+.kp-imp__title {
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--ink);
+  margin: 0 0 4px;
+}
+
+.kp-imp__intro {
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  margin: 0 0 6px;
+  line-height: 1.5;
+}
+
+.kp-imp__step {
+  display: flex;
+  gap: 12px;
+  margin: 13px 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.kp-imp__stepnum {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--check);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  width: 22px;
+  height: 22px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+.kp-imp__dropzone {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1.6px dashed var(--c-gold-bd);
+  background: var(--bg);
+  border-radius: var(--r-panel);
+  padding: 18px;
+  margin: 16px 0 6px;
+  cursor: pointer;
+}
+
+.kp-imp__dropzone:focus-within {
+  outline: 2px solid var(--brand-gold);
+  outline-offset: 2px;
+}
+
+.kp-imp__droplabel {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--ink);
+}
+
+.kp-imp__droplabel u {
+  color: var(--check);
+}
+
+.kp-imp__drophint {
+  font-size: 12px;
+  color: var(--ink-mute);
+  margin-top: 2px;
+}
+
+.kp-imp__filechip {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-field);
+  padding: 7px 12px;
+  margin-left: auto;
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kp-imp__note {
+  font-size: 12px;
+  color: var(--ink-mute);
+}
+
+.kp-imp__error {
+  font-size: 13px;
+  color: var(--brand-salsa);
+  margin: 10px 0 0;
+}
+
+.kp-imp__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+/* Secondary pill (ghost) button, next to the shared .kp-btn primary. */
+.kp-imp__ghost {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 10px 18px;
+  cursor: pointer;
+}
+
+.kp-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* --- Review screen --- */
+.kp-imp__info {
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 14px 20px 0;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+
+.kp-imp__info b {
+  color: var(--ink);
+}
+
+.kp-imp__grid {
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  column-count: 3;
+  column-gap: 16px;
+  padding: 18px 20px 8px;
+  flex: 1;
+}
+
+.kp-imp__card {
+  display: block;
+  break-inside: avoid;
+  margin-bottom: 16px;
+  cursor: pointer;
+  position: relative;
+}
+
+.kp-imp__card input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+/* The face reuses the board card look (shade classes from board.css). */
+.kp-imp__face {
+  display: block;
+  border-radius: var(--r-card);
+  padding: 14px 16px 12px;
+  position: relative;
+  box-shadow: var(--sh-card);
+  transition:
+    opacity 0.15s,
+    box-shadow 0.15s;
+}
+
+.kp-imp__card input:not(:checked) + .kp-imp__face {
+  opacity: 0.42;
+  box-shadow: none;
+}
+
+.kp-imp__card input:focus-visible + .kp-imp__face {
+  outline: 2px solid var(--brand-gold);
+  outline-offset: 2px;
+}
+
+.kp-imp__tick {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1.6px solid var(--ink-mute);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kp-imp__tick svg {
+  visibility: hidden;
+}
+
+.kp-imp__card input:checked + .kp-imp__face .kp-imp__tick {
+  background: var(--check);
+  border-color: var(--check);
+}
+
+.kp-imp__card input:checked + .kp-imp__face .kp-imp__tick svg {
+  visibility: visible;
+}
+
+.kp-imp__cardtitle {
+  font-family: var(--font-brand);
+  font-weight: 500;
+  font-size: 15.5px;
+  color: var(--ink);
+  margin: 0 30px 7px 0;
+}
+
+.kp-imp__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.kp-imp__date {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
+.kp-imp__chip {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  border-radius: var(--r-pill);
+  padding: 3px 9px;
+  background: var(--brand-salsa);
+  color: var(--brand-cream);
+}
+
+/* --- Sticky footer action bar --- */
+.kp-imp__foot {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 20px;
+  background: var(--topbar);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--border);
+}
+
+.kp-imp__count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.kp-imp__footactions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* --- Summary --- */
+.kp-imp__sumcard {
+  width: 100%;
+  max-width: 430px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-modal);
+  padding: 30px 30px 26px;
+  text-align: center;
+  box-shadow: var(--sh-modal);
+}
+
+.kp-imp__summascot {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  margin: 0 auto 10px;
+  display: block;
+}
+
+.kp-imp__sumnum {
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 30px;
+  color: var(--check);
+}
+
+.kp-imp__sumline {
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  margin-top: 8px;
+  line-height: 1.6;
+}
+
+.kp-imp__sumactions {
+  margin-top: 20px;
+}
+
+/* --- Responsive (breakpoint ~640px, handoff §8) --- */
+@media (max-width: 900px) {
+  .kp-imp__grid {
+    column-count: 2;
+  }
+}
+
+@media (max-width: 640px) {
+  .kp-imp__grid {
+    column-count: 1;
+    padding: 14px 14px 4px;
+  }
+
+  .kp-imp__bar {
+    padding: 12px 16px;
+  }
+
+  .kp-imp__modal {
+    padding: 20px 18px 18px;
+  }
+
+  .kp-imp__center {
+    padding: 18px 12px 40px;
+  }
+
+  /* Hit targets ≥ 44px: the whole card is the target; buttons grow. */
+  .kp-imp__foot .kp-btn {
+    padding: 13px 22px;
+  }
+
+  .kp-imp__filechip {
+    max-width: 100%;
+    margin: 8px 0 0;
+  }
+
+  .kp-imp__dropzone {
+    flex-wrap: wrap;
+  }
+}

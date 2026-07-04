@@ -115,13 +115,18 @@ like:
 
 - [x] **E10-S1** — Takeout parser + field/color/timestamp mapping (pure, tested)
 - [x] **E10-S2** — Endpoints: `POST /api/import/keep/preview` (parse only) + `POST /api/import/keep` (create selected + versions → summary)
-- [ ] **E10-S3** — Front: import entry point, upload, **review/selection view (« mode tunnel »)**, result summary (design-gated)
+- [x] **E10-S3** — Front: import entry point, upload, **review/selection view (« mode tunnel »)**, result summary (design-gated)
 - [x] **E10-S4** — Docs, edge cases & tests
 
-**Status.** Back shipped (S1 + S2 + S4): `services/keep_import.py`,
-`routers/import_keep.py`, `tests/test_import_keep.py`, and the user how-to
-(`docs/HOWTO-import-google-keep.md`). S3 (the UI) is design-gated — mockup
-proposals are with Guillaume for validation.
+**Status.** Shipped. Back: `services/keep_import.py`, `routers/import_keep.py`,
+`tests/test_import_keep.py`, user how-to (`docs/HOWTO-import-google-keep.md`).
+Front: mockup **validated** (`design/Keepou - Import Keep.dc.html` — the
+checkable-cards grid is the « mode tunnel » baseline; the one-note-at-a-time
+stepper variant was reviewed and dropped), `/import` route +
+`components/importer/*`, strings in `lib/copy.ts` (HANDOFF §7 « Import »),
+front tests in `pages/import.test.tsx`, verified end-to-end through the real
+UI (upload → review → import → board, duplicates on re-import, Keep dates +
+history root).
 
 ---
 
@@ -215,10 +220,10 @@ contract between the two calls — keep the file sort identical in both.
 **Goal.** A member can upload their Takeout export and see the result, in a screen
 faithful to the design system.
 
-**Design first.** There is **no mockup yet** — follow the design-driven workflow
-(`design/claude.md`, `HANDOFF.md`): produce a small validated screen (upload +
-progress + result) reusing the exact tokens/fonts before building. Copy is
-**French, verbatim** and centralized (HANDOFF §7 — new "Import" strings to add).
+**Design first.** Done — the mockup was proposed, reviewed and **validated**
+(`design/Keepou - Import Keep.dc.html`): checkable-cards grid as the « mode
+tunnel » baseline, unchecked cards dimmed ~40%, the one-by-one stepper variant
+dropped. Copy is **French, verbatim** and centralized (HANDOFF §7 « Import »).
 
 The flow has **three screens**: upload → **review/selection (« mode tunnel »)** →
 result.
@@ -245,14 +250,14 @@ result.
 - Errors surfaced calmly (wrong file type, too large, network) — never a hard crash.
 
 **Acceptance criteria**
-- [ ] The import flow is reachable from the avatar menu and matches the design
+- [x] The import flow is reachable from the avatar menu and matches the design
   system (light + dark, desktop + mobile).
-- [ ] After upload, the **review view lists every parsed note with a checkbox**;
+- [x] After upload, the **review view lists every parsed note with a checkbox**;
   the user can check/uncheck individually and via « Tout cocher / décocher ».
-- [ ] **Trashed notes are pre-unchecked**; the selected count updates live.
-- [ ] Importing creates **only the checked notes**; the board reflects them on
+- [x] **Trashed notes are pre-unchecked**; the selected count updates live.
+- [x] Importing creates **only the checked notes**; the board reflects them on
   return, and the summary is a clear French message.
-- [ ] All new copy is French and centralized (no hardcoded strings).
+- [x] All new copy is French and centralized (`web/src/lib/copy.ts`).
 
 **Notes.** The review/selection view **is the point of the feature** (« faire le
 ménage » on the way in) — it is in scope for the MVP, not deferred. The heavy
@@ -284,9 +289,9 @@ the two calls.
 
 ## Definition of "E10 done"
 
-- [ ] A member can export from Google Takeout and **import their notes into
+- [x] A member can export from Google Takeout and **import their notes into
   Keepou** in a few clicks.
-- [ ] After upload, a **review/selection view (« mode tunnel »)** lets the member
+- [x] After upload, a **review/selection view (« mode tunnel »)** lets the member
   **check/uncheck** notes (cleanup); **only the checked notes are imported**,
   trashed pre-unchecked.
 - [x] Title, text, and checklist items are imported faithfully (GFM Markdown);
@@ -294,7 +299,7 @@ the two calls.
 - [x] Trashed notes are skipped; images/labels are ignored (MVP); imported notes
   are **private** and owned by the importer.
 - [x] Each imported note has its « Créée par X » history root at the Keep date.
-- [ ] The import screen matches the design system (light/dark, mobile/desktop),
+- [x] The import screen matches the design system (light/dark, mobile/desktop),
   French copy centralized.
 - [x] Back tests cover the parser and the endpoint; a user how-to is written.
 

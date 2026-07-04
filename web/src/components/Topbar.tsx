@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { IMPORT_COPY } from '../lib/copy'
 import { ThemeToggle } from './ThemeToggle'
 
 /**
@@ -75,6 +76,17 @@ export function Topbar({ center, tabs }: { center?: ReactNode; tabs?: ReactNode 
                 Administration
               </button>
             )}
+            <button
+              type="button"
+              className="kp-menu__item"
+              role="menuitem"
+              onClick={() => {
+                setMenuOpen(false)
+                navigate('/import')
+              }}
+            >
+              {IMPORT_COPY.menuEntry}
+            </button>
             <button type="button" className="kp-menu__item" role="menuitem" onClick={signOut}>
               Se déconnecter
             </button>

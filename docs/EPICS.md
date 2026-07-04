@@ -19,7 +19,7 @@
 - [x] **E7** — Access administration · ✅ detailed → [`stories/E7-administration.md`](./stories/E7-administration.md) — *shipped (admin router: members LEFT JOIN, allowlist add / pending-only remove, role/status PATCH + last-admin guard; AccessManager tabs + counters, MemberRow ⋯ menu, PendingRow « Retirer », admins-only « Administration » avatar-menu entry, tests back & front)*
 - [ ] **E8** — Polish (PWA, a11y, archive, i18n, quality) · ✅ detailed → [`stories/E8-polish-pwa-a11y-i18n.md`](./stories/E8-polish-pwa-a11y-i18n.md) — *archive story = "voir design avec designer" (design-gated)*
 - [ ] **E9** — Database cold backups & restore · ✅ detailed → [`stories/E9-backups-restore.md`](./stories/E9-backups-restore.md) — *Scaleway Object Storage + Railway cron*
-- [ ] 🔨 **E10** — Import from Google Keep · ✅ detailed → [`stories/E10-import-keep.md`](./stories/E10-import-keep.md) — *back shipped (S1 parser, S2 preview/confirm endpoints, S4 tests + how-to); remaining: S3 front (design-gated — mockups proposed, awaiting validation)*
+- [x] **E10** — Import from Google Keep · ✅ detailed → [`stories/E10-import-keep.md`](./stories/E10-import-keep.md) — *shipped (Takeout parser, preview/confirm endpoints, validated mockup `Keepou - Import Keep.dc.html`, `/import` flow — upload → review « mode tunnel » → summary —, tests back & front, user how-to)*
 
 ---
 
@@ -391,17 +391,17 @@ user how-to written.
 
 ## Next step
 
-**E0, E1 (core), E2, E3, E4, E5, E6 and E7 are shipped** — the whole critical
-path plus access administration are done; E8–E10 are detailed in
-[`stories/`](./stories/) with acceptance criteria and technical scope. Next:
-**E9 — DB cold backups**, recommended now that real user data accumulates;
-**E8** (polish) is hardened at the end.
+**E0, E1 (core), E2, E3, E4, E5, E6, E7 and E10 are shipped** — the whole
+critical path, access administration and the Google Keep import are done;
+E8–E9 are detailed in [`stories/`](./stories/) with acceptance criteria and
+technical scope. Next: **E9 — DB cold backups**, recommended now that real
+user data accumulates; **E8** (polish) is hardened at the end.
 
 Two points to keep in mind:
 - **E8 archive** is deliberately **design-gated** — its story is just "voir design
   avec designer"; implementation stories come after the archive UI is designed.
 - **E9** uses **Scaleway Object Storage** (off-site) + a **Railway cron** service; the
   live provisioning is dashboard-only (like E1).
-- **E10** (import from Google Keep) has its **back end shipped** (parser, preview/
-  confirm endpoints, tests, user how-to); the front (S3) waits on the import-flow
-  mockups being validated (design-gated).
+- **E10** (import from Google Keep) is **shipped end-to-end** — mockup validated
+  (`design/Keepou - Import Keep.dc.html`), `/import` flow live, tests back & front,
+  user how-to in `docs/HOWTO-import-google-keep.md`.
