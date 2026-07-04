@@ -244,6 +244,22 @@ describe('AdminPage / AccessManager', () => {
     expect(screen.getByRole('menuitem', { name: 'Administration' })).toBeInTheDocument()
   })
 
+  it('navigates from the board to /admin via the avatar menu', async () => {
+    stubAdmin({
+      '/api/notes?tab=mine': () => json(200, []),
+      '/api/notes?tab=public': () => json(200, []),
+    })
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <App />
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Menu du compte' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Administration' }))
+    expect(await screen.findByText('Gestion des accès')).toBeInTheDocument()
+  })
+
   it('refuses the screen to a member without calling the admin API', async () => {
     // No /api/admin/members stub: a call would throw « Unexpected fetch ».
     stubFetch({ '/api/auth/me': () => json(200, ME_MEMBER) })
