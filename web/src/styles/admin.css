@@ -1,0 +1,315 @@
+/*
+ * Keepou — administration (E7)
+ * Access manager measured from `design/Keepou - Admin.dc.html`: add-to-allowlist
+ * bar, Membres / Invités en attente tabs, member & pending rows, status pills.
+ */
+
+.kp-admin {
+  max-width: 860px;
+}
+
+.kp-admin__title {
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 26px;
+  color: var(--ink);
+  margin: 0;
+}
+
+.kp-admin__sub {
+  font-size: 13px;
+  color: var(--ink-mute);
+  margin: 2px 0 0;
+}
+
+/* --- Add to allowlist bar --- */
+.kp-admin__addbar {
+  margin-top: 18px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 9px 9px 9px 16px;
+  box-shadow: 0 4px 14px -10px rgba(46, 42, 32, 0.3);
+}
+
+.kp-admin__addinput {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  font-family: var(--font-ui);
+  font-size: 14.5px;
+  color: var(--ink);
+  outline: none;
+}
+
+.kp-admin__addinput::placeholder {
+  color: var(--ink-mute);
+}
+
+.kp-admin__addbtn {
+  flex: none;
+  border: none;
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 13.5px;
+  color: #fff;
+  background: var(--brand-green);
+  padding: 10px 20px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+}
+
+.kp-admin__addbtn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.kp-admin__error {
+  margin: 12px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand-salsa);
+}
+
+/* --- Tabs --- */
+.kp-admin__tabs {
+  display: flex;
+  gap: 24px;
+  margin-top: 22px;
+  border-bottom: 1px solid var(--border);
+}
+
+.kp-admin__tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: none;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink-mute);
+  padding: 0 2px 12px;
+  border-bottom: 2.5px solid transparent;
+  cursor: pointer;
+}
+
+.kp-admin__tab--active {
+  color: var(--ink);
+  border-bottom-color: var(--brand-green);
+}
+
+.kp-admin__count {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  background: var(--track);
+  color: var(--ink-mute);
+}
+
+.kp-admin__tab--active .kp-admin__count {
+  background: rgba(58, 81, 50, 0.14);
+  color: var(--brand-green);
+}
+
+/* --- Rows (members & pending) --- */
+.kp-admin__list {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 10px;
+}
+
+.kp-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.kp-row__avatar {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.kp-row__avatar--pending {
+  border: 1.6px dashed var(--ink-mute);
+  color: var(--ink-mute);
+  background: none;
+}
+
+.kp-row__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.kp-row__name-line {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.kp-row__name {
+  font-weight: 700;
+  font-size: 14.5px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kp-row__admin-badge {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--brand-green);
+  background: rgba(58, 81, 50, 0.12);
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+}
+
+.kp-row__meta {
+  font-size: 12.5px;
+  color: var(--ink-mute);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Status pills: Actif (green) / Désactivé & En attente (gold) — handoff §3.7. */
+.kp-pill {
+  flex: none;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 5px 13px;
+  border-radius: var(--r-pill);
+}
+
+.kp-pill--active {
+  color: var(--brand-green);
+  background: rgba(58, 81, 50, 0.12);
+}
+
+.kp-pill--gold {
+  color: #9a7420;
+  background: rgba(234, 182, 76, 0.18);
+}
+
+.kp-row__remove {
+  flex: none;
+  border: none;
+  background: none;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--brand-salsa);
+  padding: 8px 6px;
+  cursor: pointer;
+}
+
+/* --- Member ⋯ menu --- */
+.kp-row__actions {
+  position: relative;
+  flex: none;
+}
+
+.kp-row__more {
+  border: none;
+  background: none;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--ink-mute);
+  padding: 8px 6px;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.kp-row__more:hover {
+  background: var(--track);
+}
+
+.kp-row__menu {
+  min-width: 220px;
+}
+
+.kp-menu__item:disabled {
+  color: var(--ink-mute);
+  cursor: default;
+  background: none;
+}
+
+.kp-menu__item--warn:not(:disabled) {
+  color: #9a7420;
+}
+
+.kp-row__guard-note {
+  margin: 4px 0 2px;
+  padding: 6px 10px 2px;
+  border-top: 1px solid var(--border);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--ink-mute);
+}
+
+.kp-admin__empty {
+  padding: 22px 4px;
+  font-size: 13.5px;
+  color: var(--ink-mute);
+}
+
+/* Reminder card: disable, never delete (claude.md §5). */
+.kp-admin__note {
+  margin: 20px 0 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-panel);
+  padding: 14px 18px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.kp-admin__note strong {
+  color: var(--ink);
+}
+
+/* Gold pill text needs to lift on dark surfaces. */
+[data-theme='dark'] .kp-pill--gold,
+[data-theme='dark'] .kp-menu__item--warn:not(:disabled) {
+  color: var(--brand-gold);
+}
+
+@media (max-width: 640px) {
+  .kp-admin__addbtn {
+    padding: 10px 14px;
+  }
+
+  /* Join/authorized dates step back; email keeps the line (mockup mobile). */
+  .kp-row {
+    gap: 11px;
+    padding: 13px 2px;
+  }
+
+  /* Mobile hit targets ≥ 44px (handoff §8). */
+  .kp-row__more,
+  .kp-row__remove {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}

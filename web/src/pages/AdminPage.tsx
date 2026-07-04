@@ -1,19 +1,14 @@
+import { Navigate } from 'react-router-dom'
+import { useAuth } from '../auth/AuthContext'
+import { AccessManager } from '../components/admin/AccessManager'
+
 /**
- * Administration — placeholder (E7). Rendered inside the authenticated shell.
- * The real access manager (allowlist, members / pending, roles, enable-disable)
- * and the server-side `/admin` guard land in E7.
+ * /admin — the access manager (E7). The redirect below is UX only: the real
+ * guard is the API's `require_admin` (claude.md §6), which answers 403 to any
+ * non-admin call regardless of what the client renders.
  */
 export default function AdminPage() {
-  return (
-    <section>
-      <p className="kp-tag">E7 · Administration</p>
-      <h1 className="kp-title" style={{ fontSize: 26, marginBottom: 8 }}>
-        Administration
-      </h1>
-      <p className="kp-muted">
-        Gestion des accès (liste d’autorisation, membres / invités en attente, rôles, activation /
-        désactivation). Écran implémenté en E7 — l’accès est gardé côté serveur.
-      </p>
-    </section>
-  )
+  const { user } = useAuth()
+  if (user && user.role !== 'ADMIN') return <Navigate to="/" replace />
+  return <AccessManager />
 }

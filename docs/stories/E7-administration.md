@@ -4,7 +4,6 @@
 > (registered vs pending), roles, and **enable/disable** — **never delete**.
 >
 > Estimation convention: **S** (≤ ½ day), **M** (1–2 days), **L** (3+ days).
-> All these stories are `to do` (nothing is built yet).
 
 **Reference docs.** `design/HANDOFF.md` §3.7 & §7 (Admin), `docs/ARCHITECTURE.md`
 §4/§7, PRD FR-U1…FR-U5, claude.md §5/§6. Visual source of truth:
@@ -23,15 +22,15 @@ can run **in parallel** with E3–E6.
 
 ## Stories at a glance
 
-- [ ] **E7-S1** — Back: `GET /api/admin/members` (registered vs pending, LEFT JOIN)
-- [ ] **E7-S2** — Back: allowlist add / remove (pending only)
-- [ ] **E7-S3** — Back: user role/status PATCH + last-admin guard
-- [ ] **E7-S4** — Front: AccessManager (Membres / Invités en attente + counters)
-- [ ] **E7-S5** — Front: add email, member menu, admin entry point (admins only)
-- [ ] **E7-S6** — Tests: server protection, allowlist, promote/disable, last-admin guard
+- [x] **E7-S1** — Back: `GET /api/admin/members` (registered vs pending, LEFT JOIN)
+- [x] **E7-S2** — Back: allowlist add / remove (pending only)
+- [x] **E7-S3** — Back: user role/status PATCH + last-admin guard
+- [x] **E7-S4** — Front: AccessManager (Membres / Invités en attente + counters)
+- [x] **E7-S5** — Front: add email, member menu, admin entry point (admins only)
+- [x] **E7-S6** — Tests: server protection, allowlist, promote/disable, last-admin guard
 
-**Status.** All `to do`. `require_admin` is delivered in E2-S2; E7 builds the routes
-and UI on top.
+**Status.** All **done**. Built on E2-S2's `require_admin`; routes in
+`api/app/routers/admin.py`, UI in `web/src/components/admin/`.
 
 ---
 
@@ -46,9 +45,9 @@ and UI on top.
 - Pydantic `MemberOut` (email, display_name?, role?, status?, `pending: bool`).
 
 **Acceptance criteria**
-- [ ] Returns both registered members (role + status) and pending invitees.
-- [ ] Non-admin → **403** (server-side, claude.md §6).
-- [ ] Pending = allowlisted email with no `User` row (FR-U2).
+- [x] Returns both registered members (role + status) and pending invitees.
+- [x] Non-admin → **403** (server-side, claude.md §6).
+- [x] Pending = allowlisted email with no `User` row (FR-U2).
 
 **Notes.** Bootstrap admin (E2-S3) appears here as the first ACTIVE admin.
 
@@ -65,10 +64,10 @@ and UI on top.
   whose `User` already exists cannot be removed this way — disable the user instead).
 
 **Acceptance criteria**
-- [ ] Adding an email makes it appear as **En attente** in the members list (FR-U1).
-- [ ] Removing a **pending** entry works; removing an entry that has a registered
+- [x] Adding an email makes it appear as **En attente** in the members list (FR-U1).
+- [x] Removing a **pending** entry works; removing an entry that has a registered
   user is refused (use disable instead).
-- [ ] Admin-only; non-admin → 403.
+- [x] Admin-only; non-admin → 403.
 
 **Notes.** No bulk add (PRD settled decision). No email invitations (no SMTP).
 
@@ -85,11 +84,11 @@ and UI on top.
   admin** (including self) → **409/422** with a clear message.
 
 **Acceptance criteria**
-- [ ] Promote/demote and enable/disable work and persist.
-- [ ] Disable blocks the next request immediately (status re-checked, E2-S2) and
+- [x] Promote/demote and enable/disable work and persist.
+- [x] Disable blocks the next request immediately (status re-checked, E2-S2) and
   keeps the user's notes (FR-A5).
-- [ ] The last active admin cannot be demoted or disabled (FR-U5).
-- [ ] No endpoint deletes a user.
+- [x] The last active admin cannot be demoted or disabled (FR-U5).
+- [x] No endpoint deletes a user.
 
 **Notes.** Disabling ≠ deleting (claude.md §5). Reactivation restores access.
 
@@ -106,9 +105,9 @@ and UI on top.
 - Statuses: **Actif** (green) / **Désactivé** (gold) / **En attente**.
 
 **Acceptance criteria**
-- [ ] Two tabs with live counters; rows show role + status with the right colors.
-- [ ] Registered vs pending correctly separated (from E7-S1).
-- [ ] Faithful in light + dark, desktop + mobile.
+- [x] Two tabs with live counters; rows show role + status with the right colors.
+- [x] Registered vs pending correctly separated (from E7-S1).
+- [x] Faithful in light + dark, desktop + mobile.
 
 **Notes.** The route's real guard is the API (E7-S1); the client guard is UX only.
 
@@ -127,9 +126,9 @@ and UI on top.
   `GET /api/auth/me` role, E2-S4).
 
 **Acceptance criteria**
-- [ ] Admins can add/remove pending emails and promote/disable members from the UI.
-- [ ] The last-admin guard surfaces gracefully (no dead-end error).
-- [ ] The Administration entry is hidden for non-admins and the route is refused
+- [x] Admins can add/remove pending emails and promote/disable members from the UI.
+- [x] The last-admin guard surfaces gracefully (no dead-end error).
+- [x] The Administration entry is hidden for non-admins and the route is refused
   server-side.
 
 **Notes.** Copy: « Ajouter à la liste », « Promouvoir admin », « Désactiver le
@@ -149,10 +148,10 @@ compte », note « Désactiver, jamais supprimer ». Frozen copy: HANDOFF §7 "A
   hidden for members; add-email + member-menu actions call the API.
 
 **Acceptance criteria**
-- [ ] Server-side admin protection tested (claude.md §6).
-- [ ] Allowlist + role/status changes tested (FR-U1/U3/U4).
-- [ ] Last-admin guard tested (FR-U5).
-- [ ] CI green.
+- [x] Server-side admin protection tested (claude.md §6).
+- [x] Allowlist + role/status changes tested (FR-U1/U3/U4).
+- [x] Last-admin guard tested (FR-U5).
+- [x] CI green.
 
 **Notes.** Supports "an admin can onboard a member in < 1 minute" (PRD §8).
 
@@ -160,8 +159,8 @@ compte », note « Désactiver, jamais supprimer ». Frozen copy: HANDOFF §7 "A
 
 ## Definition of "E7 done"
 
-- [ ] Allowlist manageable one email at a time; pending vs registered clearly shown.
-- [ ] Roles and statuses editable; disable is reversible and keeps notes.
-- [ ] `/admin` refused server-side for non-admins; entry hidden from non-admins.
-- [ ] Last-admin guard prevents locking everyone out.
-- [ ] Admin tests green in CI.
+- [x] Allowlist manageable one email at a time; pending vs registered clearly shown.
+- [x] Roles and statuses editable; disable is reversible and keeps notes.
+- [x] `/admin` refused server-side for non-admins; entry hidden from non-admins.
+- [x] Last-admin guard prevents locking everyone out.
+- [x] Admin tests green in CI.
