@@ -421,10 +421,11 @@ constrained by how Keep lets data out:
 - **Creation path.** Notes are created in **one transaction**, forced to
   `visibility = PRIVATE` with `owner_id` = the caller (visibility is owner-only,
   §4.2 — the owner can flip them public afterwards). Each gets its
-  `versions.record_creation` **history root** stamped with the imported
+  `versions.creation_snapshot` **history root** stamped with the imported
   `created_at`, so history reads « Créée par X » at the real Keep date. The
-  endpoint returns a summary (`imported` / `skipped_trashed` / `skipped_duplicate`
-  / `failed[]`); a malformed single note is reported, not fatal.
+  endpoint returns a summary (`imported` / `skipped_duplicate` / `failed[]`); a
+  malformed selected note is reported in `failed`, never fatal, and a selected
+  index that is trashed or out of range is silently ignored (the server decides).
 - **No schema change.** `Note.created_at` / `updated_at` already exist; the import
   path just sets them explicitly (the public `POST /api/notes` does not). The MVP
   dedups by a content match (`owner_id, title, body`) rather than a new

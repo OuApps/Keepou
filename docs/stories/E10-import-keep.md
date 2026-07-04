@@ -113,14 +113,15 @@ like:
 
 ## Stories at a glance
 
-- [ ] **E10-S1** — Takeout parser + field/color/timestamp mapping (pure, tested)
-- [ ] **E10-S2** — Endpoints: `POST /api/import/keep/preview` (parse only) + `POST /api/import/keep` (create selected + versions → summary)
+- [x] **E10-S1** — Takeout parser + field/color/timestamp mapping (pure, tested)
+- [x] **E10-S2** — Endpoints: `POST /api/import/keep/preview` (parse only) + `POST /api/import/keep` (create selected + versions → summary)
 - [ ] **E10-S3** — Front: import entry point, upload, **review/selection view (« mode tunnel »)**, result summary (design-gated)
-- [ ] **E10-S4** — Docs, edge cases & tests
+- [x] **E10-S4** — Docs, edge cases & tests
 
-**Status.** All `to do`. S1 is a pure function (easy to unit-test); S2 wires it to
-the DB behind the preview/confirm split; S3 is the UI (upload + the review view) and
-needs a short design pass (no mockup yet).
+**Status.** Back shipped (S1 + S2 + S4): `services/keep_import.py`,
+`routers/import_keep.py`, `tests/test_import_keep.py`, and the user how-to
+(`docs/HOWTO-import-google-keep.md`). S3 (the UI) is design-gated — mockup
+proposals are with Guillaume for validation.
 
 ---
 
@@ -144,12 +145,13 @@ fields Keepou needs — no DB, no HTTP.
   keys — never raise on a single malformed note (collect it as an error instead).
 
 **Acceptance criteria**
-- [ ] A text-only note, a checklist-only note, and a mixed note each produce the
+- [x] A text-only note, a checklist-only note, and a mixed note each produce the
   exact Markdown our editor round-trips (`parse(serialize(...))` stable).
-- [ ] Every Keep color maps to one of the 5 shades; unknown → `GOLD`.
-- [ ] `isTrashed: true` yields `None` (skipped).
-- [ ] `created_at` / `updated_at` reflect the Keep timestamps (µs converted).
-- [ ] Malformed input is handled without raising (unit tests cover the odd cases).
+- [x] Every Keep color maps to one of the 5 shades; unknown → `GOLD`.
+- [x] `isTrashed: true` yields `None` (skipped) — `parse_keep_note` still maps the
+  content so the preview can show it pre-unchecked.
+- [x] `created_at` / `updated_at` reflect the Keep timestamps (µs converted).
+- [x] Malformed input is handled without raising (unit tests cover the odd cases).
 
 **Notes.** Keep it pure so the endpoint (S2) is a thin wrapper and the mapping is
 trivially testable. The serialization must match the front so imported notes look
@@ -189,16 +191,17 @@ notes**, preserving dates, in one transaction.
   `imported_from` marker is a post-MVP option.
 
 **Acceptance criteria**
-- [ ] `preview` returns the parsed notes with a **stable index** and the trashed
+- [x] `preview` returns the parsed notes with a **stable index** and the trashed
   flag, and **creates nothing** in the DB.
-- [ ] `import` with a `selected` list creates **only** those notes (private, caller
+- [x] `import` with a `selected` list creates **only** those notes (private, caller
   as owner) with the right title/body/color and the **original Keep dates**.
-- [ ] A note unchecked by the user is **not** created; a trashed/out-of-range index
+- [x] A note unchecked by the user is **not** created; a trashed/out-of-range index
   in `selected` is ignored without error.
-- [ ] A malformed single note is reported (not fatal); a fatal error rolls the
-  transaction back (no partial half-import).
-- [ ] Both endpoints are bearer-authenticated and enforce an upload-size limit.
-- [ ] Each imported note has exactly one « Créée par X » version at its Keep date.
+- [x] A malformed single note is reported (not fatal); a fatal error rolls the
+  transaction back (no partial half-import — one commit at the end).
+- [x] Both endpoints are bearer-authenticated and enforce an upload-size limit
+  (20 MB archive, 1 MB per note file — zip-bomb guard).
+- [x] Each imported note has exactly one « Créée par X » version at its Keep date.
 
 **Notes.** Reuses the existing create + versioning path — no new lock/visibility
 rules. Notes are created directly (not through `POST /api/notes`) so `created_at`
@@ -272,9 +275,10 @@ the two calls.
 - Tick the docs: ARCHITECTURE §12, PRD §5.8 (FR-I*), this story, EPICS progress.
 
 **Acceptance criteria**
-- [ ] Back tests green for parser + endpoint (including edge cases).
-- [ ] The "import from Keep" how-to is written.
-- [ ] Docs (ARCHITECTURE, PRD, EPICS, this story) reflect what shipped.
+- [x] Back tests green for parser + endpoint (including edge cases).
+- [x] The "import from Keep" how-to is written
+  ([`docs/HOWTO-import-google-keep.md`](../HOWTO-import-google-keep.md)).
+- [x] Docs (ARCHITECTURE, PRD, EPICS, this story) reflect what shipped.
 
 ---
 
@@ -285,14 +289,14 @@ the two calls.
 - [ ] After upload, a **review/selection view (« mode tunnel »)** lets the member
   **check/uncheck** notes (cleanup); **only the checked notes are imported**,
   trashed pre-unchecked.
-- [ ] Title, text, and checklist items are imported faithfully (GFM Markdown);
+- [x] Title, text, and checklist items are imported faithfully (GFM Markdown);
   colors are mapped; **original Keep dates are preserved**.
-- [ ] Trashed notes are skipped; images/labels are ignored (MVP); imported notes
+- [x] Trashed notes are skipped; images/labels are ignored (MVP); imported notes
   are **private** and owned by the importer.
-- [ ] Each imported note has its « Créée par X » history root at the Keep date.
+- [x] Each imported note has its « Créée par X » history root at the Keep date.
 - [ ] The import screen matches the design system (light/dark, mobile/desktop),
   French copy centralized.
-- [ ] Back tests cover the parser and the endpoint; a user how-to is written.
+- [x] Back tests cover the parser and the endpoint; a user how-to is written.
 
 ---
 
