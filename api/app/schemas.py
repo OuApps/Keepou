@@ -132,6 +132,45 @@ class NoteOut(BaseModel):
     lock_expires_at: datetime | None = None
 
 
+class ImportPreviewItem(BaseModel):
+    """One parsed Keep note in the preview (E10-S2) — `index` is the contract
+    between preview and confirm (deterministic file order, stable)."""
+
+    index: int
+    title: str
+    body: str
+    color: NoteColor
+    created_at: datetime
+    updated_at: datetime
+    # Trashed notes are shown pre-unchecked (« Corbeille ») and never imported.
+    is_trashed: bool
+
+
+class ImportCounts(BaseModel):
+    total: int  # JSON files considered (each holds one index, parsed or not)
+    trashed: int
+    parse_failed: int
+
+
+class ImportFailure(BaseModel):
+    index: int
+    reason: str
+
+
+class ImportPreviewOut(BaseModel):
+    items: list[ImportPreviewItem]
+    counts: ImportCounts
+    failed: list[ImportFailure]
+
+
+class ImportSummaryOut(BaseModel):
+    """The confirm step's summary: what was created, what was silently kept out."""
+
+    imported: int
+    skipped_duplicate: int
+    failed: list[ImportFailure]
+
+
 class VersionOut(BaseModel):
     """One history entry (E6): who + when + the full snapshot, re-rendered
     as-is by the front (no visual diff, claude.md §3)."""

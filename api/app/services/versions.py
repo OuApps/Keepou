@@ -36,11 +36,17 @@ def _snapshot(note: Note, author_id: str) -> NoteVersion:
     )
 
 
-def record_creation(session: Session, note: Note) -> NoteVersion:
+def creation_snapshot(note: Note) -> NoteVersion:
     """The history root, stamped with the note's own `created_at` so the front
-    can tell « Créée par X » from « Modifié par X »."""
+    can tell « Créée par X » from « Modifié par X ». Not persisted here — the
+    Keep import (E10) batches many roots into one transaction."""
     version = _snapshot(note, note.owner_id)
     version.created_at = note.created_at
+    return version
+
+
+def record_creation(session: Session, note: Note) -> NoteVersion:
+    version = creation_snapshot(note)
     session.add(version)
     session.commit()
     return version

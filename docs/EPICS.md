@@ -19,7 +19,7 @@
 - [x] **E7** — Access administration · ✅ detailed → [`stories/E7-administration.md`](./stories/E7-administration.md) — *shipped (admin router: members LEFT JOIN, allowlist add / pending-only remove, role/status PATCH + last-admin guard; AccessManager tabs + counters, MemberRow ⋯ menu, PendingRow « Retirer », admins-only « Administration » avatar-menu entry, tests back & front)*
 - [ ] **E8** — Polish (PWA, a11y, archive, i18n, quality) · ✅ detailed → [`stories/E8-polish-pwa-a11y-i18n.md`](./stories/E8-polish-pwa-a11y-i18n.md) — *archive story = "voir design avec designer" (design-gated)*
 - [ ] **E9** — Database cold backups & restore · ✅ detailed → [`stories/E9-backups-restore.md`](./stories/E9-backups-restore.md) — *Scaleway Object Storage + Railway cron*
-- [ ] **E10** — Import from Google Keep · ✅ detailed → [`stories/E10-import-keep.md`](./stories/E10-import-keep.md) — *Google Takeout ZIP → server-side parse → private notes (dates preserved, images ignored)*
+- [ ] 🔨 **E10** — Import from Google Keep · ✅ detailed → [`stories/E10-import-keep.md`](./stories/E10-import-keep.md) — *back shipped (S1 parser, S2 preview/confirm endpoints, S4 tests + how-to); remaining: S3 front (design-gated — mockups proposed, awaiting validation)*
 
 ---
 
@@ -402,5 +402,6 @@ Two points to keep in mind:
   avec designer"; implementation stories come after the archive UI is designed.
 - **E9** uses **Scaleway Object Storage** (off-site) + a **Railway cron** service; the
   live provisioning is dashboard-only (like E1).
-- **E10** (import from Google Keep) is unblocked (E3 is shipped) and can be picked up
-  independently — a **Google Takeout ZIP** parsed server-side into private notes.
+- **E10** (import from Google Keep) has its **back end shipped** (parser, preview/
+  confirm endpoints, tests, user how-to); the front (S3) waits on the import-flow
+  mockups being validated (design-gated).
