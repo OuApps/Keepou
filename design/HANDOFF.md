@@ -39,18 +39,22 @@ Palette extracted from the logo (burrito mascot). **Reuse these values as-is.**
 
 ### Surfaces & text (dark)
 ```
---bg:#211D16;  --surface:#2C2719;  --border:#43391F;
---ink:#F3ECDD; --ink-soft:#C9BFA3; --ink-mute:#8E8161;
+--bg:#211D16;  --surface:#2C2719;  --border:#554A2B;
+--ink:#F3ECDD; --ink-soft:#C9BFA3; --ink-mute:#ABA083;
 ```
+> Dark values adjusted by the E8-S8 legibility pass (WCAG AA): `--ink-mute`
+> reaches ≥ 4.5:1 on every dark surface (incl. the 5 card shades), the
+> checkbox/struck-text ink is `--checktx:#96A47A` (was `#7E8A5F`), and borders
+> are lifted so dividers stay visible on dark. Light values are unchanged.
 
 ### Card colors (5 shades, gradient + border)
 | Name | Light (bg / border) | Dark (bg / border) |
 |---|---|---|
-| gold | `linear-gradient(160deg,#FCEFCF,#F7E2AE)` / `#EFD79E` | `linear-gradient(160deg,#3A3320,#2E2A18)` / `#4A4026` |
-| avocat | `linear-gradient(160deg,#EEF3D2,#DFEAAE)` / `#D4E0A2` | `linear-gradient(160deg,#2F3A22,#26301B)` / `#3F4A2A` |
-| salsa | `linear-gradient(160deg,#FAE0D6,#F2C7B5)` / `#EDC0AC` | `linear-gradient(160deg,#3A2A22,#2E211B)` / `#4A3328` |
-| clay | `linear-gradient(160deg,#F6E9D8,#ECD8BC)` / `#E6CDA9` | `linear-gradient(160deg,#352D1C,#2A2416)` / `#46391F` |
-| teal | `linear-gradient(160deg,#DFEDE8,#C7DED5)` / `#BAD7CD` | `linear-gradient(160deg,#1F332E,#1A2A26)` / `#2C443D` |
+| gold | `linear-gradient(160deg,#FCEFCF,#F7E2AE)` / `#EFD79E` | `linear-gradient(160deg,#3A3320,#2E2A18)` / `#5C5030` |
+| avocat | `linear-gradient(160deg,#EEF3D2,#DFEAAE)` / `#D4E0A2` | `linear-gradient(160deg,#2F3A22,#26301B)` / `#4E5C34` |
+| salsa | `linear-gradient(160deg,#FAE0D6,#F2C7B5)` / `#EDC0AC` | `linear-gradient(160deg,#3A2A22,#2E211B)` / `#5E4032` |
+| clay | `linear-gradient(160deg,#F6E9D8,#ECD8BC)` / `#E6CDA9` | `linear-gradient(160deg,#352D1C,#2A2416)` / `#584826` |
+| teal | `linear-gradient(160deg,#DFEDE8,#C7DED5)` / `#BAD7CD` | `linear-gradient(160deg,#1F332E,#1A2A26)` / `#38564D` |
 
 These 5 shades are a note's color picker. Store an identifier (`gold|avocat|salsa|clay|teal`), not the hex.
 
