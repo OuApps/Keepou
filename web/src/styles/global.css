@@ -32,3 +32,10 @@ body {
   break-inside: avoid;
   -webkit-column-break-inside: avoid;
 }
+
+/* Keyboard navigation (E8-S3): a consistent, visible focus ring on every
+ * interactive element — pointer interactions stay ring-free (:focus-visible). */
+:focus-visible {
+  outline: 2px solid var(--check);
+  outline-offset: 2px;
+}

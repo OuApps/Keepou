@@ -196,4 +196,42 @@
     width: 44px;
     height: 44px;
   }
+
+  /* Small text/icon controls across the app reach a 44px tap height (E8-S3).
+   * Cross-screen list kept here so each surface doesn't re-derive the rule. */
+  .kp-tabs__tab,
+  .kp-menu__item,
+  .kp-composer__add,
+  .kp-composer__close,
+  .kp-composer__visibility,
+  .kp-visibility,
+  .kp-editor__history,
+  .kp-lock__takeover-btn,
+  .kp-lock__conflict-btn,
+  .kp-history__stage-back,
+  .kp-history__close-btn,
+  .kp-history__restore-btn,
+  .kp-history__panel-back,
+  .kp-history__panel-close,
+  .kp-vrow__restore,
+  .kp-restore__ok,
+  .kp-admin__add-btn,
+  .kp-imp__ghost,
+  .kp-imp__linkbtn {
+    min-height: 44px;
+  }
+
+  /* Color swatches keep their mockup size; an invisible ::after pad grows the
+   * tap area to ~44px without changing the visual (E8-S3). */
+  .kp-composer__swatch,
+  .kp-editor__swatch {
+    position: relative;
+  }
+
+  .kp-composer__swatch::after,
+  .kp-editor__swatch::after {
+    content: '';
+    position: absolute;
+    inset: -9px;
+  }
 }
