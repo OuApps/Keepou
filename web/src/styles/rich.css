@@ -1,0 +1,92 @@
+/*
+ * Keepou — Inline Markdown subset (E8-S9)
+ * Bold `**`, italic `*`, headings `#`–`###`. Heading sizes are RELATIVE (em)
+ * so the same scale works on every surface (editor 14.5px body, card 13px…);
+ * the family/weight comes from the HANDOFF type scale (Fredoka 600 for
+ * titles). Recorded in `design/HANDOFF.md` §3.3.
+ */
+
+/* --- Read-only headings (card preview, version preview, locked editor) --- */
+.kp-rich__h {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.kp-rich__h1 {
+  font-size: 1.3em;
+}
+
+.kp-rich__h2 {
+  font-size: 1.16em;
+}
+
+.kp-rich__h3 {
+  font-size: 1.05em;
+}
+
+/* RichBlockText wrappers stay transparent to the parent layout. */
+.kp-vpreview__rich {
+  display: contents;
+}
+
+/* Static paragraph block in the locked read-only editor. */
+.kp-blocks__text--static {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.kp-blocks__text--static p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+/* --- Editing surface (contenteditable view over the Markdown) --- */
+.kp-blocks__text--edit {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  cursor: text;
+  min-height: 1.6em;
+}
+
+/* Placeholder (contenteditable has no ::placeholder). */
+.kp-blocks__text--edit[data-empty='true']::before {
+  content: attr(data-placeholder);
+  color: var(--ink-mute);
+  pointer-events: none;
+}
+
+/* The Markdown markers stay visible while editing, but dimmed. */
+.kp-md__mark {
+  color: var(--ink-mute);
+  font-weight: 400;
+}
+
+.kp-md__b {
+  font-weight: 700;
+}
+
+.kp-md__i {
+  font-style: italic;
+}
+
+.kp-md__h {
+  font-family: var(--font-brand);
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.kp-md__h1 {
+  font-size: 1.3em;
+}
+
+.kp-md__h2 {
+  font-size: 1.16em;
+}
+
+.kp-md__h3 {
+  font-size: 1.05em;
+}
