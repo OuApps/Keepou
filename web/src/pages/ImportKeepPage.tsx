@@ -72,7 +72,10 @@ export default function ImportKeepPage() {
     setBusy(true)
     setError(null)
     try {
-      const summary = await importKeepNotes(file, [...selected].sort((a, b) => a - b))
+      const summary = await importKeepNotes(
+        file,
+        [...selected].sort((a, b) => a - b),
+      )
       setStep({ name: 'summary', summary })
     } catch (err) {
       setError(errorMessage(err))
@@ -90,11 +93,7 @@ export default function ImportKeepPage() {
         </div>
         {step.name === 'review' && (
           <div>
-            <button
-              type="button"
-              className="kp-imp__linkbtn"
-              onClick={() => handleSelectAll(true)}
-            >
+            <button type="button" className="kp-imp__linkbtn" onClick={() => handleSelectAll(true)}>
               {COPY.checkAll}
             </button>
             <span className="kp-imp__bardot" aria-hidden="true">
