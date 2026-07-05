@@ -17,7 +17,7 @@
 - [x] **E5** — Single-editor lock & real-time · ✅ detailed → [`stories/E5-verrou-temps-reel.md`](./stories/E5-verrou-temps-reel.md) — *shipped (lock columns migration, atomic acquire/renew/release + PATCH enforcement with structured 409, lock state in the note payload, `useNoteLock` heartbeat 20 s / poll ~12 s / release on close & `beforeunload`, LockBanner 4 states + read-only, tests back & front)*
 - [x] **E6** — History & versions · ✅ detailed → [`stories/E6-historique-versions.md`](./stories/E6-historique-versions.md) — *shipped (`NoteVersion` migration, creation root « Créée par X », one version per session on lock release / editor close with a no-op guard, newest-first visibility-gated `GET .../versions`, restore = new version — lock-checked, visibility owner-only —, HistoryPanel desktop + mobile 2-screen flow, tests back & front)*
 - [x] **E7** — Access administration · ✅ detailed → [`stories/E7-administration.md`](./stories/E7-administration.md) — *shipped (admin router: members LEFT JOIN, allowlist add / pending-only remove, role/status PATCH + last-admin guard; AccessManager tabs + counters, MemberRow ⋯ menu, PendingRow « Retirer », admins-only « Administration » avatar-menu entry, tests back & front)*
-- [ ] **E8** — Polish (PWA, a11y, formatting, archive, i18n, quality) · ✅ detailed → [`stories/E8-polish-pwa-a11y-i18n.md`](./stories/E8-polish-pwa-a11y-i18n.md) — *adds inline text formatting (S9) + text under a checkbox (S10); archive story = "voir design avec designer" (design-gated)*
+- [ ] 🔨 **E8** — Polish (PWA, a11y, formatting, archive, i18n, quality) · ✅ detailed → [`stories/E8-polish-pwa-a11y-i18n.md`](./stories/E8-polish-pwa-a11y-i18n.md) — *S1/S3–S10 shipped (PWA install surface + minimal SW, a11y pass + ink-contrast policy, FR copy centralized in `lib/copy.ts`, tests + CI green, mobile-keyboard handling, autofill markup, dark tokens WCAG AA, inline bold/italic/headings as-you-type, text under a checkbox); remaining: E8-S2 archive (design-gated, « voir design avec designer ») + on-device checks (Android/iOS install & keyboard, Bitwarden)*
 - [ ] **E9** — Database cold backups & restore · ✅ detailed → [`stories/E9-backups-restore.md`](./stories/E9-backups-restore.md) — *Scaleway Object Storage + Railway cron*
 - [x] **E10** — Import from Google Keep · ✅ detailed → [`stories/E10-import-keep.md`](./stories/E10-import-keep.md) — *shipped (Takeout parser, preview/confirm endpoints, validated mockup `Keepou - Import Keep.dc.html`, `/import` flow — upload → review « mode tunnel » → summary —, tests back & front, user how-to)*
 
@@ -392,11 +392,13 @@ user how-to written.
 
 ## Next step
 
-**E0, E1 (core), E2, E3, E4, E5, E6, E7 and E10 are shipped** — the whole
-critical path, access administration and the Google Keep import are done;
-E8–E9 are detailed in [`stories/`](./stories/) with acceptance criteria and
-technical scope. Next: **E9 — DB cold backups**, recommended now that real
-user data accumulates; **E8** (polish) is hardened at the end.
+**E0, E1 (core), E2, E3, E4, E5, E6, E7 and E10 are shipped**, and **E8 is
+in with S1/S3–S10 done** — the whole critical path, access administration,
+the Google Keep import and the polish pass (PWA, a11y, dark-mode AA, inline
+formatting, i18n centralization, quality) are done; E9 is detailed in
+[`stories/`](./stories/) with acceptance criteria and technical scope.
+Next: **E9 — DB cold backups**, recommended now that real user data
+accumulates; **E8-S2 (archive)** stays design-gated.
 
 Two points to keep in mind:
 - **E8 archive** is deliberately **design-gated** — its story is just "voir design

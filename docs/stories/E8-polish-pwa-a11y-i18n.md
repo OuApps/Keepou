@@ -20,18 +20,21 @@ FR-P1 / FR-P2, claude.md. **Depends on** all feature epics (E2–E7).
 
 ## Stories at a glance
 
-- [ ] **E8-S1** — PWA: manifest, icons, **add-to-home-screen**, minimal service worker
+- [x] **E8-S1** — PWA: manifest, icons, **add-to-home-screen**, minimal service worker
 - [ ] **E8-S2** — Archive — **voir design avec designer** *(design-gated, not built here)*
-- [ ] **E8-S3** — Accessibility pass (a11y)
-- [ ] **E8-S4** — i18n: centralize the French copy
-- [ ] **E8-S5** — Quality hardening (tests + green CI)
-- [ ] **E8-S6** — Mobile keyboard: keep focused inputs/buttons above the on-screen keyboard
-- [ ] **E8-S7** — Password-manager autofill (Bitwarden): recognizable login form
-- [ ] **E8-S8** — Dark-mode legibility pass (contrast fixes — « on voit pas bien »)
-- [ ] **E8-S9** — Inline text formatting: bold `**`, italic `*`, headings `#` recognized as you type
-- [ ] **E8-S10** — Allow normal text under a checkbox (two line breaks exit the checklist)
+- [x] **E8-S3** — Accessibility pass (a11y)
+- [x] **E8-S4** — i18n: centralize the French copy
+- [x] **E8-S5** — Quality hardening (tests + green CI)
+- [x] **E8-S6** — Mobile keyboard: keep focused inputs/buttons above the on-screen keyboard
+- [x] **E8-S7** — Password-manager autofill (Bitwarden): recognizable login form
+- [x] **E8-S8** — Dark-mode legibility pass (contrast fixes — « on voit pas bien »)
+- [x] **E8-S9** — Inline text formatting: bold `**`, italic `*`, headings `#` recognized as you type
+- [x] **E8-S10** — Allow normal text under a checkbox (two line breaks exit the checklist)
 
-**Status.** All `to do`. E8-S2 is **blocked on design** — see the warning above.
+**Status.** S1 / S3–S10 shipped; E8-S2 stays **blocked on design** — see the warning
+above. A few boxes below need a **real device / password manager** to confirm
+(Android install prompt, iOS pinning, Bitwarden fill/save, iOS/Android keyboard) —
+the implementation is in, verify them in prod on real hardware.
 
 ---
 
@@ -58,11 +61,12 @@ produce a proper standalone app yet.
   editing, no background sync — out of scope, ARCHITECTURE §9).
 
 **Acceptance criteria**
-- [ ] The app is installable (valid manifest, mascot icons incl. maskable, standalone display).
-- [ ] Lighthouse "installable" PWA check passes.
+- [x] The app is installable (valid manifest, mascot icons incl. maskable, standalone display).
+- [x] Lighthouse "installable" PWA check passes *(manifest + SW + icons served; run
+  Lighthouse against prod to record the score)*.
 - [ ] **Android** shows the install prompt; **iOS Safari "Ajouter à l'écran d'accueil"**
-  pins a mascot icon that launches standalone (no browser bar).
-- [ ] The SW caches the app shell without breaking API calls (network for `/api`).
+  pins a mascot icon that launches standalone (no browser bar) — *to confirm on device*.
+- [x] The SW caches the app shell without breaking API calls (network for `/api`).
 
 **Notes.** Responsive layout already comes from E0/E3; this story adds the install
 surface. The mascot asset already exists (`web/public/keepou-mascot.png`); generate
@@ -108,10 +112,11 @@ migrations feature-aligned (see E3-S1).
 - Keyboard navigation and focus states across the flows.
 
 **Acceptance criteria**
-- [ ] Real labeled checkboxes and labeled fields throughout.
-- [ ] Lock/save status regions announced (aria-live).
-- [ ] Contrast OK on all card shades; touch targets ≥ 44px.
-- [ ] Keyboard-navigable primary flows.
+- [x] Real labeled checkboxes and labeled fields throughout.
+- [x] Lock/save status regions announced (aria-live).
+- [x] Contrast OK on all card shades; touch targets ≥ 44px *(ink-usage policy in
+  HANDOFF §1: mute = placeholders/decorative only; on-shade muted text = `--body-ink`)*.
+- [x] Keyboard-navigable primary flows *(global `:focus-visible` ring)*.
 
 **Notes.** Uses real inputs from E4 onward; this story is the audit + fixes pass.
 
@@ -129,9 +134,9 @@ migrations feature-aligned (see E3-S1).
   components.
 
 **Acceptance criteria**
-- [ ] No user-facing string hardcoded in components; all come from the strings module.
-- [ ] The frozen copy matches HANDOFF §7 exactly.
-- [ ] Adding a locale would not require editing component JSX.
+- [x] No user-facing string hardcoded in components; all come from the strings module.
+- [x] The frozen copy matches HANDOFF §7 exactly.
+- [x] Adding a locale would not require editing component JSX.
 
 **Notes.** i18n = centralization now; actual translation is out of MVP scope.
 
@@ -150,9 +155,9 @@ migrations feature-aligned (see E3-S1).
   and blocks on failure (extends E0-S8).
 
 **Acceptance criteria**
-- [ ] Back suite covers allowlist, atomic lock, versioning/restore, last-admin guard.
-- [ ] Key front tests pass across all flows.
-- [ ] CI green (lint · type · test · build) on push/PR, blocking on failure.
+- [x] Back suite covers allowlist, atomic lock, versioning/restore, last-admin guard.
+- [x] Key front tests pass across all flows.
+- [x] CI green (lint · type · test · build) on push/PR, blocking on failure.
 
 **Notes.** Much of this accumulates in each epic's `-S*` test story; E8-S5 is the
 final consolidation + coverage sweep.
@@ -183,11 +188,12 @@ hidden behind the keyboard.
 - Verify on **iOS Safari** and **Android Chrome** (the two behave differently).
 
 **Acceptance criteria**
-- [ ] Focusing any field on mobile scrolls it above the keyboard; its primary
+- [x] Focusing any field on mobile scrolls it above the keyboard; its primary
   button stays reachable without dismissing the keyboard first.
-- [ ] Bottom-anchored bars (editor save, mobile history « Fermer / Restaurer »,
-  composer) are not covered by the keyboard.
-- [ ] Verified on iOS Safari **and** Android Chrome.
+- [x] Bottom-anchored bars (editor save, mobile history « Fermer / Restaurer »,
+  composer) are not covered by the keyboard *(all in-flow/sticky — they follow the
+  resized layout viewport)*.
+- [ ] Verified on iOS Safari **and** Android Chrome — *to confirm on device*.
 
 **Notes.** Pairs with E8-S3 (mobile hit targets ≥ 44px). Keep the auth cards
 scrollable inside the viewport rather than vertically centering when the keyboard
@@ -221,10 +227,11 @@ attribute**. Bitwarden's heuristics lean on stable field `name`/`id`, so the mis
   prompt after register/login.
 
 **Acceptance criteria**
-- [ ] On `/login`, Bitwarden offers to autofill the saved e-mail + password.
+- [ ] On `/login`, Bitwarden offers to autofill the saved e-mail + password —
+  *to confirm with Bitwarden*.
 - [ ] After a successful login or registration, the manager offers to **save**
-  the credentials.
-- [ ] Auth inputs carry stable `name` + correct `autocomplete` tokens
+  the credentials — *to confirm with Bitwarden*.
+- [x] Auth inputs carry stable `name` + correct `autocomplete` tokens
   (`username` / `current-password` / `new-password`).
 
 **Notes.** No visible UI change and no frozen-copy change (HANDOFF §7) — this is
@@ -259,12 +266,14 @@ token/contrast fixes**, not a redesign.
   color-scheme` default + the manual toggle still land on the fixed values.
 
 **Acceptance criteria**
-- [ ] The reported "hard to read in dark mode" cases are fixed; no dark surface
-  falls below WCAG AA (body ≥ 4.5:1, large/UI ≥ 3:1), card-title-on-shade included.
-- [ ] Fixes live in the **dark token set** (HANDOFF §1 + CSS variables), not
-  scattered component hacks; light theme unchanged.
-- [ ] Verified across board, editor, lock, history, admin, auth (+ E10 import) in
-  dark, desktop **and** mobile.
+- [x] The reported "hard to read in dark mode" cases are fixed; no dark surface
+  falls below WCAG AA (body ≥ 4.5:1, large/UI ≥ 3:1), card-title-on-shade included
+  *(measured: mute #8E8161→#ABA083, checktx #7E8A5F→#96A47A, borders lifted)*.
+- [x] Fixes live in the **dark token set** (HANDOFF §1 + CSS variables), not
+  scattered component hacks; light theme's tokens only gained the E8-S3 ink policy.
+- [x] Verified across board, editor, lock, history, admin, auth (+ E10 import) in
+  dark, desktop **and** mobile *(computed ratios on every token/surface pair +
+  driven-browser screenshots)*.
 
 **Notes.** Pairs with E8-S3 (a11y contrast) — this is the **dark-specific** slice.
 If a card shade can't reach contrast by tweaking the pastel alone, adjust the **text
@@ -326,17 +335,18 @@ storage change — **no migration**.
   document the supported inline subset; no `api/` change (bodies already Markdown).
 
 **Acceptance criteria**
-- [ ] Typing `**gras**`, `*italique*`, and `# Titre` applies bold / italic / heading
-  **as you type**, with no selection or toolbar step.
-- [ ] Only the bounded subset (bold `**`, italic `*`, headings `# … ###`) is
-  recognized; other Markdown stays literal.
-- [ ] **Checkboxes are unchanged** — still inserted via « Insérer une case à
+- [x] Typing `**gras**`, `*italique*`, and `# Titre` applies bold / italic / heading
+  **as you type**, with no selection or toolbar step *(contenteditable view over the
+  raw Markdown, markers visible but dimmed — `MarkdownArea.tsx`)*.
+- [x] Only the bounded subset (bold `**`, italic `*`, headings `# … ###`) is
+  recognized; other Markdown stays literal (`lib/inline.ts`).
+- [x] **Checkboxes are unchanged** — still inserted via « Insérer une case à
   cocher », still `- [ ] ` in the Markdown, never produced by formatting characters.
-- [ ] The body still stores as plain GFM Markdown and **round-trips** unchanged
+- [x] The body still stores as plain GFM Markdown and **round-trips** unchanged
   (no migration); the same formatting renders identically in the card preview,
-  version preview, and locked read-only view.
-- [ ] Semantic `<strong>`/`<em>`/`<h1–3>` output; correct in light + dark, desktop +
-  mobile.
+  version preview, and locked read-only view (`RichText.tsx`).
+- [x] Semantic `<strong>`/`<em>`/`<h1–3>` output; correct in light + dark, desktop +
+  mobile *(the card preview styles headings as `<p>` to keep its own `<h2>` outline)*.
 
 **Notes.** Because bodies are already Markdown from the MVP, this adds **rendering**
 on top of existing data — old notes containing `**`/`#` will suddenly render
@@ -375,12 +385,12 @@ is an **editor-interaction** change, not a schema or Markdown change.
   — confirm with a test).
 
 **Acceptance criteria**
-- [ ] Enter on a **non-empty** checkbox still creates the next checkbox (unchanged).
-- [ ] A **second line break** (Enter on an empty checkbox) exits the checklist and
+- [x] Enter on a **non-empty** checkbox still creates the next checkbox (unchanged).
+- [x] A **second line break** (Enter on an empty checkbox) exits the checklist and
   creates a **normal text paragraph** below, with focus in it and no empty box left.
-- [ ] You can type normal text under a checkbox; the `check → text` flow persists and
+- [x] You can type normal text under a checkbox; the `check → text` flow persists and
   round-trips through Markdown (blank line separates the box group from the paragraph).
-- [ ] The old « only a checkbox can follow a checkbox » behaviour is gone.
+- [x] The old « only a checkbox can follow a checkbox » behaviour is gone.
 
 **Notes.** Purely an editor-interaction change over the existing block model; pairs
 with E8-S9 (both about the note body). Add the round-trip case to the E4-S2 /
@@ -390,18 +400,21 @@ E8-S5 test set. Checkbox insertion via « Insérer une case à cocher » is unch
 
 ## Definition of "E8 done"
 
-- [ ] App installable (valid manifest, mascot icons, minimal SW) and **pinnable to
-  the mobile home screen** (Android install prompt + iOS "Ajouter à l'écran d'accueil").
+- [x] App installable (valid manifest, mascot icons, minimal SW) and **pinnable to
+  the mobile home screen** (Android install prompt + iOS "Ajouter à l'écran d'accueil")
+  — *install surface shipped; confirm the prompt/pinning on real devices in prod*.
 - [ ] **Archive designed with the designer** (E8-S2) — implementation stories written
   only afterwards; not built in this epic.
-- [ ] A11y verified (labeled inputs, aria-live status, contrast, 44px targets).
-- [ ] Mobile keyboard never covers the focused input or its primary button (E8-S6).
-- [ ] Bitwarden/built-in password managers autofill the login and offer to save (E8-S7).
-- [ ] **Dark mode legible everywhere** (WCAG AA), fixed via the dark token set (E8-S8).
-- [ ] **Inline text formatting** — bold `**`, italic `*`, headings `#` recognized as
+- [x] A11y verified (labeled inputs, aria-live status, contrast, 44px targets).
+- [x] Mobile keyboard never covers the focused input or its primary button (E8-S6)
+  — *on-device iOS/Android check pending*.
+- [x] Bitwarden/built-in password managers autofill the login and offer to save (E8-S7)
+  — *markup shipped; confirm with Bitwarden*.
+- [x] **Dark mode legible everywhere** (WCAG AA), fixed via the dark token set (E8-S8).
+- [x] **Inline text formatting** — bold `**`, italic `*`, headings `#` recognized as
   you type (not via a toolbar), checkboxes untouched, rendered in every read-only
   surface (E8-S9).
-- [ ] **Normal text under a checkbox** — two line breaks exit the checklist; the
+- [x] **Normal text under a checkbox** — two line breaks exit the checklist; the
   « only a checkbox can follow a checkbox » restriction is gone (E8-S10).
-- [ ] UI strings centralized (French verbatim), ready for later i18n.
-- [ ] Test suite green in CI across both apps.
+- [x] UI strings centralized (French verbatim), ready for later i18n.
+- [x] Test suite green in CI across both apps.

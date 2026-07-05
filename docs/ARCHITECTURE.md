@@ -321,10 +321,21 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
 
 ## 9. PWA & responsiveness
 
-- **Manifest** (`manifest.webmanifest`): name, icons (the mascot), theme color,
-  `display: standalone`, start URL — shipped with the `web/` build.
-- **Service worker**: a minimal SW for installability and app-shell caching.
-  Offline editing and background sync are out of scope.
+- **Manifest** (`web/public/manifest.webmanifest`, E8-S1): name, mascot icons
+  (192 / 512 / 512-maskable), theme + background color `#FBF4E6`,
+  `display: standalone`, `start_url: "/"`. iOS pinning goes through
+  `apple-touch-icon.png` (180×180 on cream) + the `apple-mobile-web-app-*`
+  metas in `index.html`.
+- **Service worker** (`web/public/sw.js`, E8-S1): installability + app-shell
+  caching only — `/api` (and any cross-origin request) stays network-only,
+  navigations are network-first with the cached shell as offline fallback,
+  hashed build assets are cached first-hit. Registered in production builds
+  only. Offline editing and background sync are out of scope.
+- **Mobile keyboard** (E8-S6): the viewport meta carries
+  `interactive-widget=resizes-content` (Android Chrome resizes the layout
+  under the keyboard) and `lib/keyboard.ts` scrolls the focused field into
+  view (iOS Safari anchoring is unreliable); bottom bars are in-flow/sticky
+  so they follow the resized viewport.
 - **Theme**: `data-theme="light|dark"` on the root, CSS token variables; respects
   `prefers-color-scheme` on first load with a persisted manual override
   (localStorage).
