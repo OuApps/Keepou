@@ -7,7 +7,7 @@ import {
   type ImportSummaryOut,
 } from '../api/importKeep'
 import { ApiError } from '../api/client'
-import { IMPORT_COPY as COPY } from '../lib/copy'
+import { COMMON_COPY, IMPORT_COPY as COPY } from '../lib/copy'
 import { ImportReview } from '../components/importer/ImportReview'
 import { ImportSummary } from '../components/importer/ImportSummary'
 import { ImportUpload } from '../components/importer/ImportUpload'
@@ -26,7 +26,7 @@ type Step =
   | { name: 'summary'; summary: ImportSummaryOut }
 
 function errorMessage(err: unknown): string {
-  return err instanceof ApiError ? err.message : 'Erreur réseau'
+  return err instanceof ApiError ? err.message : COMMON_COPY.networkError
 }
 
 export default function ImportKeepPage() {

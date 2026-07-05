@@ -6,6 +6,7 @@ import { listVersions, restoreVersion, type NoteVersionOut } from '../api/versio
 import { HistoryPanel } from '../components/history/HistoryPanel'
 import { RestoreConfirm } from '../components/history/RestoreConfirm'
 import { VersionPreview } from '../components/history/VersionPreview'
+import { COMMON_COPY, HISTORY_COPY } from '../lib/copy'
 import { formatVersionMoment, formatVersionWhen } from '../lib/time'
 
 /**
@@ -23,8 +24,6 @@ const SHADE_CLASS: Record<NoteColor, string> = {
   CLAY: 'kp-history__stage--clay',
   TEAL: 'kp-history__stage--teal',
 }
-
-const RESTORE_FAILED = 'La restauration a échoué. Réessaie.'
 
 export default function HistoryPage() {
   const { id } = useParams()
@@ -70,9 +69,9 @@ export default function HistoryPage() {
     return (
       <div className="kp-editor-overlay">
         <div className="kp-editor__fallback">
-          <p className="kp-muted">Note introuvable.</p>
+          <p className="kp-muted">{HISTORY_COPY.noteNotFound}</p>
           <Link to="/" className="kp-link">
-            Retour au board
+            {COMMON_COPY.backToBoard}
           </Link>
         </div>
       </div>
@@ -83,7 +82,7 @@ export default function HistoryPage() {
     return (
       <div className="kp-editor-overlay">
         <div className="kp-editor__fallback">
-          <p className="kp-muted">Chargement…</p>
+          <p className="kp-muted">{COMMON_COPY.loading}</p>
         </div>
       </div>
     )
@@ -110,8 +109,8 @@ export default function HistoryPage() {
       const conflict = lockConflictOf(error)
       setRestoreError(
         conflict?.locked_by
-          ? `${conflict.locked_by.display_name} est en cours d'édition — réessaie plus tard.`
-          : RESTORE_FAILED,
+          ? HISTORY_COPY.restoreLocked(conflict.locked_by.display_name)
+          : HISTORY_COPY.restoreFailed,
       )
       setRestoring(false)
     }
@@ -123,7 +122,7 @@ export default function HistoryPage() {
         className={`kp-history${previewOpen ? ' kp-history--preview' : ''}`}
         role="dialog"
         aria-modal="true"
-        aria-label="Historique des versions"
+        aria-label={HISTORY_COPY.dialogLabel}
         onClick={(e) => e.stopPropagation()}
       >
         {selected !== null && (
@@ -146,7 +145,7 @@ export default function HistoryPage() {
                     />
                   </svg>
                 </span>
-                Retour à l'édition
+                {HISTORY_COPY.backToEditing}
               </button>
               <button
                 type="button"
@@ -163,12 +162,12 @@ export default function HistoryPage() {
                     strokeLinejoin="round"
                   />
                 </svg>
-                Historique
+                {HISTORY_COPY.panelTitle}
               </button>
               <span className="kp-history__viewing">
                 {isCurrent
-                  ? 'Version actuelle'
-                  : `Aperçu — ${formatVersionWhen(selected.created_at)}`}
+                  ? HISTORY_COPY.currentVersion
+                  : HISTORY_COPY.previewOf(formatVersionWhen(selected.created_at))}
               </span>
             </header>
             <div className="kp-history__banner" role="status">
@@ -190,9 +189,12 @@ export default function HistoryPage() {
                 <circle cx="10" cy="13.6" r="1" fill="currentColor" />
               </svg>
               <span>
-                <b>Aperçu — lecture seule</b>
+                <b>{HISTORY_COPY.previewBanner}</b>
                 <br />
-                Version de {selected.author_name} · {formatVersionMoment(selected.created_at)}
+                {HISTORY_COPY.versionOf(
+                  selected.author_name,
+                  formatVersionMoment(selected.created_at),
+                )}
               </span>
             </div>
             <VersionPreview version={selected} isCurrent={isCurrent} />
@@ -202,7 +204,7 @@ export default function HistoryPage() {
                 className="kp-history__close-btn"
                 onClick={() => setPreviewOpen(false)}
               >
-                Fermer
+                {COMMON_COPY.close}
               </button>
               {!isCurrent && (
                 <button
@@ -210,7 +212,7 @@ export default function HistoryPage() {
                   className="kp-history__restore-btn"
                   onClick={() => askRestore(selected)}
                 >
-                  Restaurer cette version
+                  {HISTORY_COPY.restoreThis}
                 </button>
               )}
             </div>
@@ -231,7 +233,7 @@ export default function HistoryPage() {
 
         {versions.length === 0 && (
           <div className="kp-history__empty">
-            <p className="kp-muted">Aucune version enregistrée pour l'instant.</p>
+            <p className="kp-muted">{HISTORY_COPY.empty}</p>
           </div>
         )}
 

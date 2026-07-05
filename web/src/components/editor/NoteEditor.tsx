@@ -17,6 +17,7 @@ import {
   LockReadOnlyNote,
   LockTakeoverBar,
 } from './LockBanner'
+import { COMMON_COPY, EDITOR_COPY } from '../../lib/copy'
 import { SaveStatus } from './SaveStatus'
 import { VisibilityToggle } from './VisibilityToggle'
 
@@ -213,9 +214,9 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     return (
       <div className="kp-editor-overlay">
         <div className="kp-editor__fallback">
-          <p className="kp-muted">Note introuvable.</p>
+          <p className="kp-muted">{EDITOR_COPY.notFound}</p>
           <Link to="/" className="kp-link">
-            Retour au board
+            {COMMON_COPY.backToBoard}
           </Link>
         </div>
       </div>
@@ -226,7 +227,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     return (
       <div className="kp-editor-overlay">
         <div className="kp-editor__fallback">
-          <p className="kp-muted">Chargement…</p>
+          <p className="kp-muted">{COMMON_COPY.loading}</p>
         </div>
       </div>
     )
@@ -246,7 +247,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         className={`kp-editor ${SHADE_CLASS[draft.color]}`}
         role="dialog"
         aria-modal="true"
-        aria-label={draft.title || 'Note sans titre'}
+        aria-label={draft.title || EDITOR_COPY.untitled}
         onClick={(e) => e.stopPropagation()}
       >
         <header className={`kp-editor__bar${barModifier}`}>
@@ -254,7 +255,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             type="button"
             className="kp-editor__back"
             onClick={() => void close()}
-            aria-label="Retour au board"
+            aria-label={COMMON_COPY.backToBoard}
           >
             <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true">
               <path
@@ -274,7 +275,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             <LockLiveDot />
           ) : null}
           <button type="button" className="kp-editor__ok" onClick={() => void close()}>
-            OK
+            {EDITOR_COPY.ok}
           </button>
         </header>
 
@@ -286,8 +287,8 @@ export function NoteEditor({ noteId }: { noteId: string }) {
               className="kp-editor__title"
               type="text"
               value={draft.title}
-              placeholder={readOnly ? undefined : 'Titre'}
-              aria-label="Titre de la note"
+              placeholder={readOnly ? undefined : EDITOR_COPY.titlePlaceholder}
+              aria-label={EDITOR_COPY.titleLabel}
               maxLength={200}
               disabled={readOnly}
               onChange={(e) => edit({ title: e.target.value })}
@@ -296,12 +297,11 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             <p className="kp-editor__sub">
               {readOnly ? (
                 <>
-                  Dernière édition par <b>{lastSaved.by}</b> · {formatRelative(lastSaved.at)}
+                  {EDITOR_COPY.lastEditedBy} <b>{lastSaved.by}</b> · {formatRelative(lastSaved.at)}
                 </>
               ) : (
                 <>
-                  Dernière version enregistrée par <b>{lastSaved.by}</b> ·{' '}
-                  {formatRelative(lastSaved.at)}
+                  {EDITOR_COPY.lastSavedBy} <b>{lastSaved.by}</b> · {formatRelative(lastSaved.at)}
                 </>
               )}
             </p>
@@ -338,10 +338,10 @@ export function NoteEditor({ noteId }: { noteId: string }) {
           </div>
           <div className="kp-editor__actions">
             <button type="button" className="kp-editor__history" onClick={() => void openHistory()}>
-              Historique
+              {EDITOR_COPY.history}
             </button>
             <button type="button" className="kp-editor__done" onClick={() => void close()}>
-              Terminé
+              {EDITOR_COPY.done}
             </button>
           </div>
         </footer>

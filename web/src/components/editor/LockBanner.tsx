@@ -1,3 +1,4 @@
+import { LOCK_COPY } from '../../lib/copy'
 import type { LockStatus } from '../../hooks/useNoteLock'
 
 /**
@@ -9,9 +10,6 @@ import type { LockStatus } from '../../hooks/useNoteLock'
  * pieces (read-only note, takeover bar, conflict panel) live in the body.
  */
 
-/** « Quelqu'un » only ever shows on degraded payloads — the 409 names the holder. */
-const someone = (holder: string | null) => holder ?? 'Quelqu’un'
-
 export function LockBanner({ status, holder }: { status: LockStatus; holder: string | null }) {
   if (status === 'none' || status === 'pending') return null
   return (
@@ -19,11 +17,10 @@ export function LockBanner({ status, holder }: { status: LockStatus; holder: str
       {(status === 'mine' || status === 'available') && (
         <span className="kp-lock__dot" aria-hidden="true" />
       )}
-      {status === 'mine' && 'Tu modifies cette note'}
-      {status === 'locked' && `🔒 ${someone(holder)} est en cours d'édition — lecture seule`}
-      {status === 'available' &&
-        (holder === null ? 'Note disponible' : `${holder} a fini de modifier — note disponible`)}
-      {status === 'conflict' && `${someone(holder)} modifie cette note`}
+      {status === 'mine' && LOCK_COPY.mine}
+      {status === 'locked' && LOCK_COPY.locked(holder)}
+      {status === 'available' && LOCK_COPY.available(holder)}
+      {status === 'conflict' && LOCK_COPY.conflict(holder)}
     </span>
   )
 }
@@ -33,19 +30,14 @@ export function LockLiveDot() {
   return (
     <span className="kp-lock__live" aria-hidden="true">
       <span className="kp-lock__live-dot" />
-      en direct
+      {LOCK_COPY.live}
     </span>
   )
 }
 
 /** Read-only subtext under the content (locked state). */
 export function LockReadOnlyNote({ holder }: { holder: string | null }) {
-  return (
-    <p className="kp-lock__note">
-      Édition indisponible tant que {someone(holder)} modifie la note. L'affichage se met à jour en
-      temps réel.
-    </p>
-  )
+  return <p className="kp-lock__note">{LOCK_COPY.readOnlyNote(holder)}</p>
 }
 
 /** Takeover action once the lock is released or expired (state 3). */
@@ -53,7 +45,7 @@ export function LockTakeoverBar({ onTakeover }: { onTakeover: () => void }) {
   return (
     <div className="kp-lock__takeover">
       <button type="button" className="kp-lock__takeover-btn" onClick={onTakeover}>
-        Modifier la note
+        {LOCK_COPY.takeover}
       </button>
     </div>
   )
@@ -69,12 +61,9 @@ export function LockConflictPanel({
 }) {
   return (
     <div className="kp-lock__conflict">
-      <p className="kp-lock__conflict-text">
-        {someone(holder)} a commencé à modifier cette note pendant ton absence. Tes dernières
-        modifications n'ont pas pu être enregistrées.
-      </p>
+      <p className="kp-lock__conflict-text">{LOCK_COPY.conflictText(holder)}</p>
       <button type="button" className="kp-lock__conflict-btn" onClick={onGoReadOnly}>
-        Passer en lecture seule
+        {LOCK_COPY.goReadOnly}
       </button>
     </div>
   )

@@ -40,11 +40,11 @@ export function ImportUpload({
             <span>
               {i === 0 ? (
                 <>
-                  Ouvre{' '}
+                  {COPY.step1Before}
                   <a className="kp-link" href={COPY.takeoutUrl} target="_blank" rel="noreferrer">
-                    Google Takeout
+                    {COPY.step1Link}
                   </a>
-                  , ne coche que Keep, et crée l’export (format .zip).
+                  {COPY.step1After}
                 </>
               ) : (
                 step
@@ -71,7 +71,8 @@ export function ImportUpload({
           </svg>
           <span>
             <span className="kp-imp__droplabel">
-              Dépose ton export ici, ou <u>parcourir…</u>
+              {COPY.dropBefore}
+              <u>{COPY.dropBrowse}</u>
             </span>
             <span className="kp-imp__drophint" style={{ display: 'block' }}>
               {COPY.dropHint}

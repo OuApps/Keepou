@@ -6,6 +6,7 @@ import { NoteCard } from '../components/NoteCard'
 import { NoteGrid } from '../components/NoteGrid'
 import { TabSwitch } from '../components/TabSwitch'
 import { Topbar } from '../components/Topbar'
+import { BOARD_COPY, COMMON_COPY } from '../lib/copy'
 
 /**
  * Main board (E3): Topbar (search + tabs), quick composer, masonry of cards.
@@ -85,8 +86,8 @@ export default function BoardPage() {
             <input
               type="search"
               className="kp-search__input"
-              placeholder="Rechercher dans mes notes…"
-              aria-label="Rechercher dans mes notes…"
+              placeholder={BOARD_COPY.searchPlaceholder}
+              aria-label={BOARD_COPY.searchPlaceholder}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
@@ -100,10 +101,10 @@ export default function BoardPage() {
 
         {failed && (
           <p className="kp-board__status" role="alert">
-            Impossible de charger les notes. Réessaie dans un instant.
+            {BOARD_COPY.loadFailed}
           </p>
         )}
-        {!failed && notes === null && <p className="kp-board__status">Chargement…</p>}
+        {!failed && notes === null && <p className="kp-board__status">{COMMON_COPY.loading}</p>}
 
         {visible && visible.length > 0 && (
           <NoteGrid>
@@ -116,10 +117,10 @@ export default function BoardPage() {
         {visible && visible.length === 0 && notes !== null && (
           <p className="kp-board__status">
             {query.trim() !== ''
-              ? 'Aucune note ne correspond à ta recherche.'
+              ? BOARD_COPY.emptySearch
               : tab === 'mine'
-                ? 'Aucune note pour l’instant — écris ta première note ci-dessus.'
-                : 'Aucune note publique pour l’instant.'}
+                ? BOARD_COPY.emptyMine
+                : BOARD_COPY.emptyPublic}
           </p>
         )}
       </main>

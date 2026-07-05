@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { EDITOR_COPY } from '../../lib/copy'
 import { RichBlockText } from '../RichText'
 import { blockId, type EditorBlock } from './blocks'
 import { MarkdownArea } from './MarkdownArea'
@@ -75,7 +76,11 @@ export function BlockList({ blocks, onChange, onFlush, readOnly = false }: Block
               key={block.id}
               blockKey={block.id}
               value={block.text}
-              placeholder={blocks.length === 1 && block.text === '' ? 'Écris ta note…' : undefined}
+              placeholder={
+                blocks.length === 1 && block.text === ''
+                  ? EDITOR_COPY.paragraphPlaceholder
+                  : undefined
+              }
               onChange={(text) => replace(i, { ...block, text })}
               onFlush={onFlush}
             />
@@ -86,7 +91,7 @@ export function BlockList({ blocks, onChange, onFlush, readOnly = false }: Block
               type="checkbox"
               className="kp-blocks__box"
               checked={block.checked}
-              aria-label={block.text === '' ? 'Case à cocher' : block.text}
+              aria-label={block.text === '' ? EDITOR_COPY.checkboxLabel : block.text}
               disabled={readOnly}
               onChange={(e) => replace(i, { ...block, checked: e.target.checked })}
               onBlur={onFlush}
@@ -96,8 +101,8 @@ export function BlockList({ blocks, onChange, onFlush, readOnly = false }: Block
               data-block={block.id}
               className={`kp-blocks__label${block.checked ? ' kp-blocks__label--done' : ''}`}
               value={block.text}
-              placeholder={readOnly ? undefined : 'Nouvel élément'}
-              aria-label="Intitulé de la case"
+              placeholder={readOnly ? undefined : EDITOR_COPY.checkboxItemPlaceholder}
+              aria-label={EDITOR_COPY.checkboxItemLabel}
               disabled={readOnly}
               onChange={(e) => replace(i, { ...block, text: e.target.value })}
               onBlur={onFlush}
@@ -125,7 +130,7 @@ export function BlockList({ blocks, onChange, onFlush, readOnly = false }: Block
           <span className="kp-blocks__insert-box" aria-hidden="true">
             +
           </span>
-          Insérer une case à cocher
+          {EDITOR_COPY.insertCheckbox}
         </button>
       )}
     </div>

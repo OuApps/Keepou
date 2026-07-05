@@ -4,6 +4,7 @@ import { login } from '../api/auth'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import { AuthMessage } from '../components/AuthMessage'
+import { AUTH_COPY, COMMON_COPY } from '../lib/copy'
 import { ThemeToggle } from '../components/ThemeToggle'
 
 /**
@@ -33,14 +34,11 @@ export default function LoginPage() {
       navigate(from, { replace: true })
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
-        setError({ variant: 'error', text: 'E-mail ou mot de passe incorrect.' })
+        setError({ variant: 'error', text: AUTH_COPY.badCredentials })
       } else if (err instanceof ApiError && err.status === 403) {
-        setError({
-          variant: 'warning',
-          text: "Ton accès a été suspendu. Contacte l'administrateur.",
-        })
+        setError({ variant: 'warning', text: AUTH_COPY.suspended })
       } else {
-        setError({ variant: 'error', text: 'Connexion impossible. Réessaie dans un instant.' })
+        setError({ variant: 'error', text: AUTH_COPY.loginFailed })
       }
     } finally {
       setSubmitting(false)
@@ -62,12 +60,12 @@ export default function LoginPage() {
             width={72}
             height={72}
           />
-          <h1 className="kp-auth__brand-name">Keepou</h1>
+          <h1 className="kp-auth__brand-name">{COMMON_COPY.appName}</h1>
         </div>
 
         <form className="kp-auth__card" onSubmit={onSubmit}>
           <label className="kp-auth__label" htmlFor="login-email">
-            E-mail
+            {AUTH_COPY.email}
           </label>
           <div className="kp-auth__field">
             <input
@@ -83,7 +81,7 @@ export default function LoginPage() {
           </div>
 
           <label className="kp-auth__label" htmlFor="login-password">
-            Mot de passe
+            {AUTH_COPY.password}
           </label>
           <div className="kp-auth__field">
             <input
@@ -100,7 +98,7 @@ export default function LoginPage() {
               type="button"
               className="kp-auth__eye"
               onClick={() => setShowPassword((v) => !v)}
-              aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+              aria-label={showPassword ? AUTH_COPY.hidePassword : AUTH_COPY.showPassword}
               aria-pressed={showPassword}
             >
               <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true">
@@ -133,12 +131,12 @@ export default function LoginPage() {
           {error && <AuthMessage variant={error.variant}>{error.text}</AuthMessage>}
 
           <button type="submit" className="kp-auth__submit" disabled={submitting}>
-            Se connecter
+            {AUTH_COPY.signIn}
           </button>
         </form>
 
         <p className="kp-auth__alt kp-auth__alt--salsa">
-          Pas encore de compte ? <Link to="/register">Créer un compte</Link>
+          {AUTH_COPY.noAccountYet} <Link to="/register">{AUTH_COPY.createAccountLink}</Link>
         </p>
       </div>
     </div>

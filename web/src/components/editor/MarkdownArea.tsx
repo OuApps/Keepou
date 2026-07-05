@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef } from 'react'
+import { EDITOR_COPY } from '../../lib/copy'
 import { highlightMarkdown } from '../../lib/highlight'
 
 /**
@@ -122,7 +123,7 @@ export function MarkdownArea({
       suppressContentEditableWarning
       role="textbox"
       aria-multiline="true"
-      aria-label="Paragraphe"
+      aria-label={EDITOR_COPY.paragraphLabel}
       tabIndex={0}
       data-block={blockKey}
       data-placeholder={placeholder}

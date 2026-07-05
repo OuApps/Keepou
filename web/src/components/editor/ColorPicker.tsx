@@ -1,5 +1,6 @@
 import type { NoteColor } from '../../api/notes'
 import { SWATCHES } from '../../lib/colors'
+import { EDITOR_COPY } from '../../lib/copy'
 
 /**
  * Editor color picker (E4-S5): the 5 shades as round swatches, the active one
@@ -16,7 +17,7 @@ export function ColorPicker({
   disabled?: boolean
 }) {
   return (
-    <div className="kp-editor__colors" role="radiogroup" aria-label="Couleur de la note">
+    <div className="kp-editor__colors" role="radiogroup" aria-label={EDITOR_COPY.colorLabel}>
       {SWATCHES.map((s) => (
         <button
           key={s.color}

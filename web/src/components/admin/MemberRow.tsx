@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { MemberOut, UserAdminPatch } from '../../api/admin'
+import { ADMIN_COPY } from '../../lib/copy'
 import { formatDayMonth } from '../../lib/time'
 
 /**
@@ -76,18 +77,20 @@ export function MemberRow({
       <div className="kp-admin__id">
         <div className="kp-admin__name-line">
           <span className="kp-admin__name">{name}</span>
-          {isAdmin && <span className="kp-admin__badge-admin">admin</span>}
+          {isAdmin && <span className="kp-admin__badge-admin">{ADMIN_COPY.adminBadge}</span>}
         </div>
         <div className="kp-admin__meta">
           {member.email}
-          {member.registered_at ? ` · inscrit le ${formatDayMonth(member.registered_at)}` : ''}
+          {member.registered_at
+            ? ADMIN_COPY.registeredOn(formatDayMonth(member.registered_at))
+            : ''}
         </div>
       </div>
       <div className="kp-admin__actions" ref={menuRef}>
         <span
           className={`kp-admin__status ${isActive ? 'kp-admin__status--active' : 'kp-admin__status--warn'}`}
         >
-          {isActive ? 'Actif' : 'Désactivé'}
+          {isActive ? ADMIN_COPY.statusActive : ADMIN_COPY.statusDisabled}
         </span>
         <button
           type="button"
@@ -95,7 +98,7 @@ export function MemberRow({
           onClick={() => setMenuOpen((open) => !open)}
           aria-haspopup="menu"
           aria-expanded={menuOpen}
-          aria-label={`Actions pour ${name}`}
+          aria-label={ADMIN_COPY.actionsFor(name)}
           disabled={busy}
         >
           ⋯
@@ -110,7 +113,7 @@ export function MemberRow({
                 onClick={() => act({ role: 'MEMBER' })}
                 disabled={isLastActiveAdmin}
               >
-                Rétrograder en membre
+                {ADMIN_COPY.demote}
               </button>
             ) : (
               <button
@@ -119,7 +122,7 @@ export function MemberRow({
                 role="menuitem"
                 onClick={() => act({ role: 'ADMIN' })}
               >
-                Promouvoir admin
+                {ADMIN_COPY.promote}
               </button>
             )}
             {isActive ? (
@@ -130,7 +133,7 @@ export function MemberRow({
                 onClick={() => act({ status: 'DISABLED' })}
                 disabled={isLastActiveAdmin}
               >
-                Désactiver le compte
+                {ADMIN_COPY.disable}
               </button>
             ) : (
               <button
@@ -139,14 +142,10 @@ export function MemberRow({
                 role="menuitem"
                 onClick={() => act({ status: 'ACTIVE' })}
               >
-                Réactiver le compte
+                {ADMIN_COPY.enable}
               </button>
             )}
-            {isLastActiveAdmin && (
-              <p className="kp-admin__menu-note">
-                Dernier administrateur actif — l’instance doit toujours en conserver un.
-              </p>
-            )}
+            {isLastActiveAdmin && <p className="kp-admin__menu-note">{ADMIN_COPY.lastAdminNote}</p>}
           </div>
         )}
       </div>

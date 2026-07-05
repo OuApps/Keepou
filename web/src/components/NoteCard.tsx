@@ -3,6 +3,7 @@ import type { NoteOut } from '../api/notes'
 import { SHADE_CLASS } from '../lib/colors'
 import { parsePreview } from '../lib/preview'
 import { formatRelative } from '../lib/time'
+import { BOARD_COPY } from '../lib/copy'
 import { InlineText } from './RichText'
 
 /**
@@ -57,7 +58,7 @@ export function NoteCard({ note, showAuthor }: { note: NoteOut; showAuthor: bool
       className={`kp-card kp-note ${SHADE_CLASS[note.color]}`}
       role="button"
       tabIndex={0}
-      aria-label={note.title || 'Note sans titre'}
+      aria-label={note.title || BOARD_COPY.untitled}
       onClick={() => navigate(`/note/${note.id}`)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -102,7 +103,7 @@ export function NoteCard({ note, showAuthor }: { note: NoteOut; showAuthor: bool
             {note.author_name.trim().charAt(0).toUpperCase()}
           </span>
           <span className="kp-note__author">
-            {note.author_name} · modifié {formatRelative(note.updated_at)}
+            {BOARD_COPY.authorMeta(note.author_name, formatRelative(note.updated_at))}
           </span>
         </div>
       ) : (
@@ -110,10 +111,10 @@ export function NoteCard({ note, showAuthor }: { note: NoteOut; showAuthor: bool
           {note.visibility === 'PUBLIC' ? (
             <>
               <GlobeIcon />
-              <span>Public · partagé par toi</span>
+              <span>{BOARD_COPY.publicByYou}</span>
             </>
           ) : (
-            <span>Privé · {formatRelative(note.updated_at)}</span>
+            <span>{BOARD_COPY.privateMeta(formatRelative(note.updated_at))}</span>
           )}
         </div>
       )}

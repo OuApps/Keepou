@@ -1,4 +1,5 @@
 import type { NoteVersionOut } from '../../api/versions'
+import { HISTORY_COPY } from '../../lib/copy'
 import { formatVersionWhen } from '../../lib/time'
 
 /**
@@ -57,7 +58,7 @@ export function VersionRow({
         <span className="kp-vrow__info">
           <span className="kp-vrow__top">
             <span className="kp-vrow__when">{formatVersionWhen(version.created_at)}</span>
-            {isCurrent && <span className="kp-vrow__badge">actuelle</span>}
+            {isCurrent && <span className="kp-vrow__badge">{HISTORY_COPY.currentBadge}</span>}
           </span>
           <span className="kp-vrow__author">
             <span
@@ -67,7 +68,7 @@ export function VersionRow({
             >
               {version.author_name.charAt(0).toUpperCase()}
             </span>
-            {isCreation ? 'Créée par' : 'Modifié par'} {version.author_name}
+            {isCreation ? HISTORY_COPY.createdBy : HISTORY_COPY.modifiedBy} {version.author_name}
           </span>
         </span>
         <svg
@@ -89,7 +90,7 @@ export function VersionRow({
       </button>
       {selected && !isCurrent && (
         <button type="button" className="kp-vrow__restore" onClick={onRestore}>
-          Restaurer cette version
+          {HISTORY_COPY.restoreThis}
         </button>
       )}
     </li>
