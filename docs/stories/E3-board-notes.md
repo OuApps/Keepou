@@ -125,15 +125,20 @@ Lock enforcement on public-note mutations is added in E5 (409 without a held loc
 
 **Tasks**
 - `components/Composer.tsx`: quick input + **ColorPicker** (5 shades) + **public
-  toggle** → `POST /api/notes`, then prepend the new card / open the editor (E4).
+  toggle** → `POST /api/notes`, then **open the note in the editor** (E4) so the
+  body is written there. The **title is optional** (a note can be created empty).
 - Faithful to the composer in `Keepou - Board.dc.html`.
 
 **Acceptance criteria**
-- [x] Creating a note from the composer adds it to the board immediately.
+- [x] Creating a note from the composer opens it in the editor (title optional);
+  the new card appears on the board when the editor is closed.
 - [x] Color + public toggle are applied on create.
 - [x] Composer faithful (light + dark, desktop + mobile).
 
-**Notes.** Full editing (blocks, autosave) is E4; the composer only creates.
+**Notes.** Full editing (blocks, autosave) is E4; the composer only creates then
+hands off to the editor. *(Post-E8 polish: the composer used to prepend the card
+and stay on the board; it now opens the note straight in the editor, the title is
+optional, and the checkbox hint icon was dropped.)*
 
 ---
 

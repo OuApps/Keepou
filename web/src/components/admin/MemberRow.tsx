@@ -145,7 +145,6 @@ export function MemberRow({
                 {ADMIN_COPY.enable}
               </button>
             )}
-            {isLastActiveAdmin && <p className="kp-admin__menu-note">{ADMIN_COPY.lastAdminNote}</p>}
           </div>
         )}
       </div>

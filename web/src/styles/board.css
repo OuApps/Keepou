@@ -170,11 +170,6 @@
   outline: none;
 }
 
-.kp-composer__hint {
-  flex: none;
-  color: var(--ink-mute);
-}
-
 .kp-composer__add {
   flex: none;
   border: none;
@@ -304,14 +299,97 @@
   color: var(--ink-soft);
 }
 
+/* --- Archived view header (E8) --- */
+.kp-board__archived-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.kp-board__archived-title {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--ink);
+}
+
+.kp-board__archived-back {
+  flex: none;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.kp-board__archived-back:hover {
+  background: var(--track);
+}
+
 /* --- Note card (5 shades, gradient + border tokens) --- */
 .kp-note {
+  position: relative;
   width: 100%;
   margin: 0 0 18px;
   border-radius: var(--r-card);
   padding: 16px;
   box-shadow: var(--sh-card);
   cursor: pointer;
+}
+
+/* --- Pin indicator + owner actions (E8), top-right of the card --- */
+.kp-note__organize {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.kp-note__pin {
+  display: inline-flex;
+  color: var(--ink-soft);
+}
+
+.kp-note__more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--ink-soft);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.kp-note__more:hover {
+  background: rgba(46, 42, 32, 0.08);
+}
+
+[data-theme='dark'] .kp-note__more:hover {
+  background: rgba(243, 236, 221, 0.1);
+}
+
+/* Reuse the .kp-menu popover, sized to sit inside a narrow card. */
+.kp-note__menu {
+  min-width: 160px;
+}
+
+/* Keep the title clear of the actions cluster. */
+.kp-note__title {
+  padding-right: 30px;
 }
 
 .kp-note--gold {
@@ -358,6 +436,8 @@
 .kp-note__text {
   margin: 0;
   line-height: 1.55;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
 }
 
 .kp-note__check {

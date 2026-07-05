@@ -165,11 +165,6 @@
   white-space: nowrap;
 }
 
-.kp-imp__note {
-  font-size: 12px;
-  color: var(--ink-soft);
-}
-
 .kp-imp__error {
   font-size: 13px;
   color: var(--brand-salsa);

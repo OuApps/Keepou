@@ -20,6 +20,10 @@ export interface NoteOut {
   color: NoteColor
   visibility: Visibility
   owner_id: string
+  /** Board-organization flags (E8): pinned floats the card to the top; archived
+   * hides it from every board (shown only in the archived view). Owner-only. */
+  pinned: boolean
+  archived: boolean
   author_name: string
   created_at: string
   updated_at: string
@@ -39,16 +43,20 @@ export interface NoteIn {
   visibility?: Visibility
 }
 
-/** Consolidated editor update (E4-S1) — only the provided fields change. */
+/** Consolidated editor update (E4-S1) — only the provided fields change.
+ * `pinned` / `archived` are owner-only board flags (E8): no lock, no version. */
 export interface NotePatch {
   title?: string
   body?: string
   color?: NoteColor
   visibility?: Visibility
+  pinned?: boolean
+  archived?: boolean
 }
 
-export function listNotes(tab: BoardTab): Promise<NoteOut[]> {
-  return api.get<NoteOut[]>(`/api/notes?tab=${tab}`)
+/** `archived` = the caller's dedicated archived view (own notes only). */
+export function listNotes(tab: BoardTab, archived = false): Promise<NoteOut[]> {
+  return api.get<NoteOut[]>(`/api/notes?tab=${tab}${archived ? '&archived=true' : ''}`)
 }
 
 export function createNote(input: NoteIn): Promise<NoteOut> {

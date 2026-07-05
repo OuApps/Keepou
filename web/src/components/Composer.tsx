@@ -43,21 +43,21 @@ export function Composer({
     setError(false)
   }
 
+  // A note can be created without a title; the editor opens right after so the
+  // body is written there (the composer is only the launch pad).
   const submit = async (e?: FormEvent) => {
     e?.preventDefault()
-    const trimmed = title.trim()
-    if (trimmed === '' || saving) return
+    if (saving) return
     setSaving(true)
     setError(false)
     try {
       const note = await createNote({
-        title: trimmed,
+        title: title.trim(),
         color,
         visibility: isPublic ? 'PUBLIC' : 'PRIVATE',
       })
-      onCreated(note)
       close()
-      inputRef.current?.focus()
+      onCreated(note)
     } catch {
       setError(true)
     } finally {
@@ -87,52 +87,6 @@ export function Composer({
           onChange={(e) => setTitle(e.target.value)}
           onFocus={() => setOpen(true)}
         />
-        <svg
-          className="kp-composer__hint"
-          width="20"
-          height="20"
-          viewBox="0 0 20 20"
-          aria-hidden="true"
-        >
-          <rect
-            x="3"
-            y="4"
-            width="5"
-            height="5"
-            rx="1.5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          />
-          <line
-            x1="11"
-            y1="6.5"
-            x2="17"
-            y2="6.5"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-          <rect
-            x="3"
-            y="12"
-            width="5"
-            height="5"
-            rx="1.5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          />
-          <line
-            x1="11"
-            y1="14.5"
-            x2="17"
-            y2="14.5"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-        </svg>
         <button type="submit" className="kp-composer__add" disabled={saving}>
           {BOARD_COPY.composerAdd}
         </button>

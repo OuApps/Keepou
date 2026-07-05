@@ -233,7 +233,6 @@ describe('AdminPage / AccessManager', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Actions pour Marie' }))
     expect(screen.getByRole('menuitem', { name: 'Rétrograder en membre' })).toBeDisabled()
     expect(screen.getByRole('menuitem', { name: 'Désactiver le compte' })).toBeDisabled()
-    expect(screen.getByText(/Dernier administrateur actif/)).toBeInTheDocument()
   })
 
   it('shows the Administration entry to admins only', async () => {

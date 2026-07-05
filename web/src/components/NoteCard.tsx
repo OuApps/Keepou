@@ -1,5 +1,6 @@
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { NoteOut } from '../api/notes'
+import type { NoteOut, NotePatch } from '../api/notes'
 import { SHADE_CLASS } from '../lib/colors'
 import { parsePreview } from '../lib/preview'
 import { formatRelative } from '../lib/time'
@@ -48,10 +49,70 @@ function GlobeIcon() {
   )
 }
 
-export function NoteCard({ note, showAuthor }: { note: NoteOut; showAuthor: boolean }) {
+function PinIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true">
+      <path
+        d="M6 1.6h4l-.7 3.3 2.1 2.3H4.6l2.1-2.3z"
+        fill="currentColor"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeLinejoin="round"
+      />
+      <line
+        x1="8"
+        y1="7.2"
+        x2="8"
+        y2="13.4"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+export function NoteCard({
+  note,
+  showAuthor,
+  canOrganize = false,
+  archivedView = false,
+  onOrganize,
+}: {
+  note: NoteOut
+  showAuthor: boolean
+  /** Owner-only pin/archive affordance (E8). */
+  canOrganize?: boolean
+  /** In the archived view the only action is « Désarchiver ». */
+  archivedView?: boolean
+  onOrganize?: (patch: NotePatch) => void
+}) {
   const navigate = useNavigate()
   const blocks = parsePreview(note.body)
   const badge = badgeColor(note.author_name)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const onPointerDown = (e: PointerEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
+    }
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [menuOpen])
+
+  const organize = (patch: NotePatch) => {
+    setMenuOpen(false)
+    onOrganize?.(patch)
+  }
 
   return (
     <article
@@ -61,12 +122,75 @@ export function NoteCard({ note, showAuthor }: { note: NoteOut; showAuthor: bool
       aria-label={note.title || BOARD_COPY.untitled}
       onClick={() => navigate(`/note/${note.id}`)}
       onKeyDown={(e) => {
+        // Keys on the actions button (a child) must not also open the note.
+        if (e.target !== e.currentTarget) return
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
           navigate(`/note/${note.id}`)
         }
       }}
     >
+      {(note.pinned || canOrganize) && (
+        <div className="kp-note__organize" ref={menuRef} onClick={(e) => e.stopPropagation()}>
+          {note.pinned && (
+            <span
+              className="kp-note__pin"
+              title={BOARD_COPY.pinnedBadge}
+              aria-label={BOARD_COPY.pinnedBadge}
+            >
+              <PinIcon />
+            </span>
+          )}
+          {canOrganize && (
+            <>
+              <button
+                type="button"
+                className="kp-note__more"
+                onClick={() => setMenuOpen((open) => !open)}
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                aria-label={BOARD_COPY.cardActions(note.title)}
+              >
+                ⋯
+              </button>
+              {menuOpen && (
+                <div className="kp-menu kp-note__menu" role="menu">
+                  {archivedView ? (
+                    <button
+                      type="button"
+                      className="kp-menu__item"
+                      role="menuitem"
+                      onClick={() => organize({ archived: false })}
+                    >
+                      {BOARD_COPY.unarchive}
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        className="kp-menu__item"
+                        role="menuitem"
+                        onClick={() => organize({ pinned: !note.pinned })}
+                      >
+                        {note.pinned ? BOARD_COPY.unpin : BOARD_COPY.pin}
+                      </button>
+                      <button
+                        type="button"
+                        className="kp-menu__item"
+                        role="menuitem"
+                        onClick={() => organize({ archived: true })}
+                      >
+                        {BOARD_COPY.archive}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
       {note.title !== '' && <h2 className="kp-note__title">{note.title}</h2>}
 
       {blocks.length > 0 && (
