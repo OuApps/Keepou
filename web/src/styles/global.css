@@ -39,3 +39,13 @@ body {
   outline: 2px solid var(--check);
   outline-offset: 2px;
 }
+
+/* Text-entry fields show focus via the caret (and their own border, where they
+ * have one — e.g. the auth / admin fields go gold on :focus-within). The ring
+ * above would otherwise draw an ugly rectangle inside the field as you type.
+ * Checkboxes, radios, buttons, links and cards keep the ring. */
+input:not([type='checkbox']):not([type='radio']):focus-visible,
+textarea:focus-visible,
+[contenteditable]:focus-visible {
+  outline: none;
+}
