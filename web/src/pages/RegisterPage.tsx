@@ -133,6 +133,7 @@ export default function RegisterPage() {
               id="register-name"
               className="kp-auth__input"
               type="text"
+              name="displayName"
               autoComplete="nickname"
               required
               maxLength={80}
@@ -149,7 +150,8 @@ export default function RegisterPage() {
               id="register-email"
               className="kp-auth__input"
               type="email"
-              autoComplete="email"
+              name="email"
+              autoComplete="username"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -164,6 +166,7 @@ export default function RegisterPage() {
               id="register-password"
               className="kp-auth__input"
               type="password"
+              name="password"
               autoComplete="new-password"
               required
               minLength={8}

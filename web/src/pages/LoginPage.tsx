@@ -74,7 +74,8 @@ export default function LoginPage() {
               id="login-email"
               className="kp-auth__input"
               type="email"
-              autoComplete="email"
+              name="email"
+              autoComplete="username"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -89,6 +90,7 @@ export default function LoginPage() {
               id="login-password"
               className="kp-auth__input"
               type={showPassword ? 'text' : 'password'}
+              name="password"
               autoComplete="current-password"
               required
               value={password}

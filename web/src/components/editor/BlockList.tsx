@@ -6,7 +6,9 @@ import { blockId, type EditorBlock } from './blocks'
  * checkboxes, faithful to `Keepou - Éditeur canonique.dc.html`. Boxes are real
  * `<input type=checkbox>` (HANDOFF §8); the « Insérer une case à cocher »
  * affordance sits at the BOTTOM of the flow (§3.3, never in the middle).
- * Enter in a box inserts the next one; Backspace in an empty box removes it.
+ * Enter in a non-empty box inserts the next one; Enter in an EMPTY box (the
+ * second consecutive line break) exits the checklist into a normal text
+ * paragraph (E8-S10, Keep-like); Backspace in an empty box removes it.
  */
 
 interface BlockListProps {
@@ -64,6 +66,14 @@ export function BlockList({ blocks, onChange, onFlush, readOnly = false }: Block
     onChange(blocks.filter((_, i) => i !== index))
   }
 
+  // Two line breaks exit the checklist (E8-S10): the empty box becomes a
+  // normal paragraph, focus moves into it.
+  const exitChecklistAt = (index: number) => {
+    const id = blockId()
+    pendingFocus.current = id
+    onChange(blocks.map((block, i) => (i === index ? { id, type: 'text', text: '' } : block)))
+  }
+
   return (
     <div className="kp-blocks" ref={rootRef}>
       {blocks.map((block, i) =>
@@ -108,7 +118,8 @@ export function BlockList({ blocks, onChange, onFlush, readOnly = false }: Block
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault()
-                  insertCheckAt(i + 1)
+                  if (block.text === '') exitChecklistAt(i)
+                  else insertCheckAt(i + 1)
                 } else if (e.key === 'Backspace' && block.text === '') {
                   e.preventDefault()
                   removeAt(i)

@@ -236,6 +236,35 @@ describe('NoteEditor', () => {
     expect(patches[0].body).toBe(`${BODY}\n- [ ] Gobelets réutilisables`)
   })
 
+  it('exits the checklist with two line breaks into a normal paragraph (E8-S10)', async () => {
+    const patches = stubEditor(note())
+    renderEditor()
+    await editorLoaded()
+
+    // First Enter on a non-empty box: the list continues with an empty box.
+    const lastLabel = screen.getByDisplayValue('Tables & chaises')
+    fireEvent.keyDown(lastLabel, { key: 'Enter' })
+    const labels = screen.getAllByPlaceholderText('Nouvel élément')
+    const emptyLabel = labels[labels.length - 1]
+    expect(emptyLabel).toHaveValue('')
+
+    // Second Enter (on the empty box): exit the checklist — the empty box is
+    // gone, replaced by a focused normal paragraph.
+    fireEvent.keyDown(emptyLabel, { key: 'Enter' })
+    expect(screen.getAllByPlaceholderText('Nouvel élément')).toHaveLength(2)
+    const paragraphs = screen.getAllByLabelText('Paragraphe')
+    expect(paragraphs).toHaveLength(2)
+    expect(paragraphs[1]).toHaveValue('')
+    expect(paragraphs[1]).toHaveFocus()
+
+    // The check → text flow round-trips with the blank-line separator.
+    fireEvent.change(paragraphs[1], { target: { value: 'Texte sous la liste' } })
+    fireEvent.blur(paragraphs[1])
+    await screen.findByText(/Enregistré · à l'instant/)
+    expect(patches).toHaveLength(1)
+    expect(patches[0].body).toBe(`${BODY}\n\nTexte sous la liste`)
+  })
+
   it('toggling a checkbox updates the [x] marker in the saved body', async () => {
     const patches = stubEditor(note())
     renderEditor()
