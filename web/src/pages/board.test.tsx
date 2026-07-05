@@ -123,6 +123,31 @@ describe('BoardPage', () => {
     expect(card.querySelectorAll('input')).toHaveLength(0)
   })
 
+  it('renders the inline Markdown subset on the card preview (E8-S9)', async () => {
+    stubBoard({
+      '/api/notes?tab=mine': () =>
+        json(200, [
+          note({
+            id: 'n-md',
+            title: 'Vacances',
+            body: '# Programme\nOn part **samedi** en *covoiturage*.',
+          }),
+        ]),
+    })
+    renderBoard()
+
+    const card = (await screen.findByRole('button', { name: 'Vacances' })) as HTMLElement
+    // Heading rendered as a styled paragraph (no document heading above the h2 title).
+    const heading = card.querySelector('.kp-rich__h1')
+    expect(heading).not.toBeNull()
+    expect(heading!.tagName).toBe('P')
+    expect(heading).toHaveTextContent('Programme')
+    // Bold / italic as semantic elements, markers hidden.
+    expect(card.querySelector('strong')).toHaveTextContent('samedi')
+    expect(card.querySelector('em')).toHaveTextContent('covoiturage')
+    expect(card.textContent).not.toContain('**')
+  })
+
   it('shows the visibility meta on own cards and no author badge', async () => {
     stubBoard()
     renderBoard()

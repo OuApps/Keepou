@@ -177,6 +177,28 @@ describe('NoteEditor — single-editor lock (E5)', () => {
     expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'POST')).toHaveLength(0)
   })
 
+  it('renders the formatted body — markers hidden — in the locked read-only view (E8-S9)', async () => {
+    const current = note({
+      locked_by: BOB,
+      lock_expires_at: inOneMinute(),
+      body: '# Menu\n**Guacamole** et *chips*.\n\n- [ ] Citron vert',
+    })
+    stubFetch({
+      '/api/auth/me': () => json(200, ME),
+      [`/api/notes/${current.id}`]: () => json(200, current),
+    })
+    renderEditor()
+    await screen.findByText("🔒 Bob est en cours d'édition — lecture seule")
+
+    const staticBlock = document.querySelector('.kp-blocks__text--static')!
+    expect(staticBlock.querySelector('h1')).toHaveTextContent('Menu')
+    expect(staticBlock.querySelector('strong')).toHaveTextContent('Guacamole')
+    expect(staticBlock.querySelector('em')).toHaveTextContent('chips')
+    expect(staticBlock.textContent).not.toContain('**')
+    // The checkbox row stays a (disabled) real checkbox, untouched by formatting.
+    expect(screen.getByRole('checkbox', { name: 'Citron vert' })).toBeDisabled()
+  })
+
   it('polls while read-only, offers the takeover once released, then acquires', async () => {
     vi.useFakeTimers()
     let current = note({ locked_by: BOB, lock_expires_at: inOneMinute() })
