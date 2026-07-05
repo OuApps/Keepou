@@ -1,6 +1,7 @@
 import type { NoteVersionOut } from '../../api/versions'
 import { parse } from '../../lib/markdown'
 import { formatVersionMoment } from '../../lib/time'
+import { RichBlockText } from '../RichText'
 
 /**
  * Read-only re-render of a version snapshot (E6): the exact content — title,
@@ -27,9 +28,9 @@ export function VersionPreview({
       <div className="kp-vpreview__blocks">
         {blocks.map((block, i) =>
           block.type === 'text' ? (
-            <p key={i} className="kp-vpreview__text">
-              {block.text}
-            </p>
+            <div key={i} className="kp-vpreview__rich">
+              <RichBlockText text={block.text} paragraphClass="kp-vpreview__text" />
+            </div>
           ) : (
             <div key={i} className="kp-vpreview__row">
               <span

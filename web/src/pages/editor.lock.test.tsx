@@ -168,7 +168,9 @@ describe('NoteEditor — single-editor lock (E5)', () => {
 
     // Read-only: every field and tool is inert, no insertion, no acquire attempt.
     expect(screen.getByLabelText('Titre de la note')).toBeDisabled()
-    expect(screen.getByLabelText('Paragraphe')).toBeDisabled()
+    // The paragraph is a static formatted rendering (E8-S9), not an editable surface.
+    expect(screen.queryByLabelText('Paragraphe')).not.toBeInTheDocument()
+    expect(screen.getByText('Guacamole, chips de maïs.')).toBeInTheDocument()
     expect(screen.getByRole('checkbox', { name: 'Citron vert' })).toBeDisabled()
     expect(screen.queryByRole('button', { name: /Insérer une case/ })).not.toBeInTheDocument()
     for (const swatch of screen.getAllByRole('radio')) expect(swatch).toBeDisabled()

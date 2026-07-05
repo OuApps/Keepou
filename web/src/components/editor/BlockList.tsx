@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react'
+import { RichBlockText } from '../RichText'
 import { blockId, type EditorBlock } from './blocks'
+import { MarkdownArea } from './MarkdownArea'
 
 /**
  * The mixed editing surface (E4-S4): an ordered flow of paragraphs and
@@ -9,6 +11,8 @@ import { blockId, type EditorBlock } from './blocks'
  * Enter in a non-empty box inserts the next one; Enter in an EMPTY box (the
  * second consecutive line break) exits the checklist into a normal text
  * paragraph (E8-S10, Keep-like); Backspace in an empty box removes it.
+ * Paragraphs are Markdown-aware (E8-S9): bold / italic / headings take
+ * effect as typed, and render formatted (markers hidden) in read-only mode.
  */
 
 interface BlockListProps {
@@ -18,12 +22,6 @@ interface BlockListProps {
   onFlush: () => void
   /** Read-only mode (E5): fields disabled, no checkbox insertion. */
   readOnly?: boolean
-}
-
-function autosize(el: HTMLTextAreaElement | null) {
-  if (el === null) return
-  el.style.height = 'auto'
-  el.style.height = `${el.scrollHeight}px`
 }
 
 export function BlockList({ blocks, onChange, onFlush, readOnly = false }: BlockListProps) {
@@ -36,16 +34,6 @@ export function BlockList({ blocks, onChange, onFlush, readOnly = false }: Block
     rootRef.current?.querySelector<HTMLElement>(`[data-block="${pendingFocus.current}"]`)?.focus()
     pendingFocus.current = null
   })
-
-  // Textarea heights are content-driven: recompute them when the viewport
-  // width changes (modal ⇄ full screen, phone rotation), or they stay clipped.
-  useEffect(() => {
-    const onResize = () => {
-      rootRef.current?.querySelectorAll<HTMLTextAreaElement>('.kp-blocks__text').forEach(autosize)
-    }
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [])
 
   const replace = (index: number, next: EditorBlock) => {
     onChange(blocks.map((block, i) => (i === index ? next : block)))
@@ -78,22 +66,20 @@ export function BlockList({ blocks, onChange, onFlush, readOnly = false }: Block
     <div className="kp-blocks" ref={rootRef}>
       {blocks.map((block, i) =>
         block.type === 'text' ? (
-          <textarea
-            key={block.id}
-            data-block={block.id}
-            className="kp-blocks__text"
-            rows={1}
-            value={block.text}
-            placeholder={blocks.length === 1 && block.text === '' ? 'Écris ta note…' : undefined}
-            aria-label="Paragraphe"
-            disabled={readOnly}
-            ref={autosize}
-            onChange={(e) => {
-              autosize(e.currentTarget)
-              replace(i, { ...block, text: e.target.value })
-            }}
-            onBlur={onFlush}
-          />
+          readOnly ? (
+            <div key={block.id} className="kp-blocks__text kp-blocks__text--static">
+              <RichBlockText text={block.text} />
+            </div>
+          ) : (
+            <MarkdownArea
+              key={block.id}
+              blockKey={block.id}
+              value={block.text}
+              placeholder={blocks.length === 1 && block.text === '' ? 'Écris ta note…' : undefined}
+              onChange={(text) => replace(i, { ...block, text })}
+              onFlush={onFlush}
+            />
+          )
         ) : (
           <div key={block.id} className="kp-blocks__row">
             <input

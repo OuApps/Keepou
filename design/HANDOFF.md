@@ -115,7 +115,13 @@ Deliberately simple model (no CRDT/OT). A note has at most one active lock.
   - box → `- [ ] label` (unchecked) / `- [x] label` (checked).
   - The **title** is stored separately (dedicated field), not in the Markdown.
 - Reference serialization (see `Keepou - Éditeur canonique.dc.html`, `buildMd` method): a blank line between a paragraph and a group of boxes; no more than one consecutive blank line.
-- Rich rendering (bold, nested lists) is possible later **without migration** since it's already Markdown.
+- **Inline formatting subset (E8-S9)** — recognized **as you type** (no toolbar, no selection step), bounded to exactly:
+  - **bold** `**texte**` · *italic* `*italique*` · headings `# ` / `## ` / `### ` (levels 1–3, space required);
+  - everything else (links, code, `_underscore_`, tables, quotes…) stays **literal text** — not full GFM;
+  - checkbox lines are **untouched**: `- [ ]` / `- [x]` never come from formatting characters and vice-versa.
+  - Editing surface: the markers stay **visible but dimmed** (`--ink-mute`) while typing; read-only surfaces (card preview, version preview, locked editor) render `<strong>` / `<em>` / `<h1>`–`<h3>` **without** the markers.
+  - Heading type scale **inside a note body** (relative, so it fits every surface): Fredoka 600, `h1 = 1.3em`, `h2 = 1.16em`, `h3 = 1.05em` of the surface's body size; bold = Nunito Sans 700.
+- Further rich rendering (nested lists…) stays possible later **without migration** since it's already Markdown.
 
 ### 3.4 Versioning & history
 - **One version = one editing session**, created on lock release (not per keystroke nor per checked box).

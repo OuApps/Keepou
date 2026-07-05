@@ -124,6 +124,12 @@ erDiagram
   Storing Markdown from the MVP means richer text can be rendered later **without
   a migration**. The reference serializer is `buildMd` in the mockups; the
   frontend mirror is `web/src/lib/markdown.ts`.
+  Since E8-S9 the frontend also **renders a bounded inline subset** — bold
+  `**…**`, italic `*…*`, heading lines `# `/`## `/`### ` — recognized as you
+  type in the editor (`web/src/lib/inline.ts`, markers kept visible) and shown
+  as `<strong>`/`<em>`/`<h1>`–`<h3>` on the read-only surfaces. This is pure
+  recognition/rendering: the stored body stays plain GFM (no API change, no
+  migration), and everything outside the subset remains literal text.
 - **Note.color** — an identifier from a fixed palette (`GOLD | AVOCAT | SALSA |
   CLAY | TEAL`), not a hex value (FR-N4).
 - **Note.visibility** — `PRIVATE` (owner only) or `PUBLIC` (all members),

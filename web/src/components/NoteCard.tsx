@@ -3,6 +3,7 @@ import type { NoteOut } from '../api/notes'
 import { SHADE_CLASS } from '../lib/colors'
 import { parsePreview } from '../lib/preview'
 import { formatRelative } from '../lib/time'
+import { InlineText } from './RichText'
 
 /**
  * Board card (E3-S6), faithful to `Keepou - Board.dc.html`: one of the 5 shades
@@ -80,9 +81,15 @@ export function NoteCard({ note, showAuthor }: { note: NoteOut; showAuthor: bool
                 </span>
                 <span className={block.checked ? 'kp-note__done' : undefined}>{block.text}</span>
               </div>
+            ) : block.type === 'heading' ? (
+              // Visual heading only: a preview must not add document headings
+              // above the card's own <h2> title (E8-S9).
+              <p key={i} className={`kp-note__text kp-rich__h kp-rich__h${block.level}`}>
+                <InlineText text={block.text} />
+              </p>
             ) : (
               <p key={i} className="kp-note__text">
-                {block.text}
+                <InlineText text={block.text} />
               </p>
             ),
           )}

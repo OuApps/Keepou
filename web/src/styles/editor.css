@@ -284,10 +284,13 @@
   -webkit-text-fill-color: var(--ink);
 }
 
-.kp-editor__body--readonly .kp-blocks__text:disabled,
 .kp-editor__body--readonly .kp-blocks__label:disabled {
   color: var(--body-ink);
   -webkit-text-fill-color: var(--body-ink);
+}
+
+.kp-editor__body--readonly .kp-blocks__text--static {
+  color: var(--body-ink);
 }
 
 .kp-editor__body--readonly .kp-blocks__box:disabled {

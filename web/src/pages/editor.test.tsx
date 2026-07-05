@@ -129,8 +129,8 @@ describe('NoteEditor', () => {
     expect(screen.getByRole('dialog', { name: 'Repas de quartier' })).toHaveClass(
       'kp-editor--avocat',
     )
-    // The block flow: 1 paragraph textarea + 2 real checkboxes with their state.
-    expect(screen.getByLabelText('Paragraphe')).toHaveValue(
+    // The block flow: 1 Markdown-aware paragraph + 2 real checkboxes with their state.
+    expect(screen.getByLabelText('Paragraphe').textContent).toBe(
       'Pour le repas de quartier on se répartit les tâches.',
     )
     expect(screen.getByRole('checkbox', { name: 'Réserver la salle' })).toBeChecked()
@@ -254,11 +254,12 @@ describe('NoteEditor', () => {
     expect(screen.getAllByPlaceholderText('Nouvel élément')).toHaveLength(2)
     const paragraphs = screen.getAllByLabelText('Paragraphe')
     expect(paragraphs).toHaveLength(2)
-    expect(paragraphs[1]).toHaveValue('')
+    expect(paragraphs[1].textContent).toBe('')
     expect(paragraphs[1]).toHaveFocus()
 
     // The check → text flow round-trips with the blank-line separator.
-    fireEvent.change(paragraphs[1], { target: { value: 'Texte sous la liste' } })
+    paragraphs[1].textContent = 'Texte sous la liste'
+    fireEvent.input(paragraphs[1])
     fireEvent.blur(paragraphs[1])
     await screen.findByText(/Enregistré · à l'instant/)
     expect(patches).toHaveLength(1)
