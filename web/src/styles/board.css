@@ -63,7 +63,7 @@
   border-radius: var(--r-pill);
   font: inherit;
   font-weight: 500;
-  color: var(--ink-mute);
+  color: var(--ink-soft);
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -110,7 +110,7 @@
 
 .kp-menu__email {
   font-size: 12px;
-  color: var(--ink-mute);
+  color: var(--ink-soft);
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -282,7 +282,7 @@
   background: none;
   font-family: var(--font-brand);
   font-size: 13px;
-  color: var(--ink-mute);
+  color: var(--ink-soft);
   cursor: pointer;
   padding: 6px 12px;
 }
@@ -352,7 +352,7 @@
   flex-direction: column;
   gap: 7px;
   font-size: 13.5px;
-  color: var(--ink-soft);
+  color: var(--body-ink);
 }
 
 .kp-note__text {
@@ -393,7 +393,7 @@
   align-items: center;
   gap: 6px;
   font-size: 11.5px;
-  color: var(--ink-mute);
+  color: var(--body-ink);
 }
 
 .kp-note__meta--author {
@@ -416,7 +416,7 @@
 
 .kp-note__author {
   font-size: 11.5px;
-  color: var(--ink-soft);
+  color: var(--body-ink);
   font-weight: 600;
 }
 

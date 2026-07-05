@@ -145,7 +145,7 @@
 
 .kp-imp__drophint {
   font-size: 12px;
-  color: var(--ink-mute);
+  color: var(--ink-soft);
   margin-top: 2px;
 }
 
@@ -167,7 +167,7 @@
 
 .kp-imp__note {
   font-size: 12px;
-  color: var(--ink-mute);
+  color: var(--ink-soft);
 }
 
 .kp-imp__error {

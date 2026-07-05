@@ -35,7 +35,14 @@ Palette extracted from the logo (burrito mascot). **Reuse these values as-is.**
 ```
 --bg:#FBF4E6;  --surface:#ffffff;  --border:#EBDFC6;  --track:#EFE4CE;
 --ink:#2E2A20; --ink-soft:#6A6354; --ink-mute:#A1977F;
+--body-ink:#4A4636;  --checktx:#727762;
 ```
+> **Ink usage policy (E8-S3, WCAG AA).** `--ink-mute` is reserved for
+> **placeholders and decorative glyphs** (it cannot carry AA text on any
+> surface). Muted **text** on `--bg`/`--surface` uses `--ink-soft`; muted text
+> that sits **on a card shade** (card meta/author, editor subtitle, lock note)
+> uses `--body-ink` (≥ 6:1 on every shade). Struck-through "done" labels use
+> `--checktx` (≥ 3:1 on every light shade — dimmed state by design).
 
 ### Surfaces & text (dark)
 ```

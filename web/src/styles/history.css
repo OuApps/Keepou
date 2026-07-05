@@ -18,7 +18,6 @@
   /* Chrome tints over the colored stage (same idea as the editor). */
   --tint: rgba(46, 42, 32, 0.07);
   --tint-line: rgba(46, 42, 32, 0.14);
-  --body-ink: #4a4636;
   /* Gold « Aperçu » accents (banner, viewing pill). */
   --gold-ink: #9a7420;
   --gold-wash: rgba(234, 182, 76, 0.18);
@@ -28,7 +27,6 @@
 [data-theme='dark'] .kp-history {
   --tint: rgba(243, 236, 221, 0.06);
   --tint-line: rgba(243, 236, 221, 0.16);
-  --body-ink: var(--ink-soft);
   --gold-ink: #d9b25f;
   --gold-wash: rgba(234, 182, 76, 0.14);
   --gold-line: rgba(234, 182, 76, 0.3);
@@ -95,7 +93,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--ink-mute);
+  color: var(--ink-soft);
 }
 
 .kp-history__stage-back--mobile {
@@ -147,7 +145,7 @@
   margin: 0 0 22px;
   font-family: var(--font-ui);
   font-size: 12.5px;
-  color: var(--ink-mute);
+  color: var(--body-ink);
 }
 
 .kp-vpreview__blocks {
@@ -263,7 +261,7 @@
   background: none;
   padding: 0;
   cursor: pointer;
-  color: var(--ink-mute);
+  color: var(--ink-soft);
   align-items: center;
   justify-content: center;
 }
@@ -276,14 +274,14 @@
   font-family: var(--font-ui);
   font-size: 18px;
   line-height: 1;
-  color: var(--ink-mute);
+  color: var(--ink-soft);
 }
 
 .kp-history__panel-sub {
   margin: 2px 0 0;
   font-family: var(--font-ui);
   font-size: 12px;
-  color: var(--ink-mute);
+  color: var(--body-ink);
 }
 
 .kp-history__panel-sub--mobile {
@@ -616,7 +614,7 @@
     display: inline-flex;
     gap: 12px;
     min-height: 44px;
-    color: var(--ink-mute);
+    color: var(--ink-soft);
   }
 
   .kp-history__viewing {
