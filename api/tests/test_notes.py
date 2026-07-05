@@ -340,3 +340,75 @@ def test_owner_relationship_survives_author_rename(client, session) -> None:
 
     res = client.get(f"/api/notes/{note['id']}", headers=auth(admin))
     assert res.json()["author_name"] == "Marie O."
+
+
+# --- pin / archive: owner-only board flags (E8) ---
+
+
+def test_pin_and_archive_round_trip_without_touching_updated_at(client) -> None:
+    admin = bootstrap_admin(client)
+    note = create_note(client, admin, title="À épingler")
+    assert note["pinned"] is False and note["archived"] is False
+
+    res = client.patch(
+        f"/api/notes/{note['id']}", json={"pinned": True, "archived": True}, headers=auth(admin)
+    )
+    assert res.status_code == 200
+    patched = res.json()
+    assert patched["pinned"] is True and patched["archived"] is True
+    # Organizing a note is not editing it — the "last saved version" is untouched.
+    assert patched["updated_at"] == note["updated_at"]
+
+
+def test_pinned_notes_float_to_the_top(client) -> None:
+    admin = bootstrap_admin(client)
+    create_note(client, admin, title="Ancienne")
+    pinned = create_note(client, admin, title="Épinglée")
+    create_note(client, admin, title="Récente")
+    client.patch(f"/api/notes/{pinned['id']}", json={"pinned": True}, headers=auth(admin))
+
+    titles = [n["title"] for n in client.get("/api/notes", headers=auth(admin)).json()]
+    assert titles[0] == "Épinglée"
+
+
+def test_archived_notes_leave_the_board_and_show_in_the_archived_view(client, session) -> None:
+    admin = bootstrap_admin(client)
+    kept = create_note(client, admin, title="Visible")
+    gone = create_note(client, admin, title="Archivée")
+    client.patch(f"/api/notes/{gone['id']}", json={"archived": True}, headers=auth(admin))
+
+    board = client.get("/api/notes", headers=auth(admin)).json()
+    assert [n["id"] for n in board] == [kept["id"]]
+
+    archived = client.get("/api/notes?archived=true", headers=auth(admin)).json()
+    assert [n["id"] for n in archived] == [gone["id"]]
+
+
+def test_archived_public_note_leaves_the_public_board(client, session) -> None:
+    admin = bootstrap_admin(client)
+    tom = member(client, session, TOM)
+    note = create_note(client, tom, title="Publique archivée", visibility="PUBLIC")
+    lock_note(client, tom, note["id"])  # holding the lock is irrelevant to archiving
+    client.patch(f"/api/notes/{note['id']}", json={"archived": True}, headers=auth(tom))
+
+    public = client.get("/api/notes?tab=public", headers=auth(admin)).json()
+    assert note["id"] not in [n["id"] for n in public]
+
+
+def test_owner_pins_a_public_note_without_holding_the_lock(client, session) -> None:
+    # Pin/archive are metadata: no single-editor lock required (unlike content).
+    admin = bootstrap_admin(client)
+    note = create_note(client, admin, title="Publique", visibility="PUBLIC")
+    res = client.patch(f"/api/notes/{note['id']}", json={"pinned": True}, headers=auth(admin))
+    assert res.status_code == 200
+    assert res.json()["pinned"] is True
+
+
+def test_member_cannot_pin_or_archive_someone_elses_public_note(client, session) -> None:
+    admin = bootstrap_admin(client)
+    tom = member(client, session, TOM)
+    note = create_note(client, admin, title="Publique de Marie", visibility="PUBLIC")
+
+    for field in ("pinned", "archived"):
+        res = client.patch(f"/api/notes/{note['id']}", json={field: True}, headers=auth(tom))
+        assert res.status_code == 403

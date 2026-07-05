@@ -99,12 +99,18 @@ class NoteIn(BaseModel):
 
 
 class NotePatch(BaseModel):
-    """Consolidated editor update (E4-S1): only the provided fields change."""
+    """Consolidated editor update (E4-S1): only the provided fields change.
+
+    `pinned` / `archived` are owner-only board flags (E8): unlike the content
+    fields they need no editor lock and do not touch `updated_at`.
+    """
 
     title: str | None = Field(default=None, max_length=200)
     body: str | None = None
     color: NoteColor | None = None
     visibility: Visibility | None = None
+    pinned: bool | None = None
+    archived: bool | None = None
 
 
 class LockedBy(BaseModel):
@@ -121,6 +127,10 @@ class NoteOut(BaseModel):
     color: NoteColor
     visibility: Visibility
     owner_id: str
+    # Board-organization flags (E8): pinned floats the card to the top, archived
+    # hides it from every board (shown only in the dedicated archived view).
+    pinned: bool = False
+    archived: bool = False
     # Display name of the owner — the Public tab shows « <auteur> · modifié <date> ».
     author_name: str
     created_at: datetime
