@@ -177,13 +177,6 @@ export function AccessManager() {
           ))}
         </ul>
       )}
-
-      <p className="kp-admin__note">
-        <b>{ADMIN_COPY.neverDeleteBold}</b>
-        {ADMIN_COPY.neverDeleteMid}
-        <b>{ADMIN_COPY.neverDeleteBold2}</b>
-        {ADMIN_COPY.neverDeleteEnd}
-      </p>
     </section>
   )
 }

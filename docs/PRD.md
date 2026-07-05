@@ -36,7 +36,7 @@ notes, and a full history of who changed what.
 - ❌ Email-dependent flows (password reset, email invitations — no SMTP
   dependency).
 - ❌ Native mobile apps (the PWA covers mobile).
-- ❌ Nice-to-haves that aren't part of the current scope: pinning, labels/tags,
+- ❌ Nice-to-haves that aren't part of the current scope: labels/tags,
   retention/pruning, offline editing, and allowlist bulk-add.
 
 ## 3. Personas
@@ -85,7 +85,7 @@ notes, and a full history of who changed what.
   (an admin cannot demote/deactivate the last admin — including themselves).
 
 ### 5.3 Notes
-- **FR-N1** A member can **create, read, update, archive** their notes.
+- **FR-N1** A member can **create, read, update, pin, archive** their notes.
 - **FR-N2** A note is **private** (owner-only) or **public** (all members).
 - **FR-N3** Note content supports **plain text and checklists** (checkable
   items); bodies are persisted as **Markdown (GFM task lists)**.
@@ -96,7 +96,10 @@ notes, and a full history of who changed what.
   an admin**.
 - **FR-N7** Any member can **edit the content** of a public note (subject to the
   lock, see 5.4).
-- **FR-N8** **Archive** hides a note from the main board without deleting it.
+- **FR-N8** **Archive** hides a note from every board without deleting it; it
+  stays reachable in a dedicated archived view and can be unarchived. Owner-only.
+- **FR-N9** **Pin** floats a note to the top of its board. Owner-only. Pinning
+  and archiving are metadata (no editor lock, no new version).
 
 ### 5.4 Public-note locking (single editor)
 - **FR-L1** When a member opens a public note to edit, the client attempts to

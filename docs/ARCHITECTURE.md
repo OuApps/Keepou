@@ -89,6 +89,7 @@ erDiagram
         string body "Markdown (GFM)"
         enum color "GOLD | AVOCAT | SALSA | CLAY | TEAL"
         enum visibility "PRIVATE | PUBLIC"
+        bool pinned
         bool archived
         string locked_by_id FK "nullable"
         datetime locked_at "nullable"
@@ -135,8 +136,13 @@ erDiagram
 - **Note.visibility** — `PRIVATE` (owner only) or `PUBLIC` (all members),
   reversible by the owner (FR-N5); switching back to private removes it from
   others' public board.
-- **Note.archived** — hides a note from the main board without deleting it
-  (FR-N8). Scheduled for **E8** (not in the current mockups).
+- **Note.pinned** — floats a note to the top of its board (FR-N9).
+- **Note.archived** — hides a note from **every** board (including Public)
+  without deleting it (FR-N8), shown only in the dedicated archived view.
+  Both flags are **owner-only metadata**, toggled **lock-free** and **without
+  writing a version** (they aren't content edits and don't touch `updated_at`).
+  Shipped in **E8** — no dedicated mockup; the UI reuses the existing card /
+  `.kp-menu` tokens.
 - **Note.locked_by_id / locked_at / lock_expires_at** — the single-editor lock
   carried by the note (see §5). Only meaningful on `PUBLIC` notes.
 - **NoteVersion** — an immutable snapshot (title + body + color + visibility +
@@ -176,6 +182,7 @@ API returns. There is no in-app "request access" flow.
 | Edit private note | ✅ | ❌ | ❌¹ | ❌ |
 | Edit public note content (with lock) | ✅ | ✅ | ✅ | ❌ |
 | Change note visibility | ✅ | ❌ | ❌ | ❌ |
+| Pin a note | ✅ | ❌ | ❌ | ❌ |
 | Archive a note | ✅ | ❌ | ❌ | ❌ |
 | Delete a note | ✅ | ❌ | ✅ | ❌ |
 | Manage allowlist / users | ❌ | ❌ | ✅ | ❌ |
@@ -272,10 +279,10 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
 | POST | `/api/auth/login` | Sign in | Returns `{access, refresh}`; `401` bad creds, `403` if `DISABLED` |
 | POST | `/api/auth/refresh` | Renew the access token | Takes the refresh token; `401` if invalid/expired |
 | GET | `/api/auth/me` | Current user + role | Bearer-authenticated; drives client route guards |
-| GET | `/api/notes?tab=mine\|public` | List notes | `mine` = own; `public` = all members' public (with author); `?archived=` filter (E8) |
+| GET | `/api/notes?tab=mine\|public` | List notes | `mine` = own; `public` = all members' public (with author); `?archived=true` = own archived view (E8); pinned-first ordering |
 | POST | `/api/notes` | Create note | |
 | GET | `/api/notes/:id` | Read a note | Visibility-checked |
-| PATCH | `/api/notes/:id` | Update note | `title`, `body`, `color`, `visibility`, `archived` (E8); lock-checked for public |
+| PATCH | `/api/notes/:id` | Update note | `title`, `body`, `color`, `visibility`; `pinned`/`archived` (E8, owner-only, lock-free); content is lock-checked for public |
 | DELETE | `/api/notes/:id` | Delete note | Owner or admin |
 | POST | `/api/notes/:id/lock` | Acquire / heartbeat lock | `409` if held by another |
 | DELETE | `/api/notes/:id/lock` | Release lock | Ends the session → writes a version |

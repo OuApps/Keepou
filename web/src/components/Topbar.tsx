@@ -82,6 +82,17 @@ export function Topbar({ center, tabs }: { center?: ReactNode; tabs?: ReactNode 
               role="menuitem"
               onClick={() => {
                 setMenuOpen(false)
+                navigate('/?archived=1')
+              }}
+            >
+              {BOARD_COPY.archivedEntry}
+            </button>
+            <button
+              type="button"
+              className="kp-menu__item"
+              role="menuitem"
+              onClick={() => {
+                setMenuOpen(false)
                 navigate('/import')
               }}
             >

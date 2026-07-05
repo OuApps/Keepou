@@ -30,6 +30,8 @@ function note(overrides: Partial<NoteOut>): NoteOut {
     author_name: 'Marie',
     created_at: '2026-07-01T10:00:00',
     updated_at: new Date(Date.now() - 5_000).toISOString(),
+    pinned: false,
+    archived: false,
     locked_by: null,
     lock_expires_at: null,
     ...overrides,
@@ -148,6 +150,21 @@ describe('BoardPage', () => {
     expect(card.textContent).not.toContain('**')
   })
 
+  it('keeps line breaks inside a card paragraph (rendered on several lines)', async () => {
+    stubBoard({
+      '/api/notes?tab=mine': () =>
+        json(200, [
+          note({ id: 'n-wifi', title: 'Wifi', body: 'Réseau : Keepou-Casa\nMot de passe : guaca' }),
+        ]),
+    })
+    renderBoard()
+
+    const card = (await screen.findByRole('button', { name: 'Wifi' })) as HTMLElement
+    // A single paragraph block keeps its newline (not collapsed to a space).
+    const text = card.querySelector('.kp-note__text')
+    expect(text?.textContent).toBe('Réseau : Keepou-Casa\nMot de passe : guaca')
+  })
+
   it('shows the visibility meta on own cards and no author badge', async () => {
     stubBoard()
     renderBoard()
@@ -193,7 +210,7 @@ describe('BoardPage', () => {
     expect(screen.getByText('Aucune note ne correspond à ta recherche.')).toBeInTheDocument()
   })
 
-  it('creates a note from the composer and prepends it to the board', async () => {
+  it('creates a note from the composer and opens it in the editor', async () => {
     const created = note({
       id: 'n-new',
       title: 'Idées déco salon',
@@ -210,6 +227,9 @@ describe('BoardPage', () => {
         })
         return json(201, created)
       },
+      // The editor mounts on the created note (load + acquire the lock).
+      '/api/notes/n-new': () => json(200, created),
+      '/api/notes/n-new/lock': () => json(200, created),
     })
     renderBoard()
     await screen.findByRole('button', { name: 'Courses du week-end' })
@@ -221,10 +241,35 @@ describe('BoardPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Public' }))
     fireEvent.click(screen.getByRole('button', { name: 'Ajouter' }))
 
-    const card = await screen.findByRole('button', { name: 'Idées déco salon' })
-    expect(card).toHaveClass('kp-note--salsa')
-    // The composer resets after a successful create.
-    expect(screen.getByLabelText('Prends une note…')).toHaveValue('')
+    // The note opens in the editor, title carried; the composer is gone.
+    const title = await screen.findByLabelText('Titre de la note')
+    expect(title).toHaveValue('Idées déco salon')
+    expect(screen.queryByLabelText('Prends une note…')).not.toBeInTheDocument()
+  })
+
+  it('creates a note without a title and still opens the editor', async () => {
+    const created = note({ id: 'n-blank', title: '', color: 'GOLD', visibility: 'PRIVATE' })
+    stubBoard({
+      '/api/notes': (init) => {
+        expect(init?.method).toBe('POST')
+        expect(JSON.parse(String(init?.body))).toEqual({
+          title: '',
+          color: 'GOLD',
+          visibility: 'PRIVATE',
+        })
+        return json(201, created)
+      },
+      '/api/notes/n-blank': () => json(200, created),
+      '/api/notes/n-blank/lock': () => new Response(null, { status: 204 }),
+    })
+    renderBoard()
+    await screen.findByRole('button', { name: 'Courses du week-end' })
+
+    fireEvent.focus(screen.getByLabelText('Prends une note…'))
+    fireEvent.click(screen.getByRole('button', { name: 'Ajouter' }))
+
+    // A private note has no lock round-trip; the editor still opens on it.
+    expect(await screen.findByLabelText('Titre de la note')).toHaveValue('')
   })
 
   it('defaults the composer to Public when created from the Public tab (E3-S9)', async () => {
@@ -246,6 +291,8 @@ describe('BoardPage', () => {
         })
         return json(201, created)
       },
+      '/api/notes/n-fete': () => json(200, created),
+      '/api/notes/n-fete/lock': () => json(200, created),
     })
     renderBoard('/?tab=public')
     await screen.findByRole('button', { name: 'Sorties ciné' })
@@ -257,6 +304,73 @@ describe('BoardPage', () => {
     fireEvent.change(input, { target: { value: 'Fête des voisins' } })
     fireEvent.click(screen.getByRole('button', { name: 'Ajouter' }))
 
-    expect(await screen.findByRole('button', { name: 'Fête des voisins' })).toBeInTheDocument()
+    expect(await screen.findByLabelText('Titre de la note')).toHaveValue('Fête des voisins')
+  })
+
+  // --- pin / archive (E8) ---
+
+  it('shows the pin/archive menu on owned cards only', async () => {
+    stubBoard()
+    renderBoard('/?tab=public')
+    // Léa's public note is not owned by Marie → no actions affordance.
+    await screen.findByRole('button', { name: 'Sorties ciné' })
+    expect(screen.queryByRole('button', { name: /^Actions pour/ })).not.toBeInTheDocument()
+  })
+
+  it('pins a note and floats it to the top of the board (optimistic)', async () => {
+    stubBoard({
+      '/api/notes/n-repas': (init) => {
+        expect(init?.method).toBe('PATCH')
+        expect(JSON.parse(String(init?.body))).toEqual({ pinned: true })
+        return json(200, { ...MINE[1], pinned: true })
+      },
+    })
+    renderBoard()
+    await screen.findByRole('button', { name: 'Courses du week-end' })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Actions pour Repas de quartier' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Épingler' }))
+
+    const titles = [...document.querySelectorAll('.kp-note__title')].map((h) => h.textContent)
+    expect(titles[0]).toBe('Repas de quartier')
+  })
+
+  it('archives a note and removes it from the board (optimistic)', async () => {
+    stubBoard({
+      '/api/notes/n-courses': (init) => {
+        expect(init?.method).toBe('PATCH')
+        expect(JSON.parse(String(init?.body))).toEqual({ archived: true })
+        return json(200, { ...MINE[0], archived: true })
+      },
+    })
+    renderBoard()
+    await screen.findByRole('button', { name: 'Courses du week-end' })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Actions pour Courses du week-end' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Archiver' }))
+
+    expect(screen.queryByRole('button', { name: 'Courses du week-end' })).not.toBeInTheDocument()
+  })
+
+  it('opens the archived view and unarchives a note', async () => {
+    const archivedNote = note({ id: 'n-old', title: 'Vieux mémo', archived: true })
+    stubBoard({
+      '/api/notes?tab=mine&archived=true': () => json(200, [archivedNote]),
+      '/api/notes/n-old': (init) => {
+        expect(init?.method).toBe('PATCH')
+        expect(JSON.parse(String(init?.body))).toEqual({ archived: false })
+        return json(200, { ...archivedNote, archived: false })
+      },
+    })
+    renderBoard('/?archived=1')
+
+    await screen.findByRole('button', { name: 'Vieux mémo' })
+    expect(screen.getByRole('heading', { name: 'Notes archivées' })).toBeInTheDocument()
+    // No composer in the archived view.
+    expect(screen.queryByLabelText('Prends une note…')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Actions pour Vieux mémo' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Désarchiver' }))
+    expect(screen.queryByRole('button', { name: 'Vieux mémo' })).not.toBeInTheDocument()
   })
 })

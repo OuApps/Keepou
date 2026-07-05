@@ -1,4 +1,4 @@
-# E8 — Polish: PWA, a11y, formatting, archive, i18n, quality — Detailed stories
+# E8 — Polish: PWA, a11y, formatting, pin + archive, i18n, quality — Detailed stories
 
 > Epic goal: harden and finalize — installable, accessible, centralized strings,
 > tested. Cross-cutting; hardened at the end.
@@ -9,19 +9,19 @@
 **Reference docs.** `design/HANDOFF.md` §8, `docs/ARCHITECTURE.md` §9, PRD FR-N8 /
 FR-P1 / FR-P2, claude.md. **Depends on** all feature epics (E2–E7).
 
-> ⚠️ **Archive (E8-S2) is design-gated.** There is **no mockup** for the archive UI
-> yet. Per Guillaume's instruction, this epic does **not** design or implement the
-> archive here — E8-S2 is a placeholder story: **"voir design avec designer"**. The
-> archive implementation stories (unarchive, `?archived=` board filter,
-> `Note.archived` column + migration) will be detailed **only after** the archive UI
-> is designed and validated with the designer.
+> ℹ️ **Pin + archive (E8-S2 / E8-S11) shipped without a dedicated mockup.** Per
+> Guillaume's go-ahead (« fais-le toi-même, colle au design existant, on ajustera
+> post-deploy »), the UI reuses the existing card / `.kp-menu` tokens: an owner-only
+> ⋯ menu on each card (« Épingler » / « Archiver »), a pinned indicator + pinned-first
+> ordering, and a « Notes archivées » view reached from the account menu. To be
+> refined with the designer post-deploy if needed.
 
 ---
 
 ## Stories at a glance
 
 - [x] **E8-S1** — PWA: manifest, icons, **add-to-home-screen**, minimal service worker
-- [ ] **E8-S2** — Archive — **voir design avec designer** *(design-gated, not built here)*
+- [x] **E8-S2** — Archive: hide a note from every board + « Notes archivées » view
 - [x] **E8-S3** — Accessibility pass (a11y)
 - [x] **E8-S4** — i18n: centralize the French copy
 - [x] **E8-S5** — Quality hardening (tests + green CI)
@@ -30,9 +30,10 @@ FR-P1 / FR-P2, claude.md. **Depends on** all feature epics (E2–E7).
 - [x] **E8-S8** — Dark-mode legibility pass (contrast fixes — « on voit pas bien »)
 - [x] **E8-S9** — Inline text formatting: bold `**`, italic `*`, headings `#` recognized as you type
 - [x] **E8-S10** — Allow normal text under a checkbox (two line breaks exit the checklist)
+- [x] **E8-S11** — Pin: float a note to the top of its board (owner-only)
 
-**Status.** S1 / S3–S10 shipped; E8-S2 stays **blocked on design** — see the warning
-above. A few boxes below need a **real device / password manager** to confirm
+**Status.** S1–S11 shipped (pin + archive built without a dedicated mockup — see the
+note above). A few boxes below need a **real device / password manager** to confirm
 (Android install prompt, iOS pinning, Bitwarden fill/save, iOS/Android keyboard) —
 the implementation is in, verify them in prod on real hardware.
 
@@ -69,34 +70,60 @@ produce a proper standalone app yet.
 - [x] The SW caches the app shell without breaking API calls (network for `/api`).
 
 **Notes.** Responsive layout already comes from E0/E3; this story adds the install
-surface. The mascot asset already exists (`web/public/keepou-mascot.png`); generate
-the sized icon set from it.
+surface. The brand logo (`web/public/keepou-mascot.png`, the notebook+pen mascot) is
+the source for the sized icon set: transparent brand mark for the topbar/favicon, and
+a **cream background + warm border** for the app icons (`apple-touch`, `icon-192/512`,
+plus a full-bleed `icon-maskable-512` with the logo in the safe zone). *(Post-E8: the
+original maracas mascot was replaced by the notebook+pen logo and the whole icon set
+regenerated from it.)*
 
 ---
 
-## E8-S2 — Archive — voir design avec designer · (design-gated)
+## E8-S2 — Archive: hide a note from every board without deleting it · M
 
-**Goal.** Archive hides a note from the main board **without deleting** it (FR-N8).
+**Goal.** Archive hides a note from **every** board (own + Public) without deleting
+it (FR-N8); it stays reachable in a dedicated view and can be unarchived.
 
-**Status.** ⛔ **Blocked on design.** There is no archive mockup yet. **Voir design
-avec designer** before any implementation: run the design-driven workflow
-(`design/claude.md` / `design/HANDOFF.md`) to produce and validate the archive UI
-(board affordance, archived view, unarchive action, empty states) — the `.dc.html`
-mockup is the source of truth, as for every other screen.
-
-**Tasks (later, once the design is validated — not part of this epic yet)**
-- Then, and only then, detail the implementation stories: `Note.archived` column +
-  migration, archive/unarchive endpoints, the `?archived=` board filter, and the UI
-  wiring — added as new stories here after design.
+**Tasks**
+- **Back**: `Note.archived` column + migration (`a1f4c2d9b6e7`, shared with pin);
+  `list_notes` hides archived by default and serves `?archived=true` as the caller's
+  own archived view; `PATCH` accepts `archived` **owner-only** and **lock-free**
+  (metadata: no version, no `updated_at` bump).
+- **Front**: the card ⋯ menu « Archiver » (own cards only); a « Notes archivées »
+  entry in the account menu → `/?archived=1` (own notes, composer + tabs hidden,
+  « Désarchiver » on each card); optimistic removal on toggle, resync on error.
 
 **Acceptance criteria**
-- [ ] An archive UI is designed **with the designer** and a validated `.dc.html`
-  mockup exists (this is the deliverable of this story).
-- [ ] Implementation stories are written **only after** the design is validated.
+- [x] Archiving a note removes it from « Mes notes » **and** « Public ».
+- [x] `/?archived=1` lists the caller's archived notes with « Désarchiver ».
+- [x] Only the owner can archive/unarchive (server 403 otherwise); no lock needed.
+- [x] Tests: back (leaves every board, owner-only) + front (menu, view, optimistic).
 
-**Notes.** Deliberately no implementation detail here, per instruction. The
-`Note.archived` field is intentionally **not** added until the design lands, keeping
-migrations feature-aligned (see E3-S1).
+**Notes.** No dedicated mockup — reuses existing card / `.kp-menu` tokens (see the
+note at the top). Refine with the designer post-deploy if needed.
+
+---
+
+## E8-S11 — Pin: float a note to the top of its board · S
+
+**Goal.** Pin keeps a note at the top of its board (FR-N9), owner-only.
+
+**Tasks**
+- **Back**: `Note.pinned` column (same migration as archive); `list_notes` orders
+  **pinned-first** then newest-first; `PATCH` accepts `pinned` **owner-only** and
+  **lock-free** (no version, no `updated_at` bump).
+- **Front**: card ⋯ menu « Épingler » / « Ne plus épingler » (own cards); a pin
+  indicator on pinned cards; client re-sort on optimistic toggle (mirrors the server
+  order).
+
+**Acceptance criteria**
+- [x] Pinning floats the card to the top of the board (server + optimistic client).
+- [x] A pinned card shows the pin indicator; unpinning clears it.
+- [x] Only the owner can pin/unpin (403 otherwise); no lock needed.
+- [x] Tests: back (pinned-first, owner-only) + front (menu, re-sort).
+
+**Notes.** Pinning was previously a PRD non-goal; scoped in on Guillaume's request
+(FR-N9). Owner's pin applies on the Public board too (global flag, not per-viewer).
 
 ---
 
@@ -400,11 +427,13 @@ E8-S5 test set. Checkbox insertion via « Insérer une case à cocher » is unch
 
 ## Definition of "E8 done"
 
-- [x] App installable (valid manifest, mascot icons, minimal SW) and **pinnable to
-  the mobile home screen** (Android install prompt + iOS "Ajouter à l'écran d'accueil")
-  — *install surface shipped; confirm the prompt/pinning on real devices in prod*.
-- [ ] **Archive designed with the designer** (E8-S2) — implementation stories written
-  only afterwards; not built in this epic.
+- [x] App installable (valid manifest, notebook+pen logo icon set incl. a
+  background+border app icon, minimal SW) and **pinnable to the mobile home screen**
+  (Android install prompt + iOS "Ajouter à l'écran d'accueil") — *install surface
+  shipped; confirm the prompt/pinning on real devices in prod*.
+- [x] **Pin + archive shipped** (E8-S2 / E8-S11) — owner-only, lock-free; card ⋯
+  menu, « Notes archivées » view, pinned-first ordering. No dedicated mockup (reuses
+  existing tokens); refine with the designer post-deploy if needed.
 - [x] A11y verified (labeled inputs, aria-live status, contrast, 44px targets).
 - [x] Mobile keyboard never covers the focused input or its primary button (E8-S6)
   — *on-device iOS/Android check pending*.

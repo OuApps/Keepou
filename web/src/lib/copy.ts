@@ -66,11 +66,24 @@ export const BOARD_COPY = {
   tabPublic: 'Public',
   accountMenu: 'Menu du compte',
   adminEntry: 'Administration',
+  archivedEntry: 'Notes archivées',
   signOut: 'Se déconnecter',
   loadFailed: 'Impossible de charger les notes. Réessaie dans un instant.',
   emptySearch: 'Aucune note ne correspond à ta recherche.',
   emptyMine: 'Aucune note pour l’instant — écris ta première note ci-dessus.',
   emptyPublic: 'Aucune note publique pour l’instant.',
+
+  // Archived view (E8) + pin / archive card actions
+  archivedTitle: 'Notes archivées',
+  archivedBack: 'Retour au board',
+  emptyArchived: 'Aucune note archivée.',
+  cardActions: (title: string) => `Actions pour ${title || 'la note sans titre'}`,
+  pin: 'Épingler',
+  unpin: 'Ne plus épingler',
+  archive: 'Archiver',
+  unarchive: 'Désarchiver',
+  pinnedBadge: 'Épinglée',
+  organizeFailed: 'Action impossible. Réessaie dans un instant.',
 
   // Composer
   composerPlaceholder: 'Prends une note…',
@@ -193,15 +206,7 @@ export const ADMIN_COPY = {
   demote: 'Rétrograder en membre',
   disable: 'Désactiver le compte',
   enable: 'Réactiver le compte',
-  lastAdminNote: 'Dernier administrateur actif — l’instance doit toujours en conserver un.',
   remove: 'Retirer',
-  // « <b>Désactiver, jamais supprimer</b> — désactiver <b>bloque la connexion</b> tout en … »
-  neverDeleteBold: 'Désactiver, jamais supprimer',
-  neverDeleteMid: ' — désactiver ',
-  neverDeleteBold2: 'bloque la connexion',
-  neverDeleteEnd:
-    ' tout en conservant le compte et ses notes. Aucune suppression de compte : un membre ' +
-    'désactivé peut être réactivé à tout moment.',
 } as const
 
 export const NOT_FOUND_COPY = {
@@ -240,7 +245,6 @@ export const IMPORT_COPY = {
   dropBefore: 'Dépose ton export ici, ou ',
   dropBrowse: 'parcourir…',
   dropHint: 'Archive .zip · 20 Mo maximum',
-  uploadNote: "Aucune note n'est créée à cette étape — tu passes d'abord en revue.",
   continue: 'Continuer',
   analyzing: 'Analyse de l’archive…',
   cancel: 'Annuler',

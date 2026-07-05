@@ -88,7 +88,6 @@ export function ImportUpload({
           />
         </label>
 
-        <p className="kp-imp__note">{COPY.uploadNote}</p>
         {error !== null && (
           <p className="kp-imp__error" role="alert">
             {error}

@@ -34,6 +34,8 @@ function note(overrides: Partial<NoteOut> = {}): NoteOut {
     author_name: 'Bob',
     created_at: CREATED_AT,
     updated_at: '2026-06-14T14:32:00',
+    pinned: false,
+    archived: false,
     locked_by: null,
     lock_expires_at: null,
     ...overrides,

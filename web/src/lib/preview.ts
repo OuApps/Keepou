@@ -24,7 +24,9 @@ export function parsePreview(body: string): PreviewBlock[] {
 
   const flush = () => {
     if (paragraph.length > 0) {
-      blocks.push({ type: 'text', text: paragraph.join(' ') })
+      // Keep the line breaks (rendered with white-space: pre-line, as the Board
+      // mockup does with <br>) — a multi-line note reads on several lines.
+      blocks.push({ type: 'text', text: paragraph.join('\n') })
       paragraph = []
     }
   }
