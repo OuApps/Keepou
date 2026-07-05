@@ -443,16 +443,6 @@
   color: var(--checktx);
 }
 
-/* Text-entry surfaces indicate focus with the caret (like the composer/search
- * inputs). Without this the global :focus-visible ring (E8-S3) draws a green
- * rectangle around the title, every paragraph and every checkbox label as you
- * click through them. Buttons, toggles, swatches and cards keep the ring. */
-.kp-editor__title:focus-visible,
-.kp-blocks__text--edit:focus-visible,
-.kp-blocks__label:focus-visible {
-  outline: none;
-}
-
 /* « Insérer une case à cocher » — at the BOTTOM of the flow (HANDOFF §3.3). */
 .kp-blocks__insert {
   margin-top: 13px;
