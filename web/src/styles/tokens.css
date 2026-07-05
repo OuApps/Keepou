@@ -65,28 +65,35 @@
   --font-mono: 'IBM Plex Mono', monospace;
 }
 
+/*
+ * Dark set — legibility pass E8-S8 (WCAG AA): --ink-mute ≥ 4.5:1 on every
+ * dark surface incl. the 5 card shades (was #8E8161, down to 3.1:1 on avocat),
+ * --checktx ≥ 4.5:1 for struck-through labels (was #7E8A5F), and borders
+ * lifted so dividers stop vanishing (fields/cards keep distinct fills, so
+ * decorative borders carry no 3:1 requirement). Mirrored in HANDOFF §1.
+ */
 [data-theme='dark'] {
   --bg: #211d16;
   --topbar: rgba(38, 33, 25, 0.92);
   --surface: #2c2719;
-  --border: #43391f;
+  --border: #554a2b;
   --track: #2c2719;
   --ink: #f3ecdd;
   --ink-soft: #c9bfa3;
-  --ink-mute: #8e8161;
+  --ink-mute: #aba083;
 
   --check: #9db84e;
-  --checktx: #7e8a5f;
+  --checktx: #96a47a;
 
   /* 5 card shades — dark */
   --c-gold: linear-gradient(160deg, #3a3320, #2e2a18);
-  --c-gold-bd: #4a4026;
+  --c-gold-bd: #5c5030;
   --c-avo: linear-gradient(160deg, #2f3a22, #26301b);
-  --c-avo-bd: #3f4a2a;
+  --c-avo-bd: #4e5c34;
   --c-salsa: linear-gradient(160deg, #3a2a22, #2e211b);
-  --c-salsa-bd: #4a3328;
+  --c-salsa-bd: #5e4032;
   --c-clay: linear-gradient(160deg, #352d1c, #2a2416);
-  --c-clay-bd: #46391f;
+  --c-clay-bd: #584826;
   --c-teal: linear-gradient(160deg, #1f332e, #1a2a26);
-  --c-teal-bd: #2c443d;
+  --c-teal-bd: #38564d;
 }
