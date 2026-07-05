@@ -1,5 +1,6 @@
 import type { NoteOut } from '../../api/notes'
 import type { NoteVersionOut } from '../../api/versions'
+import { EDITOR_COPY, HISTORY_COPY } from '../../lib/copy'
 import { formatDayMonth } from '../../lib/time'
 import { VersionRow } from './VersionRow'
 
@@ -24,16 +25,15 @@ export function HistoryPanel({
   onClose: () => void
 }) {
   const oldest = versions[versions.length - 1]
-  const plural = versions.length > 1 ? 's' : ''
   return (
-    <aside className="kp-history__panel" aria-label="Historique des versions">
+    <aside className="kp-history__panel" aria-label={HISTORY_COPY.dialogLabel}>
       <header className="kp-history__panel-head">
         <div className="kp-history__panel-top">
           <button
             type="button"
             className="kp-history__panel-back"
             onClick={onClose}
-            aria-label="Retour à l'éditeur"
+            aria-label={HISTORY_COPY.backToEditor}
           >
             <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true">
               <path
@@ -46,23 +46,23 @@ export function HistoryPanel({
               />
             </svg>
           </button>
-          <h2 className="kp-history__panel-title">Historique</h2>
+          <h2 className="kp-history__panel-title">{HISTORY_COPY.panelTitle}</h2>
           <button
             type="button"
             className="kp-history__panel-close"
             onClick={onClose}
-            aria-label="Fermer l'historique"
+            aria-label={HISTORY_COPY.closePanel}
           >
             ×
           </button>
         </div>
         <p className="kp-history__panel-sub">
           <span className="kp-history__panel-sub--desktop">
-            {versions.length} version{plural}
-            {oldest !== undefined && <> · depuis le {formatDayMonth(oldest.created_at)}</>}
+            {HISTORY_COPY.versionCount(versions.length)}
+            {oldest !== undefined && HISTORY_COPY.since(formatDayMonth(oldest.created_at))}
           </span>
           <span className="kp-history__panel-sub--mobile">
-            {note.title || 'Note sans titre'} · {versions.length} version{plural}
+            {note.title || EDITOR_COPY.untitled} · {HISTORY_COPY.versionCount(versions.length)}
           </span>
         </p>
       </header>

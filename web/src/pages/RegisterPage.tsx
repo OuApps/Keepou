@@ -4,6 +4,7 @@ import { register } from '../api/auth'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import { AuthMessage } from '../components/AuthMessage'
+import { AUTH_COPY } from '../lib/copy'
 import { ThemeToggle } from '../components/ThemeToggle'
 
 /**
@@ -36,9 +37,9 @@ export default function RegisterPage() {
         // Not on the allowlist → dedicated denial screen (mockup « Refus »).
         setDeniedEmail(email.trim().toLowerCase())
       } else if (err instanceof ApiError && err.status === 409) {
-        setError('Un compte existe déjà avec cette adresse e-mail.')
+        setError(AUTH_COPY.emailTaken)
       } else {
-        setError('Création du compte impossible. Réessaie dans un instant.')
+        setError(AUTH_COPY.registerFailed)
       }
     } finally {
       setSubmitting(false)
@@ -74,10 +75,11 @@ export default function RegisterPage() {
                 />
               </svg>
             </div>
-            <h1 className="kp-denial__title">Accès non autorisé</h1>
+            <h1 className="kp-denial__title">{AUTH_COPY.deniedTitle}</h1>
             <p className="kp-denial__text">
-              L'adresse <b>{deniedEmail}</b> ne figure pas sur la liste des membres autorisés de
-              cette instance Keepou.
+              {AUTH_COPY.deniedBefore}
+              <b>{deniedEmail}</b>
+              {AUTH_COPY.deniedAfter}
             </p>
             <div className="kp-denial__hint">
               <svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true">
@@ -95,13 +97,10 @@ export default function RegisterPage() {
                   strokeLinecap="round"
                 />
               </svg>
-              <span>
-                Demande à l'administrateur de ton instance d'ajouter ton e-mail. Tu pourras ensuite
-                créer ton compte.
-              </span>
+              <span>{AUTH_COPY.deniedHint}</span>
             </div>
             <Link to="/login" className="kp-auth__submit">
-              Retour à la connexion
+              {AUTH_COPY.backToLogin}
             </Link>
           </div>
         </div>
@@ -117,16 +116,13 @@ export default function RegisterPage() {
 
       <div className="kp-auth__panel">
         <div className="kp-auth__brand">
-          <h1 className="kp-auth__title">Créer un compte</h1>
-          <p className="kp-auth__subtitle">
-            Keepou est une instance privée. Ton compte n'est créé que si ton e-mail figure sur la
-            liste autorisée.
-          </p>
+          <h1 className="kp-auth__title">{AUTH_COPY.registerTitle}</h1>
+          <p className="kp-auth__subtitle">{AUTH_COPY.registerSubtitle}</p>
         </div>
 
         <form className="kp-auth__card" onSubmit={onSubmit}>
           <label className="kp-auth__label" htmlFor="register-name">
-            Nom affiché
+            {AUTH_COPY.displayName}
           </label>
           <div className="kp-auth__field">
             <input
@@ -143,7 +139,7 @@ export default function RegisterPage() {
           </div>
 
           <label className="kp-auth__label" htmlFor="register-email">
-            E-mail
+            {AUTH_COPY.email}
           </label>
           <div className="kp-auth__field">
             <input
@@ -159,7 +155,7 @@ export default function RegisterPage() {
           </div>
 
           <label className="kp-auth__label" htmlFor="register-password">
-            Mot de passe
+            {AUTH_COPY.password}
           </label>
           <div className="kp-auth__field">
             <input
@@ -182,12 +178,12 @@ export default function RegisterPage() {
             className="kp-auth__submit kp-auth__submit--green"
             disabled={submitting}
           >
-            Créer mon compte
+            {AUTH_COPY.registerSubmit}
           </button>
         </form>
 
         <p className="kp-auth__alt kp-auth__alt--green">
-          Déjà un compte ? <Link to="/login">Se connecter</Link>
+          {AUTH_COPY.alreadyAccount} <Link to="/login">{AUTH_COPY.signInLink}</Link>
         </p>
       </div>
     </div>

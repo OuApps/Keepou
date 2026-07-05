@@ -1,4 +1,5 @@
 import type { SaveState } from '../../hooks/useAutosave'
+import { SAVE_COPY } from '../../lib/copy'
 import { formatRelative } from '../../lib/time'
 
 /**
@@ -22,12 +23,12 @@ export function SaveStatus({ state, savedAt }: { state: SaveState; savedAt: stri
               strokeLinejoin="round"
             />
           </svg>
-          Enregistré · {formatRelative(savedAt)}
+          {SAVE_COPY.saved(formatRelative(savedAt))}
         </>
       ) : (
         <>
           <span className="kp-save__dot" aria-hidden="true" />
-          {state === 'saving' ? 'Enregistrement…' : 'Modifié'}
+          {state === 'saving' ? SAVE_COPY.saving : SAVE_COPY.dirty}
         </>
       )}
     </span>

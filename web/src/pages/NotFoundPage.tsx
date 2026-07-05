@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { COMMON_COPY, NOT_FOUND_COPY } from '../lib/copy'
 
 /** 404 — unknown route. */
 export default function NotFoundPage() {
@@ -6,14 +7,14 @@ export default function NotFoundPage() {
     <div className="kp-center">
       <div className="kp-brand">
         <img src="/keepou-mascot.png" alt="" className="kp-brand__logo" width={44} height={44} />
-        <span className="kp-brand__name">Keepou</span>
+        <span className="kp-brand__name">{COMMON_COPY.appName}</span>
       </div>
       <h1 className="kp-title" style={{ fontSize: 22 }}>
-        Page introuvable
+        {NOT_FOUND_COPY.title}
       </h1>
-      <p className="kp-muted">Cette page n’existe pas.</p>
+      <p className="kp-muted">{NOT_FOUND_COPY.text}</p>
       <Link to="/" className="kp-link">
-        Retour au board
+        {COMMON_COPY.backToBoard}
       </Link>
     </div>
   )

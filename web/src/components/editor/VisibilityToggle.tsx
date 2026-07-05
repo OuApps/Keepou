@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Visibility } from '../../api/notes'
+import { COMMON_COPY, EDITOR_COPY } from '../../lib/copy'
 
 /**
  * Private/public switch (E4-S5, FR-N5 — owner only, enforced server-side).
@@ -40,20 +41,20 @@ export function VisibilityToggle({
         >
           <span className="kp-visibility__knob" />
         </span>
-        Public
+        {EDITOR_COPY.visibilityPublic}
       </button>
 
       {confirming && (
-        <div className="kp-confirm" role="alertdialog" aria-label="Confirmer le passage en privé">
+        <div className="kp-confirm" role="alertdialog" aria-label={EDITOR_COPY.confirmPrivateLabel}>
           <div className="kp-confirm__card">
-            <p className="kp-confirm__text">Cette note ne sera plus visible par les autres.</p>
+            <p className="kp-confirm__text">{EDITOR_COPY.confirmPrivateText}</p>
             <div className="kp-confirm__actions">
               <button
                 type="button"
                 className="kp-confirm__cancel"
                 onClick={() => setConfirming(false)}
               >
-                Annuler
+                {COMMON_COPY.cancel}
               </button>
               <button
                 type="button"
@@ -63,7 +64,7 @@ export function VisibilityToggle({
                   onChange('PRIVATE')
                 }}
               >
-                Confirmer
+                {COMMON_COPY.confirm}
               </button>
             </div>
           </div>

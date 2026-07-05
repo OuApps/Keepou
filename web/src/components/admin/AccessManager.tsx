@@ -8,6 +8,7 @@ import {
   type UserAdminPatch,
 } from '../../api/admin'
 import { ApiError } from '../../api/client'
+import { ADMIN_COPY, COMMON_COPY } from '../../lib/copy'
 import { AuthMessage } from '../AuthMessage'
 import { MemberRow } from './MemberRow'
 import { PendingRow } from './PendingRow'
@@ -35,7 +36,7 @@ export function AccessManager() {
         setLoadError(null)
       })
       .catch((err) => {
-        setLoadError(err instanceof ApiError ? err.message : 'Erreur réseau')
+        setLoadError(err instanceof ApiError ? err.message : COMMON_COPY.networkError)
       })
   }, [])
 
@@ -54,7 +55,7 @@ export function AccessManager() {
     return mutation()
       .then(() => load())
       .catch((err) => {
-        setActionError(err instanceof ApiError ? err.message : 'Erreur réseau')
+        setActionError(err instanceof ApiError ? err.message : COMMON_COPY.networkError)
       })
       .finally(() => setBusy(false))
   }
@@ -72,7 +73,7 @@ export function AccessManager() {
   if (loadError !== null) {
     return (
       <section className="kp-admin">
-        <h1 className="kp-admin__title">Administration</h1>
+        <h1 className="kp-admin__title">{ADMIN_COPY.title}</h1>
         <p className="kp-admin__subtitle">{loadError}</p>
       </section>
     )
@@ -80,10 +81,8 @@ export function AccessManager() {
 
   return (
     <section className="kp-admin">
-      <h1 className="kp-admin__title">Gestion des accès</h1>
-      <p className="kp-admin__subtitle">
-        Seuls les e-mails autorisés peuvent créer un compte sur cette instance.
-      </p>
+      <h1 className="kp-admin__title">{ADMIN_COPY.managerTitle}</h1>
+      <p className="kp-admin__subtitle">{ADMIN_COPY.managerSubtitle}</p>
 
       <form className="kp-admin__add" onSubmit={onAdd}>
         <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true">
@@ -108,14 +107,14 @@ export function AccessManager() {
         <input
           type="email"
           className="kp-admin__add-input"
-          placeholder="Ajouter un e-mail…"
-          aria-label="Adresse e-mail à autoriser"
+          placeholder={ADMIN_COPY.addPlaceholder}
+          aria-label={ADMIN_COPY.addLabel}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <button type="submit" className="kp-admin__add-btn" disabled={busy || !email.trim()}>
-          <span className="kp-admin__long">Ajouter à la liste</span>
-          <span className="kp-admin__short">Ajouter</span>
+          <span className="kp-admin__long">{ADMIN_COPY.addLong}</span>
+          <span className="kp-admin__short">{ADMIN_COPY.addShort}</span>
         </button>
       </form>
 
@@ -129,7 +128,7 @@ export function AccessManager() {
           className={`kp-admin__tab ${tab === 'members' ? 'kp-admin__tab--active' : ''}`}
           onClick={() => setTab('members')}
         >
-          Membres <span className="kp-admin__count">{members.length}</span>
+          {ADMIN_COPY.tabMembers} <span className="kp-admin__count">{members.length}</span>
         </button>
         <button
           type="button"
@@ -138,14 +137,14 @@ export function AccessManager() {
           className={`kp-admin__tab ${tab === 'pending' ? 'kp-admin__tab--active' : ''}`}
           onClick={() => setTab('pending')}
         >
-          <span className="kp-admin__long">Invités en attente</span>
-          <span className="kp-admin__short">En attente</span>
+          <span className="kp-admin__long">{ADMIN_COPY.tabPendingLong}</span>
+          <span className="kp-admin__short">{ADMIN_COPY.tabPendingShort}</span>
           <span className="kp-admin__count">{pending.length}</span>
         </button>
       </div>
 
       {rows === null ? (
-        <p className="kp-admin__empty">Chargement…</p>
+        <p className="kp-admin__empty">{COMMON_COPY.loading}</p>
       ) : tab === 'members' ? (
         <ul className="kp-admin__list">
           {members.map((member) => (
@@ -163,9 +162,7 @@ export function AccessManager() {
           ))}
         </ul>
       ) : pending.length === 0 ? (
-        <p className="kp-admin__empty">
-          Aucun invité en attente — ajoute un e-mail pour autoriser un nouveau membre.
-        </p>
+        <p className="kp-admin__empty">{ADMIN_COPY.emptyPending}</p>
       ) : (
         <ul className="kp-admin__list">
           {pending.map((entry) => (
@@ -182,9 +179,10 @@ export function AccessManager() {
       )}
 
       <p className="kp-admin__note">
-        <b>Désactiver, jamais supprimer</b> — désactiver <b>bloque la connexion</b> tout en
-        conservant le compte et ses notes. Aucune suppression de compte : un membre désactivé peut
-        être réactivé à tout moment.
+        <b>{ADMIN_COPY.neverDeleteBold}</b>
+        {ADMIN_COPY.neverDeleteMid}
+        <b>{ADMIN_COPY.neverDeleteBold2}</b>
+        {ADMIN_COPY.neverDeleteEnd}
       </p>
     </section>
   )

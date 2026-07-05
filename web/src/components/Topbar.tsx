@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { IMPORT_COPY } from '../lib/copy'
+import { BOARD_COPY, COMMON_COPY, IMPORT_COPY } from '../lib/copy'
 import { ThemeToggle } from './ThemeToggle'
 
 /**
@@ -37,7 +37,7 @@ export function Topbar({ center, tabs }: { center?: ReactNode; tabs?: ReactNode 
     <header className="kp-topbar">
       <div className="kp-topbar__brand">
         <img src="/keepou-mascot.png" alt="" className="kp-topbar__logo" width={38} height={38} />
-        <span className="kp-topbar__name">Keepou</span>
+        <span className="kp-topbar__name">{COMMON_COPY.appName}</span>
       </div>
 
       <div className="kp-topbar__center">{center}</div>
@@ -53,7 +53,7 @@ export function Topbar({ center, tabs }: { center?: ReactNode; tabs?: ReactNode 
           onClick={() => setMenuOpen((open) => !open)}
           aria-haspopup="menu"
           aria-expanded={menuOpen}
-          aria-label="Menu du compte"
+          aria-label={BOARD_COPY.accountMenu}
         >
           {initial}
         </button>
@@ -73,7 +73,7 @@ export function Topbar({ center, tabs }: { center?: ReactNode; tabs?: ReactNode 
                   navigate('/admin')
                 }}
               >
-                Administration
+                {BOARD_COPY.adminEntry}
               </button>
             )}
             <button
@@ -88,7 +88,7 @@ export function Topbar({ center, tabs }: { center?: ReactNode; tabs?: ReactNode 
               {IMPORT_COPY.menuEntry}
             </button>
             <button type="button" className="kp-menu__item" role="menuitem" onClick={signOut}>
-              Se déconnecter
+              {BOARD_COPY.signOut}
             </button>
           </div>
         )}

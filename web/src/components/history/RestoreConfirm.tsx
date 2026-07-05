@@ -1,4 +1,5 @@
 import type { NoteVersionOut } from '../../api/versions'
+import { COMMON_COPY, HISTORY_COPY } from '../../lib/copy'
 import { formatVersionAt, formatVersionDay } from '../../lib/time'
 
 /**
@@ -20,7 +21,7 @@ export function RestoreConfirm({
   onConfirm: () => void
 }) {
   return (
-    <div className="kp-confirm" role="alertdialog" aria-label="Confirmation de restauration">
+    <div className="kp-confirm" role="alertdialog" aria-label={HISTORY_COPY.restoreConfirmLabel}>
       <div className="kp-confirm__card kp-restore">
         <span className="kp-restore__icon" aria-hidden="true">
           <svg width="22" height="22" viewBox="0 0 24 24">
@@ -42,12 +43,13 @@ export function RestoreConfirm({
           </svg>
         </span>
         <h3 className="kp-restore__title">
-          Restaurer la version {formatVersionDay(version.created_at)}&nbsp;?
+          {HISTORY_COPY.restoreTitleBefore}
+          {formatVersionDay(version.created_at)}&nbsp;?
         </h3>
         <p className="kp-confirm__text">
-          La version actuelle sera <b>conservée dans l'historique</b> — rien n'est perdu. Le contenu
-          de cette note redevient celui de {version.author_name}{' '}
-          {formatVersionAt(version.created_at)}.
+          {HISTORY_COPY.restoreKeptBefore}
+          <b>{HISTORY_COPY.restoreKeptBold}</b>
+          {HISTORY_COPY.restoreKeptAfter(version.author_name, formatVersionAt(version.created_at))}
         </p>
         {error !== null && (
           <p className="kp-restore__error" role="alert">
@@ -56,10 +58,10 @@ export function RestoreConfirm({
         )}
         <div className="kp-confirm__actions">
           <button type="button" className="kp-confirm__cancel" onClick={onCancel} disabled={busy}>
-            Annuler
+            {COMMON_COPY.cancel}
           </button>
           <button type="button" className="kp-restore__ok" onClick={onConfirm} disabled={busy}>
-            Restaurer cette version
+            {HISTORY_COPY.restoreThis}
           </button>
         </div>
       </div>

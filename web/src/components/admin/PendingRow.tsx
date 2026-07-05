@@ -1,4 +1,5 @@
 import type { MemberOut } from '../../api/admin'
+import { ADMIN_COPY } from '../../lib/copy'
 import { formatDayMonth } from '../../lib/time'
 
 /**
@@ -41,13 +42,13 @@ export function PendingRow({
       <div className="kp-admin__id">
         <div className="kp-admin__name">{entry.email}</div>
         <div className="kp-admin__meta">
-          {entry.allowed_at ? `Autorisé le ${formatDayMonth(entry.allowed_at)} · ` : ''}
-          pas encore de compte
+          {entry.allowed_at ? ADMIN_COPY.allowedOn(formatDayMonth(entry.allowed_at)) : ''}
+          {ADMIN_COPY.noAccountYet}
         </div>
       </div>
-      <span className="kp-admin__status kp-admin__status--warn">En attente</span>
+      <span className="kp-admin__status kp-admin__status--warn">{ADMIN_COPY.statusPending}</span>
       <button type="button" className="kp-admin__remove" onClick={onRemove} disabled={busy}>
-        Retirer
+        {ADMIN_COPY.remove}
       </button>
     </li>
   )

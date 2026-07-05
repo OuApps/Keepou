@@ -1,3 +1,4 @@
+import { THEME_COPY } from '../lib/copy'
 import { useThemeContext } from '../theme/ThemeProvider'
 
 /**
@@ -13,8 +14,8 @@ export function ThemeToggle() {
       type="button"
       className="kp-icon-btn"
       onClick={toggle}
-      title="Thème"
-      aria-label={isLight ? 'Passer en thème sombre' : 'Passer en thème clair'}
+      title={THEME_COPY.title}
+      aria-label={isLight ? THEME_COPY.toDark : THEME_COPY.toLight}
     >
       {isLight ? (
         <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true">

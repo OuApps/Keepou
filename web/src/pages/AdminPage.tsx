@@ -1,5 +1,6 @@
 import { useAuth } from '../auth/AuthContext'
 import { AccessManager } from '../components/admin/AccessManager'
+import { ADMIN_COPY } from '../lib/copy'
 
 /**
  * /admin — access administration (E7). The real guard is the API: every
@@ -13,8 +14,8 @@ export default function AdminPage() {
   if (user?.role !== 'ADMIN') {
     return (
       <section className="kp-admin">
-        <h1 className="kp-admin__title">Administration</h1>
-        <p className="kp-admin__subtitle">Accès réservé aux administrateurs de l’instance.</p>
+        <h1 className="kp-admin__title">{ADMIN_COPY.title}</h1>
+        <p className="kp-admin__subtitle">{ADMIN_COPY.restricted}</p>
       </section>
     )
   }

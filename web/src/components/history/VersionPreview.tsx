@@ -1,5 +1,6 @@
 import type { NoteVersionOut } from '../../api/versions'
 import { parse } from '../../lib/markdown'
+import { EDITOR_COPY, HISTORY_COPY } from '../../lib/copy'
 import { formatVersionMoment } from '../../lib/time'
 import { RichBlockText } from '../RichText'
 
@@ -18,11 +19,11 @@ export function VersionPreview({
   const blocks = parse(version.body)
   return (
     <div className="kp-vpreview">
-      <h2 className="kp-vpreview__title">{version.title || 'Note sans titre'}</h2>
+      <h2 className="kp-vpreview__title">{version.title || EDITOR_COPY.untitled}</h2>
       <p className="kp-vpreview__meta">
         {isCurrent
-          ? `Version actuelle · ${version.author_name}`
-          : `Version de ${version.author_name}`}{' '}
+          ? HISTORY_COPY.currentMeta(version.author_name)
+          : HISTORY_COPY.versionMeta(version.author_name)}{' '}
         · {formatVersionMoment(version.created_at)}
       </p>
       <div className="kp-vpreview__blocks">

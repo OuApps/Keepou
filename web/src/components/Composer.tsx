@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { createNote, type NoteColor, type NoteOut } from '../api/notes'
 import { SWATCHES } from '../lib/colors'
+import { BOARD_COPY } from '../lib/copy'
 
 /**
  * Quick composer (E3-S5) — the fastest path in the app: an input, the 5 card
@@ -80,8 +81,8 @@ export function Composer({
           ref={inputRef}
           className="kp-composer__input"
           type="text"
-          placeholder="Prends une note…"
-          aria-label="Prends une note…"
+          placeholder={BOARD_COPY.composerPlaceholder}
+          aria-label={BOARD_COPY.composerPlaceholder}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onFocus={() => setOpen(true)}
@@ -133,14 +134,18 @@ export function Composer({
           />
         </svg>
         <button type="submit" className="kp-composer__add" disabled={saving}>
-          Ajouter
+          {BOARD_COPY.composerAdd}
         </button>
       </div>
 
       {open && (
         <div className="kp-composer__options">
           <div className="kp-composer__pickers">
-            <div className="kp-composer__colors" role="radiogroup" aria-label="Couleur de la note">
+            <div
+              className="kp-composer__colors"
+              role="radiogroup"
+              aria-label={BOARD_COPY.composerColorLabel}
+            >
               {SWATCHES.map((s) => (
                 <button
                   key={s.color}
@@ -166,7 +171,7 @@ export function Composer({
               >
                 <span className="kp-composer__knob" />
               </span>
-              Public
+              {BOARD_COPY.composerPublic}
             </button>
           </div>
           <button
@@ -177,14 +182,14 @@ export function Composer({
               close()
             }}
           >
-            Fermer
+            {BOARD_COPY.composerClose}
           </button>
         </div>
       )}
 
       {error && (
         <p className="kp-composer__error" role="alert">
-          La note n'a pas pu être créée. Réessaie dans un instant.
+          {BOARD_COPY.composerFailed}
         </p>
       )}
     </form>
