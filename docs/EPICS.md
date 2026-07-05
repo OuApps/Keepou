@@ -17,7 +17,7 @@
 - [x] **E5** — Single-editor lock & real-time · ✅ detailed → [`stories/E5-verrou-temps-reel.md`](./stories/E5-verrou-temps-reel.md) — *shipped (lock columns migration, atomic acquire/renew/release + PATCH enforcement with structured 409, lock state in the note payload, `useNoteLock` heartbeat 20 s / poll ~12 s / release on close & `beforeunload`, LockBanner 4 states + read-only, tests back & front)*
 - [x] **E6** — History & versions · ✅ detailed → [`stories/E6-historique-versions.md`](./stories/E6-historique-versions.md) — *shipped (`NoteVersion` migration, creation root « Créée par X », one version per session on lock release / editor close with a no-op guard, newest-first visibility-gated `GET .../versions`, restore = new version — lock-checked, visibility owner-only —, HistoryPanel desktop + mobile 2-screen flow, tests back & front)*
 - [x] **E7** — Access administration · ✅ detailed → [`stories/E7-administration.md`](./stories/E7-administration.md) — *shipped (admin router: members LEFT JOIN, allowlist add / pending-only remove, role/status PATCH + last-admin guard; AccessManager tabs + counters, MemberRow ⋯ menu, PendingRow « Retirer », admins-only « Administration » avatar-menu entry, tests back & front)*
-- [ ] **E8** — Polish (PWA, a11y, archive, i18n, quality) · ✅ detailed → [`stories/E8-polish-pwa-a11y-i18n.md`](./stories/E8-polish-pwa-a11y-i18n.md) — *archive story = "voir design avec designer" (design-gated)*
+- [ ] **E8** — Polish (PWA, a11y, formatting, archive, i18n, quality) · ✅ detailed → [`stories/E8-polish-pwa-a11y-i18n.md`](./stories/E8-polish-pwa-a11y-i18n.md) — *adds inline text formatting (S9) + text under a checkbox (S10); archive story = "voir design avec designer" (design-gated)*
 - [ ] **E9** — Database cold backups & restore · ✅ detailed → [`stories/E9-backups-restore.md`](./stories/E9-backups-restore.md) — *Scaleway Object Storage + Railway cron*
 - [x] **E10** — Import from Google Keep · ✅ detailed → [`stories/E10-import-keep.md`](./stories/E10-import-keep.md) — *shipped (Takeout parser, preview/confirm endpoints, validated mockup `Keepou - Import Keep.dc.html`, `/import` flow — upload → review « mode tunnel » → summary —, tests back & front, user how-to)*
 
@@ -35,7 +35,7 @@
 | **E5** | Single-editor lock & real-time | Atomic acquisition, heartbeat, expiration, conflict, read-only | E4 |
 | **E6** | History & versions | Versioning (1 session = 1 version), preview, restore | E4, E5 |
 | **E7** | Access administration | Allowlist, members/pending, roles, enable/disable | E2 |
-| **E8** | Polish: PWA, a11y, i18n, quality | Manifest, accessibility, **archive**, copy centralization, tests/CI | all |
+| **E8** | Polish: PWA, a11y, formatting, i18n, quality | Manifest, accessibility, **inline formatting + text under a checkbox**, **archive**, copy centralization, tests/CI | all |
 | **E9** | Database cold backups & restore | Scheduled off-site `pg_dump`, retention, tested restore | E1 |
 | **E10** | Import from Google Keep | Takeout ZIP upload, server-side parse/mapping, bulk-create private notes | E3 |
 
@@ -273,12 +273,13 @@ vs pending), roles, **enable/disable** — **never delete**.
 
 ---
 
-## E8 — Polish: PWA, accessibility, i18n, quality
+## E8 — Polish: PWA, accessibility, formatting, i18n, quality
 
-**Goal.** Harden and finalize: installable, accessible, centralized strings, tested.
+**Goal.** Harden and finalize: installable, accessible, richer note formatting, centralized strings, tested.
 
 **Scope**
 - **PWA**: manifest (icon = mascot), favicon, apple-touch metadata, minimal SW — **installable + pinnable to the mobile home screen** (Android install prompt / iOS "Ajouter à l'écran d'accueil").
+- **Text formatting** (E8-S9/S10): **inline Markdown recognized as you type** — bold `**`, italic `*`, headings `#` (bounded subset, no toolbar/selection step), rendered in every read-only surface; and **normal text under a checkbox** — two line breaks exit the checklist (drop the « only a checkbox can follow a checkbox » restriction). Bodies are already GFM Markdown (E4), so **no migration** — this is recognition/rendering + editor interaction. Checkboxes stay unchanged.
 - **Archive** (FR-N8): **starts with a design phase** — there is no mockup yet, so first **design the archive UI** (per the design-driven workflow in `design/claude.md` / `HANDOFF.md`), then implement archive / unarchive (hide from the board without deleting) + the `?archived=` board filter + the `Note.archived` field.
 - **A11y**: real `<input type=checkbox>` + labels, labeled fields, `role="status"`/aria-live lock banners, contrasts OK, mobile hit targets ≥ 44px.
 - **Dark-mode legibility**: fix the "on voit pas bien" cases (low-contrast text, washed-out card shades, faint borders) via the **dark token set** (HANDOFF §1) to WCAG AA.
@@ -289,7 +290,7 @@ vs pending), roles, **enable/disable** — **never delete**.
 
 **Mockups.** All (state & responsive verification).
 
-**Done when.** App installable **and pinnable to the home screen**, archive **designed then built** (hide/restore + filter), a11y verified, **dark mode legible everywhere (WCAG AA)**, mobile keyboard never hides inputs/buttons, password managers autofill the login, strings centralized, test suite green in CI.
+**Done when.** App installable **and pinnable to the home screen**, **inline formatting (bold/italic/headings) recognized as you type + text allowed under a checkbox**, archive **designed then built** (hide/restore + filter), a11y verified, **dark mode legible everywhere (WCAG AA)**, mobile keyboard never hides inputs/buttons, password managers autofill the login, strings centralized, test suite green in CI.
 
 ---
 

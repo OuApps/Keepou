@@ -1,4 +1,4 @@
-# E8 — Polish: PWA, a11y, archive, i18n, quality — Detailed stories
+# E8 — Polish: PWA, a11y, formatting, archive, i18n, quality — Detailed stories
 
 > Epic goal: harden and finalize — installable, accessible, centralized strings,
 > tested. Cross-cutting; hardened at the end.
@@ -28,6 +28,8 @@ FR-P1 / FR-P2, claude.md. **Depends on** all feature epics (E2–E7).
 - [ ] **E8-S6** — Mobile keyboard: keep focused inputs/buttons above the on-screen keyboard
 - [ ] **E8-S7** — Password-manager autofill (Bitwarden): recognizable login form
 - [ ] **E8-S8** — Dark-mode legibility pass (contrast fixes — « on voit pas bien »)
+- [ ] **E8-S9** — Inline text formatting: bold `**`, italic `*`, headings `#` recognized as you type
+- [ ] **E8-S10** — Allow normal text under a checkbox (two line breaks exit the checklist)
 
 **Status.** All `to do`. E8-S2 is **blocked on design** — see the warning above.
 
@@ -272,6 +274,120 @@ mockups' dark values change with it.
 
 ---
 
+## E8-S9 — Inline text formatting: bold, italic, headings recognized as you type · L
+
+**Goal.** Let Guillaume lay out a note with a **little Markdown**: **`**gras**`**
+renders **bold**, `*italique*` renders *italic*, and a line starting with `#` /
+`##` / `###` becomes a **heading**. Crucially, the formatting is **recognized
+directly in the typed text** — you just type the Markdown characters and they take
+effect — **not** through a selection + toolbar step. This is the deliberate contrast
+with checkboxes: **checkboxes stay exactly as they are** (an explicit « Insérer une
+case à cocher » block affordance, E4-S4), formatting is *inline in the text itself*.
+
+**Current state.** Note bodies are **already stored as GFM Markdown** (E4-S2,
+`web/src/lib/markdown.ts`, HANDOFF §3.3) — so `**`, `*` and `#` are already valid,
+round-tripping characters today; they are simply rendered **flat** everywhere. The
+editor paragraph block is a plain `<textarea>` (`components/editor/BlockList.tsx`),
+which cannot display styled runs, and the read-only surfaces (NoteCard preview
+`lib/preview.ts`, version preview E6, locked read-only E5) render paragraphs as
+plain text. So the work is **recognition + rendering**, **not** a data-model or
+storage change — **no migration**.
+
+**Scope of the syntax (bounded — nothing else).**
+- **Bold**: `**texte**`.
+- **Italic**: `*texte*`.
+- **Headings**: a line starting with `# `, `## `, or `### ` (heading levels 1–3).
+- Everything else (links, images, tables, blockquotes, inline code, `_underscore_`
+  emphasis, ordered lists…) stays **literal text** — do **not** pull in full GFM.
+- **Checkboxes are untouched**: a line matching `- [ ] ` / `- [x] ` stays a checkbox
+  block (E4-S4); `#`/`*`/`**` are paragraph-level / inline formatting only and never
+  turn a line into a checkbox or vice-versa.
+
+**Tasks**
+- **Editing surface — the key decision.** A `<textarea>` can't show styled text
+  while typing, so decide how to make formatting visible *as typed* (e.g. a
+  Markdown-aware `contenteditable` editing surface, or a live styled overlay over
+  the input) faithful to the editor chrome — **no floating toolbar, no selection
+  popover**. Preserve everything E4 relies on: the block flow, autosave
+  serialization (`serialize`/`parse`, E4-S6), read-only mode (E5), and the « Insérer
+  une case » affordance. Keep the stored value **plain GFM Markdown** (the surface is
+  a view over the Markdown, never a new storage format).
+- **Rendering everywhere the body is shown.** Render bold/italic/headings in the
+  **read-only** surfaces too so a note looks the same when not editing: NoteCard
+  preview (`lib/preview.ts`), version preview (E6), and the locked read-only editor
+  (E5). Use semantic elements — `<strong>` / `<em>` / `<h1>`–`<h3>` — for a11y (pairs
+  with E8-S3).
+- **Styling from tokens.** Bold/italic/heading styles come from the HANDOFF type
+  scale (Fredoka / Nunito Sans, §1) — do **not** invent sizes. Heading sizing
+  *inside a note body* is not in the mockups yet: pick from the existing type scale,
+  and if it needs its own scale, run a **short design pass** (design-driven workflow,
+  `design/claude.md`) and record it in HANDOFF §3.3 before shipping.
+- **Docs.** Update HANDOFF §3.3 (content & Markdown) and `docs/ARCHITECTURE.md` §3 to
+  document the supported inline subset; no `api/` change (bodies already Markdown).
+
+**Acceptance criteria**
+- [ ] Typing `**gras**`, `*italique*`, and `# Titre` applies bold / italic / heading
+  **as you type**, with no selection or toolbar step.
+- [ ] Only the bounded subset (bold `**`, italic `*`, headings `# … ###`) is
+  recognized; other Markdown stays literal.
+- [ ] **Checkboxes are unchanged** — still inserted via « Insérer une case à
+  cocher », still `- [ ] ` in the Markdown, never produced by formatting characters.
+- [ ] The body still stores as plain GFM Markdown and **round-trips** unchanged
+  (no migration); the same formatting renders identically in the card preview,
+  version preview, and locked read-only view.
+- [ ] Semantic `<strong>`/`<em>`/`<h1–3>` output; correct in light + dark, desktop +
+  mobile.
+
+**Notes.** Because bodies are already Markdown from the MVP, this adds **rendering**
+on top of existing data — old notes containing `**`/`#` will suddenly render
+formatted (expected). The editing-surface change is the architecturally significant
+part; keep it isolated behind the block model so autosave (E4-S6) and the lock (E5)
+are unaffected.
+
+---
+
+## E8-S10 — Allow normal text under a checkbox (two line breaks exit the checklist) · S
+
+**Goal.** Be able to write a **normal paragraph under a checkbox**. Today the only
+thing that can follow a checkbox is **another checkbox**, and that restriction should
+be removed. The way to leave the checklist is **two line breaks**: a second Enter
+(on an empty box) ends the list and drops you into a normal text paragraph.
+
+**Current state.** In `components/editor/BlockList.tsx`, pressing **Enter** in a
+checkbox label **always** inserts another checkbox (`insertCheckAt(i + 1)`,
+lines 108–116) — so there is no keyboard path from a checkbox to a paragraph. The
+data model and Markdown already support the ordering, though: `EditorBlock[]` is a
+free-ordered flow and `serialize`/`parse` (`lib/markdown.ts`, E4-S2) already put a
+**blank line** between a box group and a following paragraph (HANDOFF §3.3). So this
+is an **editor-interaction** change, not a schema or Markdown change.
+
+**Tasks**
+- Change the checkbox `onKeyDown` (`BlockList.tsx`): **Enter on a non-empty box**
+  still inserts the next checkbox (list continues, unchanged); **Enter on an empty
+  box** — i.e. the second consecutive line break — **exits the checklist**: remove
+  the empty box and insert a **normal text paragraph** below it, moving focus there.
+- Net behaviour = **two line breaks to stop having a checkbox** (first Enter opens an
+  empty box, second Enter breaks out to text), matching Google Keep.
+- Keep Backspace-on-empty (remove the box) working; optionally, Backspace at the
+  start of the just-created empty paragraph returns into the list (nice-to-have).
+- Verify the round-trip: a `check → text` sequence serializes with the blank-line
+  separator and parses back to the same blocks (no `lib/markdown.ts` change expected
+  — confirm with a test).
+
+**Acceptance criteria**
+- [ ] Enter on a **non-empty** checkbox still creates the next checkbox (unchanged).
+- [ ] A **second line break** (Enter on an empty checkbox) exits the checklist and
+  creates a **normal text paragraph** below, with focus in it and no empty box left.
+- [ ] You can type normal text under a checkbox; the `check → text` flow persists and
+  round-trips through Markdown (blank line separates the box group from the paragraph).
+- [ ] The old « only a checkbox can follow a checkbox » behaviour is gone.
+
+**Notes.** Purely an editor-interaction change over the existing block model; pairs
+with E8-S9 (both about the note body). Add the round-trip case to the E4-S2 /
+E8-S5 test set. Checkbox insertion via « Insérer une case à cocher » is unchanged.
+
+---
+
 ## Definition of "E8 done"
 
 - [ ] App installable (valid manifest, mascot icons, minimal SW) and **pinnable to
@@ -282,5 +398,10 @@ mockups' dark values change with it.
 - [ ] Mobile keyboard never covers the focused input or its primary button (E8-S6).
 - [ ] Bitwarden/built-in password managers autofill the login and offer to save (E8-S7).
 - [ ] **Dark mode legible everywhere** (WCAG AA), fixed via the dark token set (E8-S8).
+- [ ] **Inline text formatting** — bold `**`, italic `*`, headings `#` recognized as
+  you type (not via a toolbar), checkboxes untouched, rendered in every read-only
+  surface (E8-S9).
+- [ ] **Normal text under a checkbox** — two line breaks exit the checklist; the
+  « only a checkbox can follow a checkbox » restriction is gone (E8-S10).
 - [ ] UI strings centralized (French verbatim), ready for later i18n.
 - [ ] Test suite green in CI across both apps.
