@@ -2,9 +2,9 @@
 Keepou data model (SQLModel).
 
 Tables land story by story (E2: User + AllowlistEntry, E3: Note, E6:
-NoteVersion). The remaining Note.archived column is **specified** in
-`design/HANDOFF.md` §4 and arrives with its epic (E8) — feature-aligned
-migrations, no dead columns before their feature ships.
+NoteVersion). E8 adds the board-organization flags `Note.pinned` /
+`Note.archived` (own migration) — feature-aligned, no dead columns before
+their feature ships.
 
 Structural points to respect during implementation:
 - Lock carried by the Note (1 lock max) → atomic conditional update (E5).
@@ -81,8 +81,8 @@ class Visibility(StrEnum):
 class Note(SQLModel, table=True):
     """A note: Markdown body (GFM task lists), title in its own field (handoff §3.3).
 
-    `NoteVersion` arrives in E6, `archived` in E8 — each with its own migration
-    (feature-aligned).
+    `NoteVersion` arrives in E6, the `pinned` / `archived` board flags in E8 —
+    each with its own migration (feature-aligned).
     """
 
     id: str = Field(default_factory=_id, primary_key=True)
@@ -91,6 +91,11 @@ class Note(SQLModel, table=True):
     color: NoteColor = NoteColor.GOLD
     visibility: Visibility = Visibility.PRIVATE
     owner_id: str = Field(foreign_key="user.id", index=True)
+    # Board-organization flags (E8), owner-only metadata — no lock, no version:
+    # `pinned` floats the note to the top of its board; `archived` hides it from
+    # every board without deleting it (FR-N8).
+    pinned: bool = False
+    archived: bool = False
     created_at: datetime = Field(default_factory=_utcnow)
     updated_at: datetime = Field(default_factory=_utcnow)  # = "last saved version"
     # Single-editor lock (E5) — at most one active lock, carried by the note so

@@ -46,6 +46,11 @@ DETAIL_NOTE_NOT_FOUND = "Note introuvable."
 DETAIL_VERSION_NOT_FOUND = "Version introuvable."
 DETAIL_DELETE_FORBIDDEN = "Seul l'auteur de la note ou un admin peut la supprimer."
 DETAIL_VISIBILITY_FORBIDDEN = "Seul l'auteur de la note peut changer sa visibilité."
+DETAIL_ORGANIZE_FORBIDDEN = "Seul l'auteur de la note peut l'épingler ou l'archiver."
+
+# Board-organization flags (E8): owner-only, lock-free metadata (they neither
+# require the single-editor lock nor bump `updated_at`).
+ORGANIZE_FIELDS = ("pinned", "archived")
 
 
 class Tab(StrEnum):
@@ -66,6 +71,8 @@ def _note_out(note: Note, author: User, session: Session) -> NoteOut:
         color=note.color,
         visibility=note.visibility,
         owner_id=note.owner_id,
+        pinned=note.pinned,
+        archived=note.archived,
         author_name=author.display_name,
         created_at=note.created_at,
         updated_at=note.updated_at,
@@ -115,13 +122,19 @@ def _get_readable_note(note_id: str, user: User, session: SessionDep) -> Note:
 
 
 @router.get("", response_model=list[NoteOut])
-def list_notes(user: CurrentUser, session: SessionDep, tab: Tab = Tab.MINE) -> list[NoteOut]:
+def list_notes(
+    user: CurrentUser, session: SessionDep, tab: Tab = Tab.MINE, archived: bool = False
+) -> list[NoteOut]:
     query = select(Note, User).where(Note.owner_id == User.id)
     if tab is Tab.MINE:
-        query = query.where(Note.owner_id == user.id)
+        # `?archived=true` is the caller's dedicated archived view (own notes);
+        # by default the board hides archived notes.
+        query = query.where(Note.owner_id == user.id, col(Note.archived).is_(archived))
     else:
-        query = query.where(Note.visibility == Visibility.PUBLIC)
-    rows = session.exec(query.order_by(col(Note.updated_at).desc())).all()
+        # Archived notes leave every board — including Public — until unarchived.
+        query = query.where(Note.visibility == Visibility.PUBLIC, col(Note.archived).is_(False))
+    # Pinned notes float to the top; ties (and the rest) stay newest-first.
+    rows = session.exec(query.order_by(col(Note.pinned).desc(), col(Note.updated_at).desc())).all()
     return [_note_out(note, author, session) for note, author in rows]
 
 
@@ -158,22 +171,22 @@ def patch_note(note_id: str, data: NotePatch, user: CurrentUser, session: Sessio
     # Drop explicit nulls: every Note column is NOT NULL, so `{"title": null}`
     # would otherwise reach the DB and 500. A null means "leave unchanged".
     changes = {k: v for k, v in data.model_dump(exclude_unset=True).items() if v is not None}
-    # Visibility is owner-only (ARCHITECTURE §4.2: neither members nor admins may
-    # flip it) — flipping a public note to private removes it from everyone's
-    # board, which only its owner may decide.
-    if (
-        "visibility" in changes
-        and changes["visibility"] != note.visibility
-        and note.owner_id != user.id
+    # Owner-only fields (ARCHITECTURE §4.2: neither members nor admins may flip
+    # them). Visibility governs sharing; pin/archive organize the owner's board —
+    # a member editing a shared note may not touch either.
+    for field, forbidden in (
+        ("visibility", DETAIL_VISIBILITY_FORBIDDEN),
+        ("pinned", DETAIL_ORGANIZE_FORBIDDEN),
+        ("archived", DETAIL_ORGANIZE_FORBIDDEN),
     ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail=DETAIL_VISIBILITY_FORBIDDEN
-        )
-    # Single-editor enforcement (FR-L2): mutating a PUBLIC note requires holding
-    # a fresh lock — the server decides, never the client. Private notes are
-    # single-owner and edit lock-free.
+        if field in changes and changes[field] != getattr(note, field) and note.owner_id != user.id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=forbidden)
+    # Single-editor enforcement (FR-L2): mutating a PUBLIC note's CONTENT requires
+    # holding a fresh lock — the server decides, never the client. Pin/archive are
+    # metadata (lock-free), and private notes edit lock-free (single owner).
+    content_changes = {k: v for k, v in changes.items() if k not in ORGANIZE_FIELDS}
     if (
-        changes
+        content_changes
         and note.visibility == Visibility.PUBLIC
         and not locks.holds_valid_lock(note, user.id)
     ):
@@ -182,7 +195,9 @@ def patch_note(note_id: str, data: NotePatch, user: CurrentUser, session: Sessio
         )
     for field, value in changes.items():
         setattr(note, field, value)
-    if changes:
+    # `updated_at` = "last saved version": pin/archive alone must not bump it
+    # (they aren't content edits and would wrongly reorder the board).
+    if content_changes:
         note.updated_at = _utcnow()
     session.add(note)
     session.commit()
