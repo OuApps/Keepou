@@ -280,7 +280,7 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
 | POST | `/api/auth/refresh` | Renew the access token | Takes the refresh token; `401` if invalid/expired |
 | GET | `/api/auth/me` | Current user + role | Bearer-authenticated; drives client route guards |
 | PATCH | `/api/auth/me` | Change own display name | Bearer; `{display_name}` only (1..80, trimmed); email/role/status stay untouched (E11) |
-| GET | `/api/notes?tab=mine\|public` | List notes | `mine` = own; `public` = all members' public (with author); `?archived=true` = own archived view (E8); pinned-first ordering |
+| GET | `/api/notes?tab=all\|mine\|public` | List notes | `all` (default board) = own notes + every member's public note; `mine` = own; `public` = all members' public (with author); `?archived=true` = own archived view (E8); pinned-first ordering |
 | POST | `/api/notes` | Create note | |
 | GET | `/api/notes/:id` | Read a note | Visibility-checked |
 | PATCH | `/api/notes/:id` | Update note | `title`, `body`, `color`, `visibility`; `pinned`/`archived` (E8, owner-only, lock-free); content is lock-checked for public |
@@ -306,8 +306,9 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
 > notes fit on one screen; display-only, it never changes the set or its order), a
 > search reset (✕), and a **render window** that reveals cards incrementally so a
 > large imported board mounts instantly. The API still returns the full set in one
-> call. Filtering own notes by visibility is served by the top-right « Mes notes /
-> Public » tab (`?tab=`), so no separate visibility filter is needed.
+> call. The board is scoped by a **« Tout / Mes notes / Public »** segmented tab
+> under the composer (`?tab=all|mine|public`, « Tout » the default), which is why
+> no separate visibility filter is needed.
 >
 > **Perceived latency (E11 follow-up).** The editor is a separate route, so
 > BoardPage unmounts while a note is open. A module-level **board cache**

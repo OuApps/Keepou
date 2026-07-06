@@ -28,9 +28,11 @@ import {
 import { BOARD_COPY, COMMON_COPY } from '../lib/copy'
 
 /**
- * Main board (E3): Topbar (search + tabs), quick composer, masonry of cards.
- * The active board is driven by `?tab=mine|public`; `?archived=1` (E8) swaps in
- * the dedicated archived view (own notes only).
+ * Main board (E3): Topbar (search), quick composer, a « Tout / Mes notes /
+ * Public » tab pill under the composer, then the masonry of cards. The active
+ * board is driven by `?tab=all|mine|public` (« Tout » is the default — own notes
+ * + every member's public note); `?archived=1` (E8) swaps in the dedicated
+ * archived view (own notes only).
  *
  * E11 adds board controls, all URL-driven so they survive an editor round-trip
  * (« retour garde la sélection »): `?sort=` orders the board (pinned first), a ✕
@@ -71,6 +73,11 @@ function sortNotes(list: NoteOut[], key: SortKey): NoteOut[] {
   })
 }
 
+function parseTab(value: string | null): BoardTab {
+  // « Tout » is the default board (own notes + every member's public note).
+  return value === 'mine' || value === 'public' ? value : 'all'
+}
+
 function parseSort(value: string | null): SortKey {
   return value === 'created' || value === 'title' ? value : 'modified'
 }
@@ -84,7 +91,7 @@ export default function BoardPage() {
   const { user } = useAuth()
   const [params, setParams] = useSearchParams()
   const archived = params.get('archived') === '1'
-  const tab: BoardTab = params.get('tab') === 'public' ? 'public' : 'mine'
+  const tab: BoardTab = parseTab(params.get('tab'))
   const sort = parseSort(params.get('sort'))
   const density = parseDensity(params.get('density'))
   const [failed, setFailed] = useState(false)
@@ -141,7 +148,7 @@ export default function BoardPage() {
     setParams(next, { replace: false })
   }
 
-  const switchTab = (next: BoardTab) => updateParams({ tab: next === 'mine' ? null : 'public' })
+  const switchTab = (next: BoardTab) => updateParams({ tab: next === 'all' ? null : next })
   const setSort = (next: SortKey) => updateParams({ sort: next === 'modified' ? null : next })
   const setDensity = (next: Density) => updateParams({ density: next === 'full' ? null : next })
 
@@ -270,7 +277,6 @@ export default function BoardPage() {
             )}
           </div>
         }
-        tabs={archived ? undefined : <TabSwitch tab={tab} onChange={switchTab} />}
       />
 
       <main className="kp-container">
@@ -285,10 +291,10 @@ export default function BoardPage() {
           <Composer onCreated={onCreated} defaultPublic={tab === 'public'} />
         )}
 
-        {/* Board toolbar: bulk actions (archive) + sort. */}
+        {/* Board toolbar: board tabs / bulk actions (left) + density & sort (right). */}
         <div className="kp-board__toolbar">
           <div className="kp-board__toolbar-left">
-            {archived && (
+            {archived ? (
               <>
                 <button
                   type="button"
@@ -308,6 +314,8 @@ export default function BoardPage() {
                   </button>
                 )}
               </>
+            ) : (
+              <TabSwitch tab={tab} onChange={switchTab} />
             )}
           </div>
           <div className="kp-board__toolbar-right">
@@ -334,7 +342,12 @@ export default function BoardPage() {
               <NoteCard
                 key={note.id}
                 note={note}
-                showAuthor={!archived && tab === 'public'}
+                // Public tab: every card carries its author. « Tout » mixes my
+                // notes (shown with their Privé/Public meta) and others' public
+                // notes (shown with the author badge), so it's per-owner.
+                showAuthor={
+                  !archived && (tab === 'public' || (tab === 'all' && note.owner_id !== user?.id))
+                }
                 compact={density === 'compact'}
                 canOrganize={canOrganize(note)}
                 archivedView={archived}
@@ -359,9 +372,11 @@ export default function BoardPage() {
               ? BOARD_COPY.emptySearch
               : archived
                 ? BOARD_COPY.emptyArchived
-                : tab === 'mine'
-                  ? BOARD_COPY.emptyMine
-                  : BOARD_COPY.emptyPublic}
+                : tab === 'public'
+                  ? BOARD_COPY.emptyPublic
+                  : tab === 'mine'
+                    ? BOARD_COPY.emptyMine
+                    : BOARD_COPY.emptyAll}
           </p>
         )}
       </main>

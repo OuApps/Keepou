@@ -1,5 +1,5 @@
 """
-Note business rules (E3-S8): CRUD echo, tab=mine vs tab=public filtering,
+Note business rules (E3-S8): CRUD echo, tab=all/mine/public filtering,
 private-note shielding (404 for non-owners, admins included), and the delete
 permission (owner or admin only — FR-N6).
 """
@@ -125,9 +125,31 @@ def test_lists_are_newest_first(client, session) -> None:
     assert [n["title"] for n in res.json()] == ["Première", "Seconde"]
 
 
+def test_tab_all_returns_own_notes_plus_every_public_note(client, session) -> None:
+    admin = bootstrap_admin(client)
+    tom = member(client, session, TOM)
+    create_note(client, admin, title="Ma privée")  # own private → in
+    create_note(client, admin, title="Ma publique", visibility="PUBLIC")  # own public → in
+    create_note(client, tom, title="Publique de Tom", visibility="PUBLIC")  # other public → in
+    create_note(client, tom, title="Privée de Tom")  # other private → out
+
+    res = client.get("/api/notes?tab=all", headers=auth(admin))
+    assert res.status_code == 200
+    titles = [n["title"] for n in res.json()]
+    assert set(titles) == {"Ma privée", "Ma publique", "Publique de Tom"}
+    # A note that is both mine and public is a single row — never duplicated.
+    assert titles.count("Ma publique") == 1
+
+    # Archiving a note drops it from « Tout » as well.
+    note_id = next(n["id"] for n in res.json() if n["title"] == "Ma publique")
+    client.patch(f"/api/notes/{note_id}", json={"archived": True}, headers=auth(admin))
+    after = client.get("/api/notes?tab=all", headers=auth(admin)).json()
+    assert "Ma publique" not in [n["title"] for n in after]
+
+
 def test_invalid_tab_is_422(client) -> None:
     admin = bootstrap_admin(client)
-    assert client.get("/api/notes?tab=all", headers=auth(admin)).status_code == 422
+    assert client.get("/api/notes?tab=bogus", headers=auth(admin)).status_code == 422
 
 
 # --- visibility (private shielded, public readable by any member) ---

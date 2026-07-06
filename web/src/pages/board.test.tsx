@@ -67,6 +67,10 @@ const PUBLIC: NoteOut[] = [
   }),
 ]
 
+// « Tout » (default board) = own notes + every member's public note. In this
+// fixture MINE and PUBLIC don't overlap, so the union is just their concatenation.
+const ALL: NoteOut[] = [...MINE, ...PUBLIC]
+
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), {
     status,
@@ -88,6 +92,7 @@ function stubFetch(routes: Record<string, (init?: RequestInit) => Response>) {
 function stubBoard(extra: Record<string, (init?: RequestInit) => Response> = {}) {
   stubFetch({
     '/api/auth/me': () => json(200, ME),
+    '/api/notes?tab=all': () => json(200, ALL),
     '/api/notes?tab=mine': () => json(200, MINE),
     '/api/notes?tab=public': () => json(200, PUBLIC),
     ...extra,
@@ -142,7 +147,7 @@ describe('BoardPage', () => {
           }),
         ]),
     })
-    renderBoard()
+    renderBoard('/?tab=mine')
 
     const card = (await screen.findByRole('button', { name: 'Vacances' })) as HTMLElement
     // Heading rendered as a styled paragraph (no document heading above the h2 title).
@@ -163,7 +168,7 @@ describe('BoardPage', () => {
           note({ id: 'n-wifi', title: 'Wifi', body: 'Réseau : Keepou-Casa\nMot de passe : guaca' }),
         ]),
     })
-    renderBoard()
+    renderBoard('/?tab=mine')
 
     const card = (await screen.findByRole('button', { name: 'Wifi' })) as HTMLElement
     // A single paragraph block keeps its newline (not collapsed to a space).
@@ -173,7 +178,7 @@ describe('BoardPage', () => {
 
   it('shows the visibility meta on own cards and no author badge', async () => {
     stubBoard()
-    renderBoard()
+    renderBoard('/?tab=mine')
 
     expect(await screen.findByText('Public · partagé par toi')).toBeInTheDocument()
     expect(screen.getByText(/^Privé ·/)).toBeInTheDocument()
@@ -187,6 +192,25 @@ describe('BoardPage', () => {
     expect(await screen.findByRole('button', { name: 'Sorties ciné' })).toBeInTheDocument()
     expect(screen.getByText(/Léa · modifié/)).toBeInTheDocument()
     expect(screen.queryByText('Courses du week-end')).not.toBeInTheDocument()
+  })
+
+  it('opens on « Tout » by default: own notes + others’ public, author badge only on others', async () => {
+    stubBoard()
+    renderBoard()
+
+    // « Tout » is selected and merges my notes with Léa's public one.
+    await screen.findByRole('button', { name: 'Courses du week-end' }) // mine, private
+    expect(screen.getByRole('button', { name: 'Sorties ciné' })).toBeInTheDocument() // Léa's public
+    expect(screen.getByRole('tab', { name: 'Tout' })).toHaveAttribute('aria-selected', 'true')
+    // Author badge only on the note I don't own; my own public note keeps its meta.
+    expect(screen.getByText(/Léa · modifié/)).toBeInTheDocument()
+    expect(screen.getByText('Public · partagé par toi')).toBeInTheDocument()
+
+    // « Mes notes » drops the others' public notes.
+    fireEvent.click(screen.getByRole('tab', { name: 'Mes notes' }))
+    expect(await screen.findByRole('button', { name: 'Courses du week-end' })).toBeInTheDocument()
+    expect(screen.queryByText('Sorties ciné')).not.toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Mes notes' })).toHaveAttribute('aria-selected', 'true')
   })
 
   it('switches the list when clicking the Public tab', async () => {
@@ -401,7 +425,7 @@ describe('BoardPage', () => {
       '/api/notes?tab=mine': () =>
         json(200, [note({ id: 'n-z', title: 'Zèbre' }), note({ id: 'n-a', title: 'Avocat' })]),
     })
-    renderBoard()
+    renderBoard('/?tab=mine')
     await screen.findByRole('button', { name: 'Zèbre' })
 
     fireEvent.change(screen.getByLabelText('Trier les notes'), { target: { value: 'title' } })

@@ -20,7 +20,7 @@
 - [ ] 🔨 **E8** — Polish (PWA, a11y, formatting, **pin + archive**, i18n, quality) · ✅ detailed → [`stories/E8-polish-pwa-a11y-i18n.md`](./stories/E8-polish-pwa-a11y-i18n.md) — *S1–S11 shipped (PWA install surface + minimal SW, a11y pass + ink-contrast policy, FR copy centralized in `lib/copy.ts`, tests + CI green, mobile-keyboard handling, autofill markup, dark tokens WCAG AA, inline bold/italic/headings as-you-type, text under a checkbox, **pin + archive** — `Note.pinned`/`archived` migration, owner-only lock-free PATCH, `?archived=` view, card ⋯ menu + pinned-first ordering, new notebook+pen logo/icon set); remaining: on-device checks only (Android/iOS install & keyboard, Bitwarden)*
 - [ ] **E9** — Database cold backups & restore · ✅ detailed → [`stories/E9-backups-restore.md`](./stories/E9-backups-restore.md) — *Scaleway Object Storage + Railway cron*
 - [x] **E10** — Import from Google Keep · ✅ detailed → [`stories/E10-import-keep.md`](./stories/E10-import-keep.md) — *shipped (Takeout parser, preview/confirm endpoints, validated mockup `Keepou - Import Keep.dc.html`, `/import` flow — upload → review « mode tunnel » → summary —, tests back & front, user how-to)*
-- [x] **E11** — Field-feedback follow-up · ✅ detailed → [`stories/E11-retours-terrain.md`](./stories/E11-retours-terrain.md) — *shipped (board sort + density selectors + search reset + year-in-old-dates + return-state; hard delete from the card, the editor and archive multi-select/select-all; owner pin/archive/delete + `Maj+Entrée` in the editor; self-service display-name change `PATCH /api/auth/me`; windowed board rendering; instant open/close via a board cache with optimistic upserts; tests back & front)*
+- [x] **E11** — Field-feedback follow-up · ✅ detailed → [`stories/E11-retours-terrain.md`](./stories/E11-retours-terrain.md) — *shipped (board sort + density selectors + search reset + year-in-old-dates + return-state; hard delete from the card, the editor and archive multi-select/select-all; owner pin/archive/delete + `Maj+Entrée` in the editor; self-service display-name change `PATCH /api/auth/me`; windowed board rendering; instant open/close via a board cache with optimistic upserts; « Tout / Mes notes / Public » tabs moved under the composer with a new `tab=all`; tests back & front)*
 
 ---
 
@@ -157,8 +157,10 @@ notes / Public**; quick composer; faithful cards (color, checklist, meta).
 - **Public** tab = `PUBLIC` notes from all members (author + last-modified date).
 
 **Scope — Front**
-- **Topbar** (logo, search, pill tabs, theme, avatar + menu).
-- **TabSwitch** My notes / Public · **Composer** (quick input + color + public toggle).
+- **Topbar** (logo, search, theme, avatar + menu).
+- **TabSwitch** Tout / My notes / Public (under the composer; « Tout » added and the
+  pill moved out of the header in the E11 follow-up) · **Composer** (quick input +
+  color + public toggle).
 - **NoteCard** (5 shades, Fredoka title, read-only checklist, visibility/author badge).
 - **NoteGrid** masonry `column-count` 4→2 responsive · search (minimal client-side filter).
 

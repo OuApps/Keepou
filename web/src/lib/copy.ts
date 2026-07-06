@@ -65,6 +65,7 @@ export const BOARD_COPY = {
   searchPlaceholder: 'Rechercher dans mes notes…',
   searchClear: 'Effacer la recherche',
   tablistLabel: 'Tableaux',
+  tabAll: 'Tout',
   tabMine: 'Mes notes',
   tabPublic: 'Public',
   accountMenu: 'Menu du compte',
@@ -73,6 +74,7 @@ export const BOARD_COPY = {
   signOut: 'Se déconnecter',
   loadFailed: 'Impossible de charger les notes. Réessaie dans un instant.',
   emptySearch: 'Aucune note ne correspond à ta recherche.',
+  emptyAll: 'Aucune note pour l’instant — écris ta première note ci-dessus.',
   emptyMine: 'Aucune note pour l’instant — écris ta première note ci-dessus.',
   emptyPublic: 'Aucune note publique pour l’instant.',
 
