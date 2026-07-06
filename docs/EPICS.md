@@ -20,7 +20,7 @@
 - [ ] 🔨 **E8** — Polish (PWA, a11y, formatting, **pin + archive**, i18n, quality) · ✅ detailed → [`stories/E8-polish-pwa-a11y-i18n.md`](./stories/E8-polish-pwa-a11y-i18n.md) — *S1–S11 shipped (PWA install surface + minimal SW, a11y pass + ink-contrast policy, FR copy centralized in `lib/copy.ts`, tests + CI green, mobile-keyboard handling, autofill markup, dark tokens WCAG AA, inline bold/italic/headings as-you-type, text under a checkbox, **pin + archive** — `Note.pinned`/`archived` migration, owner-only lock-free PATCH, `?archived=` view, card ⋯ menu + pinned-first ordering, new notebook+pen logo/icon set); remaining: on-device checks only (Android/iOS install & keyboard, Bitwarden)*
 - [ ] **E9** — Database cold backups & restore · ✅ detailed → [`stories/E9-backups-restore.md`](./stories/E9-backups-restore.md) — *Scaleway Object Storage + Railway cron*
 - [x] **E10** — Import from Google Keep · ✅ detailed → [`stories/E10-import-keep.md`](./stories/E10-import-keep.md) — *shipped (Takeout parser, preview/confirm endpoints, validated mockup `Keepou - Import Keep.dc.html`, `/import` flow — upload → review « mode tunnel » → summary —, tests back & front, user how-to)*
-- [x] **E11** — Field-feedback follow-up · ✅ detailed → [`stories/E11-retours-terrain.md`](./stories/E11-retours-terrain.md) — *shipped (board visibility filter + sort selector + search reset + year-in-old-dates + return-state; hard delete from the card, the editor and archive multi-select/select-all; owner pin/archive/delete + `Maj+Entrée` in the editor; self-service display-name change `PATCH /api/auth/me`; windowed board rendering; tests back & front)*
+- [x] **E11** — Field-feedback follow-up · ✅ detailed → [`stories/E11-retours-terrain.md`](./stories/E11-retours-terrain.md) — *shipped (board sort selector + search reset + year-in-old-dates + return-state; hard delete from the card, the editor and archive multi-select/select-all; owner pin/archive/delete + `Maj+Entrée` in the editor; self-service display-name change `PATCH /api/auth/me`; windowed board rendering; tests back & front)*
 
 ---
 
@@ -391,10 +391,9 @@ the board, the editor, deletion and the user profile — additive UX, no new
 product rule.
 
 **Scope — Board (`web/`)**
-- **Visibility filter** on Mes notes (Tout / Public / Privé, default Tout,
-  `?vis=`), **sort selector** (Modifié / Créé / Titre, `?sort=`, pinned first),
+- **Sort selector** (Modifié / Créé / Titre, `?sort=`, pinned first),
   **search reset** (✕), **year** shown on dates outside the current year, and a
-  **return-state** so opening then closing a note keeps the tab / filter / sort.
+  **return-state** so opening then closing a note keeps the tab / sort.
 - **Windowed rendering**: render a growing slice (`useRenderWindow`) so a large
   imported board mounts instantly instead of laying out every card at once.
 

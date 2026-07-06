@@ -16,7 +16,6 @@ import { NoteGrid } from '../components/NoteGrid'
 import { SortSelect, type SortKey } from '../components/SortSelect'
 import { TabSwitch } from '../components/TabSwitch'
 import { Topbar } from '../components/Topbar'
-import { VisibilityFilter, type VisFilter } from '../components/VisibilityFilter'
 import { useRenderWindow } from '../hooks/useRenderWindow'
 import { BOARD_COPY, COMMON_COPY } from '../lib/copy'
 
@@ -26,10 +25,10 @@ import { BOARD_COPY, COMMON_COPY } from '../lib/copy'
  * the dedicated archived view (own notes only).
  *
  * E11 adds board controls, all URL-driven so they survive an editor round-trip
- * (« retour garde la sélection »): `?vis=` filters own notes by visibility,
- * `?sort=` orders the board (pinned first), a ✕ clears the search, the archived
- * view offers multi-select + a bulk permanent delete, and a render window
- * (`useRenderWindow`) keeps a 300-note board mounting instantly.
+ * (« retour garde la sélection »): `?sort=` orders the board (pinned first), a ✕
+ * clears the search, the archived view offers multi-select + a bulk permanent
+ * delete, and a render window (`useRenderWindow`) keeps a 300-note board
+ * mounting instantly.
  */
 
 /** Case- and accent-insensitive match (French titles: « déco », « Léa »…). */
@@ -64,10 +63,6 @@ function sortNotes(list: NoteOut[], key: SortKey): NoteOut[] {
   })
 }
 
-function parseVis(value: string | null): VisFilter {
-  return value === 'public' || value === 'private' ? value : 'all'
-}
-
 function parseSort(value: string | null): SortKey {
   return value === 'created' || value === 'title' ? value : 'modified'
 }
@@ -78,7 +73,6 @@ export default function BoardPage() {
   const [params, setParams] = useSearchParams()
   const archived = params.get('archived') === '1'
   const tab: BoardTab = params.get('tab') === 'public' ? 'public' : 'mine'
-  const vis = parseVis(params.get('vis'))
   const sort = parseSort(params.get('sort'))
   const [notes, setNotes] = useState<NoteOut[] | null>(null)
   const [failed, setFailed] = useState(false)
@@ -120,7 +114,6 @@ export default function BoardPage() {
   }
 
   const switchTab = (next: BoardTab) => updateParams({ tab: next === 'mine' ? null : 'public' })
-  const setVis = (next: VisFilter) => updateParams({ vis: next === 'all' ? null : next })
   const setSort = (next: SortKey) => updateParams({ sort: next === 'modified' ? null : next })
 
   const returnTo = `/${params.toString() === '' ? '' : `?${params.toString()}`}`
@@ -174,18 +167,14 @@ export default function BoardPage() {
 
   // Fold the query once, not once per note per keystroke.
   const needle = fold(query.trim())
-  const applyVis = tab === 'mine' && !archived && vis !== 'all'
   const visible = useMemo(() => {
     if (notes === null) return null
-    const want = vis === 'public' ? 'PUBLIC' : 'PRIVATE'
-    const filtered = notes.filter(
-      (note) => (!applyVis || note.visibility === want) && matches(note, needle),
-    )
+    const filtered = notes.filter((note) => matches(note, needle))
     return sortNotes(filtered, sort)
-  }, [notes, applyVis, vis, needle, sort])
+  }, [notes, needle, sort])
 
   const total = visible?.length ?? 0
-  const resetKey = `${listTab}|${archived}|${vis}|${sort}|${needle}`
+  const resetKey = `${listTab}|${archived}|${sort}|${needle}`
   const { count, sentinelRef } = useRenderWindow(resetKey, total)
   const windowed = visible?.slice(0, count)
 
@@ -268,10 +257,10 @@ export default function BoardPage() {
           <Composer onCreated={onCreated} defaultPublic={tab === 'public'} />
         )}
 
-        {/* Board toolbar: visibility filter (Mes notes) / bulk actions (archive) + sort. */}
+        {/* Board toolbar: bulk actions (archive) + sort. */}
         <div className="kp-board__toolbar">
           <div className="kp-board__toolbar-left">
-            {archived ? (
+            {archived && (
               <>
                 <button
                   type="button"
@@ -291,8 +280,6 @@ export default function BoardPage() {
                   </button>
                 )}
               </>
-            ) : (
-              tab === 'mine' && <VisibilityFilter value={vis} onChange={setVis} />
             )}
           </div>
           <SortSelect value={sort} onChange={setSort} />

@@ -374,7 +374,7 @@ describe('BoardPage', () => {
     expect(screen.queryByRole('button', { name: 'Vieux mémo' })).not.toBeInTheDocument()
   })
 
-  // --- E11: board controls (search reset, visibility filter, sort) ---
+  // --- E11: board controls (search reset, sort) ---
 
   it('clears the search with the ✕ button (E11)', async () => {
     stubBoard()
@@ -388,22 +388,6 @@ describe('BoardPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Effacer la recherche' }))
     expect(search).toHaveValue('')
     expect(screen.getByRole('button', { name: 'Courses du week-end' })).toBeInTheDocument()
-  })
-
-  it('filters Mes notes by visibility, all selected by default (E11)', async () => {
-    stubBoard()
-    renderBoard()
-    await screen.findByRole('button', { name: 'Courses du week-end' })
-    // Default « Tout »: both the private and the public own note show.
-    expect(screen.getByRole('button', { name: 'Repas de quartier' })).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('radio', { name: 'Privé' }))
-    expect(screen.getByRole('button', { name: 'Courses du week-end' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Repas de quartier' })).not.toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('radio', { name: 'Public' }))
-    expect(screen.queryByRole('button', { name: 'Courses du week-end' })).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Repas de quartier' })).toBeInTheDocument()
   })
 
   it('sorts the board by title A→Z (E11)', async () => {
