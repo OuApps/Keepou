@@ -1,0 +1,111 @@
+/*
+ * Keepou — app-wide modal dialogs (E11): the hard-delete / bulk-delete
+ * confirmation (ConfirmDialog) and the « Modifier mon nom » profile dialog.
+ * Fixed, viewport-centered, portal-rendered — reuses the design tokens.
+ */
+.kp-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(46, 42, 32, 0.4);
+}
+
+.kp-dialog__card {
+  width: min(420px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-panel);
+  box-shadow: var(--sh-card);
+  padding: 22px;
+}
+
+.kp-dialog__title {
+  margin: 0 0 8px;
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--ink);
+}
+
+.kp-dialog__text {
+  margin: 0 0 18px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.kp-dialog__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.kp-dialog__cancel {
+  border: none;
+  background: var(--track);
+  color: var(--ink);
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 9px 18px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+}
+
+.kp-dialog__ok {
+  border: none;
+  background: var(--grad-primary);
+  color: #fff;
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 9px 18px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+}
+
+/* Irreversible actions (hard delete) — solid terracotta. */
+.kp-dialog__ok--danger {
+  background: var(--brand-salsa);
+}
+
+/* --- Profile dialog fields (« Modifier mon nom ») --- */
+.kp-dialog__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 4px 0 18px;
+}
+
+.kp-dialog__label {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.kp-dialog__input {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 10px 12px;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.kp-dialog__input:focus {
+  outline: none;
+  border-color: var(--ink-mute);
+}
+
+.kp-dialog__error {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--brand-salsa);
+}

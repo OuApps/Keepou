@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { fetchMe, type TokenPair, type UserOut } from '../api/auth'
+import { fetchMe, updateMe, type TokenPair, type UserOut } from '../api/auth'
 import { ApiError, SESSION_EXPIRED_EVENT } from '../api/client'
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from './storage'
 
@@ -26,6 +26,8 @@ interface AuthContextValue {
   signIn: (tokens: TokenPair) => Promise<void>
   /** Logout is client-side (ARCHITECTURE §8): drop the tokens. */
   signOut: () => void
+  /** Change the current user's display name (E11), reflected immediately in the UI. */
+  changeDisplayName: (displayName: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -102,9 +104,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus('anonymous')
   }, [])
 
+  const changeDisplayName = useCallback(async (displayName: string) => {
+    const updated = await updateMe(displayName)
+    setUser(updated)
+  }, [])
+
   const value = useMemo<AuthContextValue>(
-    () => ({ status, user, signIn, signOut }),
-    [status, user, signIn, signOut],
+    () => ({ status, user, signIn, signOut, changeDisplayName }),
+    [status, user, signIn, signOut, changeDisplayName],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

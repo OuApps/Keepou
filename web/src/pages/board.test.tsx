@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { NoteOut } from '../api/notes'
@@ -372,5 +372,160 @@ describe('BoardPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Actions pour Vieux mémo' }))
     fireEvent.click(screen.getByRole('menuitem', { name: 'Désarchiver' }))
     expect(screen.queryByRole('button', { name: 'Vieux mémo' })).not.toBeInTheDocument()
+  })
+
+  // --- E11: board controls (search reset, visibility filter, sort) ---
+
+  it('clears the search with the ✕ button (E11)', async () => {
+    stubBoard()
+    renderBoard()
+    await screen.findByRole('button', { name: 'Courses du week-end' })
+
+    const search = screen.getByLabelText('Rechercher dans mes notes…')
+    fireEvent.change(search, { target: { value: 'introuvable' } })
+    expect(screen.getByText('Aucune note ne correspond à ta recherche.')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Effacer la recherche' }))
+    expect(search).toHaveValue('')
+    expect(screen.getByRole('button', { name: 'Courses du week-end' })).toBeInTheDocument()
+  })
+
+  it('filters Mes notes by visibility, all selected by default (E11)', async () => {
+    stubBoard()
+    renderBoard()
+    await screen.findByRole('button', { name: 'Courses du week-end' })
+    // Default « Tout »: both the private and the public own note show.
+    expect(screen.getByRole('button', { name: 'Repas de quartier' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Privé' }))
+    expect(screen.getByRole('button', { name: 'Courses du week-end' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Repas de quartier' })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Public' }))
+    expect(screen.queryByRole('button', { name: 'Courses du week-end' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Repas de quartier' })).toBeInTheDocument()
+  })
+
+  it('sorts the board by title A→Z (E11)', async () => {
+    stubBoard({
+      '/api/notes?tab=mine': () =>
+        json(200, [note({ id: 'n-z', title: 'Zèbre' }), note({ id: 'n-a', title: 'Avocat' })]),
+    })
+    renderBoard()
+    await screen.findByRole('button', { name: 'Zèbre' })
+
+    fireEvent.change(screen.getByLabelText('Trier les notes'), { target: { value: 'title' } })
+    const titles = [...document.querySelectorAll('.kp-note__title')].map((h) => h.textContent)
+    expect(titles).toEqual(['Avocat', 'Zèbre'])
+  })
+
+  // --- E11: hard delete (single + archive multi-select) ---
+
+  it('hard-deletes a note from the card menu after confirmation (E11)', async () => {
+    let deleted = false
+    stubBoard({
+      '/api/notes/n-courses': (init) => {
+        expect(init?.method).toBe('DELETE')
+        deleted = true
+        return new Response(null, { status: 204 })
+      },
+    })
+    renderBoard()
+    await screen.findByRole('button', { name: 'Courses du week-end' })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Actions pour Courses du week-end' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Supprimer définitivement' }))
+    // Nothing deleted until the confirmation is accepted.
+    expect(deleted).toBe(false)
+    fireEvent.click(screen.getByRole('button', { name: 'Supprimer' }))
+
+    await waitFor(() => expect(deleted).toBe(true))
+    expect(screen.queryByRole('button', { name: 'Courses du week-end' })).not.toBeInTheDocument()
+  })
+
+  it('bulk-deletes selected archived notes with « Tout sélectionner » (E11)', async () => {
+    const alpha = note({ id: 'n-a', title: 'Alpha', archived: true })
+    const bravo = note({ id: 'n-b', title: 'Bravo', archived: true })
+    const deleted: string[] = []
+    const del = (id: string) => (init?: RequestInit) => {
+      expect(init?.method).toBe('DELETE')
+      deleted.push(id)
+      return new Response(null, { status: 204 })
+    }
+    stubBoard({
+      '/api/notes?tab=mine&archived=true': () => json(200, [alpha, bravo]),
+      '/api/notes/n-a': del('n-a'),
+      '/api/notes/n-b': del('n-b'),
+    })
+    renderBoard('/?archived=1')
+    await screen.findByRole('button', { name: 'Alpha' })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tout sélectionner' }))
+    expect(screen.getByRole('checkbox', { name: 'Sélectionner Alpha' })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Sélectionner Bravo' })).toBeChecked()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Supprimer définitivement (2)' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Supprimer' }))
+
+    await waitFor(() => expect([...deleted].sort()).toEqual(['n-a', 'n-b']))
+    expect(screen.queryByRole('button', { name: 'Alpha' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Bravo' })).not.toBeInTheDocument()
+  })
+
+  // --- E11: return-state (« retour garde la sélection ») ---
+
+  it('returns to the tab the note was opened from (E11-S1)', async () => {
+    const cine = PUBLIC[0]
+    stubBoard({
+      '/api/notes/n-cine': () => json(200, cine),
+      '/api/notes/n-cine/lock': (init) =>
+        init?.method === 'DELETE'
+          ? new Response(null, { status: 204 })
+          : json(200, {
+              ...cine,
+              locked_by: { id: ME.id, display_name: ME.display_name },
+              lock_expires_at: new Date(Date.now() + 60_000).toISOString(),
+            }),
+    })
+    renderBoard('/?tab=public')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Sorties ciné' }))
+    const title = await screen.findByLabelText('Titre de la note')
+    await waitFor(() => expect(title).toBeEnabled())
+
+    fireEvent.click(screen.getByRole('button', { name: 'Terminé' }))
+
+    // Back on the Public tab (not Mes notes) — the selection survived.
+    expect(await screen.findByRole('button', { name: 'Sorties ciné' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Public' })).toHaveAttribute('aria-selected', 'true')
+  })
+
+  // --- E11-S4: change display name ---
+
+  it('changes the display name from the avatar menu (E11-S4)', async () => {
+    stubBoard({
+      '/api/auth/me': (init) => {
+        if (init?.method === 'PATCH') {
+          expect(JSON.parse(String(init.body))).toEqual({ display_name: 'Marité' })
+          return json(200, { ...ME, display_name: 'Marité' })
+        }
+        return json(200, ME)
+      },
+    })
+    renderBoard()
+    await screen.findByRole('button', { name: 'Courses du week-end' })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Menu du compte' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Modifier mon nom' }))
+
+    const input = screen.getByLabelText('Nom affiché')
+    expect(input).toHaveValue('Marie')
+    fireEvent.change(input, { target: { value: 'Marité' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
+
+    // The dialog closes and the menu reflects the new name.
+    await waitFor(() => expect(screen.queryByLabelText('Nom affiché')).not.toBeInTheDocument())
+    fireEvent.click(screen.getByRole('button', { name: 'Menu du compte' }))
+    expect(screen.getByText('Marité')).toBeInTheDocument()
   })
 })

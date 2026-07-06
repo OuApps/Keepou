@@ -35,3 +35,8 @@ export function register(input: RegisterInput): Promise<TokenPair> {
 export function fetchMe(): Promise<UserOut> {
   return api.get<UserOut>('/api/auth/me')
 }
+
+/** Self-service profile update (E11) — the display name only. */
+export function updateMe(display_name: string): Promise<UserOut> {
+  return api.patch<UserOut>('/api/auth/me', { display_name })
+}

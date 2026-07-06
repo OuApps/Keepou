@@ -206,6 +206,34 @@ def test_token_for_deleted_user_is_401(client) -> None:
     )
 
 
+# --- profile: change display name (E11) ---
+
+
+def test_update_me_changes_display_name(client) -> None:
+    tokens = bootstrap_admin(client)
+    headers = {"Authorization": f"Bearer {tokens['access']}"}
+    res = client.patch("/api/auth/me", json={"display_name": "  Marité  "}, headers=headers)
+    assert res.status_code == 200
+    assert res.json()["display_name"] == "Marité"  # trimmed
+    # Persisted: a fresh `me` reflects the new name.
+    assert client.get("/api/auth/me", headers=headers).json()["display_name"] == "Marité"
+
+
+def test_update_me_requires_a_token(client) -> None:
+    assert client.patch("/api/auth/me", json={"display_name": "Anon"}).status_code == 401
+
+
+def test_update_me_rejects_empty_or_too_long(client) -> None:
+    tokens = bootstrap_admin(client)
+    headers = {"Authorization": f"Bearer {tokens['access']}"}
+
+    def patch_name(name: str):
+        return client.patch("/api/auth/me", json={"display_name": name}, headers=headers)
+
+    assert patch_name("").status_code == 422
+    assert patch_name("x" * 81).status_code == 422
+
+
 # --- password hashing (bcrypt_sha256: no 72-byte truncation) ---
 
 

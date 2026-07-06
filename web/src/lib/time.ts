@@ -21,7 +21,7 @@ export function formatRelative(iso: string, now: Date = new Date()): string {
   const days = Math.floor(hours / 24)
   if (days === 1) return 'hier'
   if (days < 7) return `il y a ${days} j`
-  return `le ${date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}`
+  return `le ${dayOf(date, now)}`
 }
 
 /* --- History timestamps (E6, `Keepou - Historique.dc.html`) --- */
@@ -35,7 +35,14 @@ function calendarDaysAgo(date: Date, now: Date): number {
 const timeOf = (date: Date) =>
   date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 
-const dayOf = (date: Date) => date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
+/** « 12 juin » — with the year (« 12 juin 2020 ») when `date` is not in `now`'s
+ * year, so imported Keep notes (E10/E11) read right instead of looking recent. */
+const dayOf = (date: Date, now?: Date) =>
+  date.toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    ...(now !== undefined && date.getFullYear() !== now.getFullYear() ? { year: 'numeric' } : {}),
+  })
 
 /** History row label: « Aujourd'hui · 14:32 » / « Hier · 18:42 » / « 12 juin · 20:10 ». */
 export function formatVersionWhen(iso: string, now: Date = new Date()): string {
@@ -43,7 +50,7 @@ export function formatVersionWhen(iso: string, now: Date = new Date()): string {
   const days = calendarDaysAgo(date, now)
   if (days <= 0) return `Aujourd'hui · ${timeOf(date)}`
   if (days === 1) return `Hier · ${timeOf(date)}`
-  return `${dayOf(date)} · ${timeOf(date)}`
+  return `${dayOf(date, now)} · ${timeOf(date)}`
 }
 
 /** Day-only, genitive: « d'aujourd'hui » / « d'hier » / « du 12 juin » (confirm title). */
@@ -52,7 +59,7 @@ export function formatVersionDay(iso: string, now: Date = new Date()): string {
   const days = calendarDaysAgo(date, now)
   if (days <= 0) return "d'aujourd'hui"
   if (days === 1) return "d'hier"
-  return `du ${dayOf(date)}`
+  return `du ${dayOf(date, now)}`
 }
 
 /** Day + time, genitive: « d'hier à 18:42 » / « du 12 juin à 20:10 » (confirm body). */
@@ -64,7 +71,7 @@ export function formatVersionAt(iso: string, now: Date = new Date()): string {
 export function formatVersionMoment(iso: string, now: Date = new Date()): string {
   const date = parseApiDate(iso)
   const days = calendarDaysAgo(date, now)
-  const day = days <= 0 ? "aujourd'hui" : days === 1 ? 'hier' : `le ${dayOf(date)}`
+  const day = days <= 0 ? "aujourd'hui" : days === 1 ? 'hier' : `le ${dayOf(date, now)}`
   return `${day} à ${timeOf(date)}`
 }
 

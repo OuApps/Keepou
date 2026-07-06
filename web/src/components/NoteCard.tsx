@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import type { NoteOut, NotePatch } from '../api/notes'
 import { SHADE_CLASS } from '../lib/colors'
 import { parsePreview } from '../lib/preview'
 import { formatRelative } from '../lib/time'
-import { BOARD_COPY } from '../lib/copy'
+import { BOARD_COPY, COMMON_COPY } from '../lib/copy'
+import { ConfirmDialog } from './ConfirmDialog'
 import { InlineText } from './RichText'
 
 /**
@@ -77,21 +78,38 @@ export function NoteCard({
   showAuthor,
   canOrganize = false,
   archivedView = false,
+  selectable = false,
+  selected = false,
   onOrganize,
+  onDelete,
+  onToggleSelect,
 }: {
   note: NoteOut
   showAuthor: boolean
-  /** Owner-only pin/archive affordance (E8). */
+  /** Owner-only pin/archive/delete affordance (E8/E11). */
   canOrganize?: boolean
-  /** In the archived view the only action is « Désarchiver ». */
+  /** In the archived view the actions are « Désarchiver » + « Supprimer ». */
   archivedView?: boolean
+  /** Archive multi-select (E11): show a selection checkbox on the card. */
+  selectable?: boolean
+  selected?: boolean
   onOrganize?: (patch: NotePatch) => void
+  /** Permanent delete of this note (E11) — the board owns the API call. */
+  onDelete?: () => void
+  onToggleSelect?: () => void
 }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const blocks = parsePreview(note.body)
   const badge = badgeColor(note.author_name)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+
+  // Carry the board's current URL so the editor can return exactly here — same
+  // tab, visibility filter and sort (E11-S1, « garde la sélection »).
+  const openNote = () =>
+    navigate(`/note/${note.id}`, { state: { from: location.pathname + location.search } })
 
   useEffect(() => {
     if (!menuOpen) return
@@ -116,20 +134,31 @@ export function NoteCard({
 
   return (
     <article
-      className={`kp-card kp-note ${SHADE_CLASS[note.color]}`}
+      className={`kp-card kp-note ${SHADE_CLASS[note.color]}${selectable ? ' kp-note--selectable' : ''}${selected ? ' kp-note--selected' : ''}`}
       role="button"
       tabIndex={0}
       aria-label={note.title || BOARD_COPY.untitled}
-      onClick={() => navigate(`/note/${note.id}`)}
+      onClick={openNote}
       onKeyDown={(e) => {
         // Keys on the actions button (a child) must not also open the note.
         if (e.target !== e.currentTarget) return
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
-          navigate(`/note/${note.id}`)
+          openNote()
         }
       }}
     >
+      {selectable && (
+        <label className="kp-note__select" onClick={(e) => e.stopPropagation()}>
+          <input
+            type="checkbox"
+            checked={selected}
+            aria-label={BOARD_COPY.selectNote(note.title)}
+            onChange={() => onToggleSelect?.()}
+          />
+        </label>
+      )}
+
       {(note.pinned || canOrganize) && (
         <div className="kp-note__organize" ref={menuRef} onClick={(e) => e.stopPropagation()}>
           {note.pinned && (
@@ -184,6 +213,17 @@ export function NoteCard({
                       </button>
                     </>
                   )}
+                  <button
+                    type="button"
+                    className="kp-menu__item kp-menu__item--danger"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      setConfirmDelete(true)
+                    }}
+                  >
+                    {BOARD_COPY.deleteAction}
+                  </button>
                 </div>
               )}
             </>
@@ -241,6 +281,20 @@ export function NoteCard({
             <span>{BOARD_COPY.privateMeta(formatRelative(note.updated_at))}</span>
           )}
         </div>
+      )}
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title={BOARD_COPY.deleteConfirmTitle}
+          text={BOARD_COPY.deleteConfirmText}
+          confirmLabel={COMMON_COPY.delete}
+          danger
+          onConfirm={() => {
+            setConfirmDelete(false)
+            onDelete?.()
+          }}
+          onCancel={() => setConfirmDelete(false)}
+        />
       )}
     </article>
   )

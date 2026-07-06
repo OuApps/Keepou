@@ -20,6 +20,7 @@
 - [ ] 🔨 **E8** — Polish (PWA, a11y, formatting, **pin + archive**, i18n, quality) · ✅ detailed → [`stories/E8-polish-pwa-a11y-i18n.md`](./stories/E8-polish-pwa-a11y-i18n.md) — *S1–S11 shipped (PWA install surface + minimal SW, a11y pass + ink-contrast policy, FR copy centralized in `lib/copy.ts`, tests + CI green, mobile-keyboard handling, autofill markup, dark tokens WCAG AA, inline bold/italic/headings as-you-type, text under a checkbox, **pin + archive** — `Note.pinned`/`archived` migration, owner-only lock-free PATCH, `?archived=` view, card ⋯ menu + pinned-first ordering, new notebook+pen logo/icon set); remaining: on-device checks only (Android/iOS install & keyboard, Bitwarden)*
 - [ ] **E9** — Database cold backups & restore · ✅ detailed → [`stories/E9-backups-restore.md`](./stories/E9-backups-restore.md) — *Scaleway Object Storage + Railway cron*
 - [x] **E10** — Import from Google Keep · ✅ detailed → [`stories/E10-import-keep.md`](./stories/E10-import-keep.md) — *shipped (Takeout parser, preview/confirm endpoints, validated mockup `Keepou - Import Keep.dc.html`, `/import` flow — upload → review « mode tunnel » → summary —, tests back & front, user how-to)*
+- [x] **E11** — Field-feedback follow-up · ✅ detailed → [`stories/E11-retours-terrain.md`](./stories/E11-retours-terrain.md) — *shipped (board visibility filter + sort selector + search reset + year-in-old-dates + return-state; hard delete from the card, the editor and archive multi-select/select-all; owner pin/archive/delete + `Maj+Entrée` in the editor; self-service display-name change `PATCH /api/auth/me`; windowed board rendering; tests back & front)*
 
 ---
 
@@ -38,6 +39,7 @@
 | **E8** | Polish: PWA, a11y, formatting, i18n, quality | Manifest, accessibility, **inline formatting + text under a checkbox**, **pin + archive**, copy centralization, tests/CI | all |
 | **E9** | Database cold backups & restore | Scheduled off-site `pg_dump`, retention, tested restore | E1 |
 | **E10** | Import from Google Keep | Takeout ZIP upload, server-side parse/mapping, bulk-create private notes | E3 |
+| **E11** | Field-feedback follow-up | Board filter/sort/search-reset/year + return-state, hard delete (card/editor/archive bulk), editor owner actions + Maj+Entrée, display-name change, windowed rendering | E3, E4, E8, E10 |
 
 **Recommended critical path:** `E0 → E1 → E2 → E3 → E4 → E5 → E6`. **E1 (Railway)** is placed
 early on purpose: as soon as the scaffold runs, we wire up continuous deployment so **each
@@ -381,6 +383,46 @@ user how-to written.
 
 ---
 
+## E11 — Field-feedback follow-up
+
+**Goal.** Fold the **field feedback** gathered after the first real use of Keepou
+(notably a ~300-note Google Keep import) into concrete, shippable improvements to
+the board, the editor, deletion and the user profile — additive UX, no new
+product rule.
+
+**Scope — Board (`web/`)**
+- **Visibility filter** on Mes notes (Tout / Public / Privé, default Tout,
+  `?vis=`), **sort selector** (Modifié / Créé / Titre, `?sort=`, pinned first),
+  **search reset** (✕), **year** shown on dates outside the current year, and a
+  **return-state** so opening then closing a note keeps the tab / filter / sort.
+- **Windowed rendering**: render a growing slice (`useRenderWindow`) so a large
+  imported board mounts instantly instead of laying out every card at once.
+
+**Scope — Deletion**
+- **Hard delete** wired to the existing `DELETE /api/notes/{id}`: from the card ⋯
+  menu, from the editor's owner menu, and as a **bulk delete** in the archived
+  view (per-card selection + « Tout sélectionner »), each behind a confirmation.
+
+**Scope — Editor / profile**
+- Editor **owner ⋯ menu** (pin / archive / hard delete) and **`Maj+Entrée`**
+  (save & close, capture-phase so it never inserts a newline).
+- **Change display name**: `PATCH /api/auth/me {display_name}` + a « Modifier mon
+  nom » dialog, reflected immediately in the UI.
+
+**Related rules.** Hard delete concerns **notes** (FR-N6), not accounts — the
+« disable, never delete » rule (claude.md §5) is about **user accounts** and is
+untouched. Server-side permissions (owner/admin) are unchanged; the profile
+endpoint edits only the caller's own display name.
+
+**Done when.** The board is filterable / sortable / resettable and shows real
+years; opening a note preserves the view; notes are hard-deletable from card,
+editor and archive (bulk); the editor exposes pin/archive/delete + `Maj+Entrée`;
+members can rename themselves; large boards mount instantly; tests green in CI.
+
+➡️ **Detailed stories: [`stories/E11-retours-terrain.md`](./stories/E11-retours-terrain.md)**
+
+---
+
 ## Cross-cutting (present in each epic)
 
 - **Visual fidelity**: exact tokens; light **and** dark; desktop **and** mobile.
@@ -392,10 +434,11 @@ user how-to written.
 
 ## Next step
 
-**E0, E1 (core), E2, E3, E4, E5, E6, E7 and E10 are shipped**, and **E8 is
+**E0, E1 (core), E2, E3, E4, E5, E6, E7, E10 and E11 are shipped**, and **E8 is
 in with S1/S3–S10 done** — the whole critical path, access administration,
-the Google Keep import and the polish pass (PWA, a11y, dark-mode AA, inline
-formatting, i18n centralization, quality) are done; E9 is detailed in
+the Google Keep import, the polish pass (PWA, a11y, dark-mode AA, inline
+formatting, i18n centralization, quality) and the first field-feedback
+follow-up (E11) are done; E9 is detailed in
 [`stories/`](./stories/) with acceptance criteria and technical scope.
 Next: **E9 — DB cold backups**, recommended now that real user data
 accumulates; **E8-S2 (archive)** stays design-gated.
@@ -408,3 +451,7 @@ Two points to keep in mind:
 - **E10** (import from Google Keep) is **shipped end-to-end** — mockup validated
   (`design/Keepou - Import Keep.dc.html`), `/import` flow live, tests back & front,
   user how-to in `docs/HOWTO-import-google-keep.md`.
+- **E11** (field-feedback follow-up) is **shipped** — board filter/sort/search-reset/
+  year + return-state, hard delete (card / editor / archive bulk), editor owner
+  actions + `Maj+Entrée`, self-service display-name change, windowed rendering;
+  tests back & front, docs synced.

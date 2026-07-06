@@ -354,6 +354,70 @@ describe('NoteEditor', () => {
     expect(patches[0]).not.toHaveProperty('visibility')
   })
 
+  // --- E11: owner actions (pin / archive / hard delete) + Maj+Entrée ---
+
+  it('archives the note from the owner menu and returns to the board (E11)', async () => {
+    const patches = stubEditor(note())
+    renderEditor()
+    await editorLoaded()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Actions sur la note' }))
+    await act(async () => {
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Archiver' }))
+    })
+
+    expect(patches).toContainEqual({ archived: true })
+    expect(await screen.findByLabelText('Prends une note…')).toBeInTheDocument()
+  })
+
+  it('hard-deletes the note from the owner menu after confirmation (E11)', async () => {
+    const current = note()
+    let deleted = false
+    stubEditor(current, {
+      [`/api/notes/${current.id}`]: (init) => {
+        if (init?.method === 'DELETE') {
+          deleted = true
+          return new Response(null, { status: 204 })
+        }
+        return json(200, current)
+      },
+    })
+    renderEditor()
+    await editorLoaded()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Actions sur la note' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Supprimer définitivement' }))
+    // Irreversible → a confirmation before the DELETE.
+    expect(deleted).toBe(false)
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Supprimer' }))
+    })
+
+    await waitFor(() => expect(deleted).toBe(true))
+    expect(await screen.findByLabelText('Prends une note…')).toBeInTheDocument()
+  })
+
+  it('hides the owner menu from non-owners (E11)', async () => {
+    stubEditor(note({ owner_id: 'u-lea', author_name: 'Léa' }))
+    renderEditor()
+    await editorLoaded()
+    expect(screen.queryByRole('button', { name: 'Actions sur la note' })).not.toBeInTheDocument()
+  })
+
+  it('saves and closes on Maj+Entrée without inserting a newline (E11)', async () => {
+    const patches = stubEditor(note())
+    renderEditor()
+    const title = await editorLoaded()
+
+    fireEvent.change(title, { target: { value: 'Enregistré au clavier' } })
+    fireEvent.keyDown(title, { key: 'Enter', shiftKey: true })
+
+    // Back on the board, and the latest title was flushed (not left as a newline).
+    expect(await screen.findByLabelText('Prends une note…')).toBeInTheDocument()
+    await waitFor(() => expect(patches).toHaveLength(1))
+    expect(patches[0].title).toBe('Enregistré au clavier')
+  })
+
   it('shows « Note introuvable. » when the note cannot be loaded', async () => {
     stubFetch({
       '/api/auth/me': () => json(200, ME),

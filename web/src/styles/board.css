@@ -40,6 +40,148 @@
   outline: none;
 }
 
+/* Explicit ✕ (E11) — hide the browser's native search-cancel to avoid a double. */
+.kp-search__input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.kp-search__clear {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--ink-mute);
+  cursor: pointer;
+}
+
+.kp-search__clear:hover {
+  color: var(--ink);
+  background: rgba(46, 42, 32, 0.06);
+}
+
+[data-theme='dark'] .kp-search__clear:hover {
+  background: rgba(243, 236, 221, 0.1);
+}
+
+/* --- Board toolbar (E11): visibility filter / bulk actions + sort --- */
+.kp-board__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.kp-board__toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-height: 34px;
+}
+
+/* Segmented visibility filter (Tout / Public / Privé) — mirrors .kp-tabs. */
+.kp-segmented {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--track);
+  border-radius: var(--r-pill);
+  padding: 4px;
+}
+
+.kp-segmented__opt {
+  border: none;
+  background: none;
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.kp-segmented__opt--active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(46, 42, 32, 0.14);
+}
+
+/* Sort selector */
+.kp-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-soft);
+}
+
+.kp-sort__icon {
+  flex: none;
+  color: var(--ink-mute);
+}
+
+.kp-sort__select {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--r-pill);
+  padding: 7px 12px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.kp-sort__select:focus {
+  outline: none;
+  border-color: var(--ink-mute);
+}
+
+/* Archive bulk actions */
+.kp-board__selectall {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--r-pill);
+  padding: 7px 14px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.kp-board__selectall:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.kp-board__bulk-delete {
+  border: none;
+  background: var(--brand-salsa);
+  color: #fff;
+  border-radius: var(--r-pill);
+  padding: 8px 15px;
+  font-family: var(--font-brand);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Render-window sentinel (E11-S5) — invisible scroll anchor. */
+.kp-grid__sentinel {
+  height: 1px;
+}
+
 /* --- Topbar: tabs pill (Mes notes / Public) --- */
 .kp-topbar__tabs {
   flex: none;
@@ -385,6 +527,38 @@
 /* Reuse the .kp-menu popover, sized to sit inside a narrow card. */
 .kp-note__menu {
   min-width: 160px;
+}
+
+/* Destructive menu item (hard delete, E11). */
+.kp-menu__item--danger {
+  color: var(--brand-salsa);
+}
+
+/* Archive multi-select (E11): a checkbox top-left; pad the card so it never
+ * overlaps the title, and outline the selected cards. */
+.kp-note--selectable {
+  padding-top: 38px;
+}
+
+.kp-note__select {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: inline-flex;
+  z-index: 1;
+}
+
+.kp-note__select input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--check);
+}
+
+.kp-note--selected {
+  outline: 2px solid var(--check);
+  outline-offset: 1px;
 }
 
 /* Keep the title clear of the actions cluster. */

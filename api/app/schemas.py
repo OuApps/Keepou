@@ -39,6 +39,13 @@ class RefreshIn(BaseModel):
     refresh: str
 
 
+class ProfilePatch(BaseModel):
+    """Self-service profile update (E11): the display name only — email stays the
+    identity, role/status remain admin-only (never self-editable)."""
+
+    display_name: str = Field(min_length=1, max_length=80)
+
+
 class TokenPair(BaseModel):
     access: str
     refresh: str

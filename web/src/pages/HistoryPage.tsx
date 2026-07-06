@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { lockConflictOf } from '../api/locks'
 import { getNote, type NoteColor, type NoteOut } from '../api/notes'
 import { listVersions, restoreVersion, type NoteVersionOut } from '../api/versions'
@@ -29,6 +29,9 @@ export default function HistoryPage() {
   const { id } = useParams()
   const noteId = id!
   const navigate = useNavigate()
+  const location = useLocation()
+  // Carry the board return path back through the editor (E11-S1).
+  const editorState = { from: (location.state as { from?: string } | null)?.from ?? '/' }
   const [note, setNote] = useState<NoteOut | null>(null)
   const [versions, setVersions] = useState<NoteVersionOut[] | null>(null)
   const [failed, setFailed] = useState(false)
@@ -55,14 +58,16 @@ export default function HistoryPage() {
     }
   }, [noteId])
 
-  const backToEditor = () => navigate(`/note/${noteId}`)
+  const backToEditor = () => navigate(`/note/${noteId}`, { state: editorState })
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') navigate(`/note/${noteId}`)
+      if (e.key === 'Escape') navigate(`/note/${noteId}`, { state: editorState })
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
+    // editorState is derived from location.state (stable across renders here).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate, noteId])
 
   if (failed) {
@@ -104,7 +109,7 @@ export default function HistoryPage() {
     try {
       await restoreVersion(noteId, confirming.id)
       // Back to the editor: it reloads the note and shows the restored content.
-      navigate(`/note/${noteId}`)
+      navigate(`/note/${noteId}`, { state: editorState })
     } catch (error) {
       const conflict = lockConflictOf(error)
       setRestoreError(
