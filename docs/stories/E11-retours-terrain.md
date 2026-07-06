@@ -209,3 +209,37 @@ Removed: `web/src/components/VisibilityFilter.tsx`, the `?vis=` parsing / state 
 client filter in `BoardPage.tsx`, the `filterLabel` / `filterAll` / `filterPublic`
 / `filterPrivate` copy in `web/src/lib/copy.ts`, and the associated front test.
 The « Mes notes / Public » tab and the sort selector are unchanged.
+
+---
+
+## Follow-up — density selector & instant open/close
+
+Two field asks after living with a large imported board:
+
+- **Density selector.** Next to the sort selector, a native `<select>` **Notes
+  entières / Aperçu** (`?density=`, default « Notes entières »). « Aperçu » caps
+  each card body (`.kp-note__body--compact`, `max-height` + `overflow: hidden`) so
+  long notes stop forcing a long scroll and more cards fit on one screen. It is
+  display-only — it never changes which notes show or their order, and so is not
+  part of the render-window reset key. Copy: `densityLabel` / `densityFull` /
+  `densityCompact` in `web/src/lib/copy.ts`; component
+  `web/src/components/DensitySelect.tsx`.
+
+- **Instant open / close.** Opening or closing a note flashed « Chargement… »
+  because the editor is a separate route: opening always refetched the note, and
+  closing remounted BoardPage from a blank state and refetched the whole list.
+  Now:
+  - a **module-level board cache** (`web/src/lib/boardCache.ts`) keeps the
+    last-fetched lists across the editor round-trip; BoardPage renders the cached
+    list immediately (stale-while-revalidate) and reconciles with a background
+    `listNotes()`. The editor **upserts** the note it just saved (and removes it on
+    archive / delete) so the board reflects the change without waiting for the
+    refetch — the optimistic update. The cache is cleared on sign-out / session
+    expiry.
+  - **opening a card passes the already-loaded note** in navigation state, so the
+    editor paints from it synchronously; `getNote` becomes a silent revalidation
+    that never blocks and never clobbers edits in progress (a bare deep link with
+    no seed still loads normally).
+
+  Tests: `web/src/lib/boardCache.test.ts` (store), a board density test, and an
+  editor seed test (a hung `getNote` still paints instantly from the seed).

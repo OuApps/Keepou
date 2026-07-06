@@ -76,6 +76,7 @@ function PinIcon() {
 export function NoteCard({
   note,
   showAuthor,
+  compact = false,
   canOrganize = false,
   archivedView = false,
   selectable = false,
@@ -86,6 +87,8 @@ export function NoteCard({
 }: {
   note: NoteOut
   showAuthor: boolean
+  /** Compact density (E11 follow-up): cap the card body to a short preview. */
+  compact?: boolean
   /** Owner-only pin/archive/delete affordance (E8/E11). */
   canOrganize?: boolean
   /** In the archived view the actions are « Désarchiver » + « Supprimer ». */
@@ -107,9 +110,12 @@ export function NoteCard({
   const menuRef = useRef<HTMLDivElement>(null)
 
   // Carry the board's current URL so the editor can return exactly here — same
-  // tab, visibility filter and sort (E11-S1, « garde la sélection »).
+  // tab and sort (E11-S1, « garde la sélection ») — plus the already-loaded note
+  // so the editor paints instantly instead of blocking on a fetch (E11 perf).
   const openNote = () =>
-    navigate(`/note/${note.id}`, { state: { from: location.pathname + location.search } })
+    navigate(`/note/${note.id}`, {
+      state: { from: location.pathname + location.search, note },
+    })
 
   useEffect(() => {
     if (!menuOpen) return
@@ -234,7 +240,7 @@ export function NoteCard({
       {note.title !== '' && <h2 className="kp-note__title">{note.title}</h2>}
 
       {blocks.length > 0 && (
-        <div className="kp-note__body">
+        <div className={`kp-note__body${compact ? ' kp-note__body--compact' : ''}`}>
           {blocks.map((block, i) =>
             block.type === 'check' ? (
               <div key={i} className="kp-note__check">

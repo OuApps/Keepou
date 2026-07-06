@@ -10,6 +10,7 @@ import {
   type Visibility,
 } from '../../api/notes'
 import { useAuth } from '../../auth/AuthContext'
+import { removeCachedNote, upsertCachedNote } from '../../lib/boardCache'
 import { useAutosave } from '../../hooks/useAutosave'
 import { useNoteLock, type LockStatus } from '../../hooks/useNoteLock'
 import { parse, serialize } from '../../lib/markdown'
@@ -70,24 +71,36 @@ function draftOf(note: NoteOut): Draft {
 export function NoteEditor({ noteId }: { noteId: string }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const navState = location.state as { from?: string; note?: NoteOut } | null
   // Where « back » goes (E11-S1): the board URL the note was opened from — same
-  // tab / visibility filter / sort — falling back to the board root on a deep link.
-  const returnTo = (location.state as { from?: string } | null)?.from ?? '/'
+  // tab / sort — falling back to the board root on a deep link.
+  const returnTo = navState?.from ?? '/'
+  // The board already holds the full note (body included); opening a card passes
+  // it along so the editor paints immediately instead of blocking on getNote
+  // behind a « Chargement… » (E11 perf). A deep link has no seed and still loads.
+  const seeded = navState?.note ?? null
   const { user } = useAuth()
-  const [note, setNote] = useState<NoteOut | null>(null)
+  const [note, setNote] = useState<NoteOut | null>(seeded)
   const [failed, setFailed] = useState(false)
-  const [draft, setDraft] = useState<Draft | null>(null)
+  const [draft, setDraft] = useState<Draft | null>(() => (seeded ? draftOf(seeded) : null))
   // Owner actions menu (E11-S3): pin / archive / hard delete.
   const [menuOpen, setMenuOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   // "Last saved version" (HANDOFF §3.2) — moves only on a successful persist,
   // independently of the session state rendered by <SaveStatus>.
-  const [lastSaved, setLastSaved] = useState<{ by: string; at: string } | null>(null)
+  const [lastSaved, setLastSaved] = useState<{ by: string; at: string } | null>(() =>
+    seeded ? { by: seeded.author_name, at: seeded.updated_at } : null,
+  )
 
   // The autosave callback reads through refs so a debounced/flushed save
   // always persists the latest keystrokes, never a stale closure.
-  const draftRef = useRef<Draft | null>(null)
+  const draftRef = useRef<Draft | null>(draft)
+  // A seed is already on screen; the mount revalidation must not overwrite it
+  // once the user has started typing (`touchedRef`), and a transient fetch
+  // failure on a seeded open is tolerated rather than surfaced (`seededRef`).
+  const touchedRef = useRef(false)
+  const seededRef = useRef(seeded !== null)
   const isOwner = note !== null && user !== null && note.owner_id === user.id
   const isOwnerRef = useRef(isOwner)
   isOwnerRef.current = isOwner
@@ -103,6 +116,8 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     draftRef.current = next
     setDraft(next)
     setLastSaved({ by: fresh.author_name, at: fresh.updated_at })
+    // Keep the board cache fresh so a return doesn't need to refetch (E11 perf).
+    upsertCachedNote(fresh)
   }, [])
 
   const afterSave = (updated: NoteOut) => {
@@ -110,6 +125,8 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     // draft keeps the local keystrokes.
     setNote(updated)
     setLastSaved({ by: user?.display_name ?? updated.author_name, at: updated.updated_at })
+    // The board reflects this edit optimistically on return, no refetch needed.
+    upsertCachedNote(updated)
   }
 
   const editableRef = useRef(false)
@@ -178,14 +195,18 @@ export function NoteEditor({ noteId }: { noteId: string }) {
   editableRef.current = editable
   const readOnly = !editable
 
+  // Load (deep link) or silently revalidate (seeded open) the note on mount.
+  // With a seed the content is already painted, so this refresh never blocks and
+  // never clobbers edits in progress, and a transient failure is swallowed.
   useEffect(() => {
     let cancelled = false
     getNote(noteId)
       .then((loaded) => {
-        if (!cancelled) applyServer(loaded)
+        if (cancelled) return
+        if (!touchedRef.current && lockStatusRef.current !== 'mine') applyServer(loaded)
       })
       .catch(() => {
-        if (!cancelled) setFailed(true)
+        if (!cancelled && !seededRef.current) setFailed(true)
       })
     return () => {
       cancelled = true
@@ -194,6 +215,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
 
   const edit = (patch: Partial<Draft>, immediate = false) => {
     if (draftRef.current === null || !editableRef.current) return
+    touchedRef.current = true
     const next = { ...draftRef.current, ...patch }
     draftRef.current = next
     setDraft(next)
@@ -227,10 +249,14 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     setMenuOpen(false)
     if (note === null) return
     const pinned = !note.pinned
-    setNote({ ...note, pinned })
+    const updated = { ...note, pinned }
+    setNote(updated)
+    upsertCachedNote(updated)
     patchNote(noteId, { pinned }).catch(() => {
       // Revert on failure (the board would show the truthful state on return).
-      setNote((current) => (current === null ? current : { ...current, pinned: !pinned }))
+      const reverted = { ...updated, pinned: !pinned }
+      setNote(reverted)
+      upsertCachedNote(reverted)
     })
   }
 
@@ -239,6 +265,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     await flush()
     try {
       await patchNote(noteId, { archived: true })
+      removeCachedNote(noteId) // leaves every board; the archived view refetches
       navigate(returnTo)
     } catch {
       // Stay in the editor; nothing was archived.
@@ -249,6 +276,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     setConfirmDelete(false)
     try {
       await deleteNote(noteId)
+      removeCachedNote(noteId)
       navigate(returnTo)
     } catch {
       // Stay in the editor; nothing was deleted.

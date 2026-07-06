@@ -82,6 +82,11 @@ export const BOARD_COPY = {
   sortCreated: 'Date de création',
   sortTitle: 'Titre (A→Z)',
 
+  // Density selector (E11 follow-up) — full cards vs. capped previews
+  densityLabel: 'Densité d’affichage',
+  densityFull: 'Notes entières',
+  densityCompact: 'Aperçu',
+
   // Archived view (E8) + pin / archive card actions
   archivedTitle: 'Notes archivées',
   archivedBack: 'Retour au board',

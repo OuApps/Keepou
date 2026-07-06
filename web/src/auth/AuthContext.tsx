@@ -9,6 +9,7 @@ import {
 } from 'react'
 import { fetchMe, updateMe, type TokenPair, type UserOut } from '../api/auth'
 import { ApiError, SESSION_EXPIRED_EVENT } from '../api/client'
+import { clearBoardCache } from '../lib/boardCache'
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from './storage'
 
 /**
@@ -77,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // A 401 that survived the refresh retry anywhere in the app ends the session.
   useEffect(() => {
     const onExpired = () => {
+      clearBoardCache()
       setUser(null)
       setStatus('anonymous')
     }
@@ -100,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(() => {
     clearTokens()
+    clearBoardCache()
     setUser(null)
     setStatus('anonymous')
   }, [])

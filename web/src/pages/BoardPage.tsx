@@ -11,12 +11,20 @@ import {
 import { useAuth } from '../auth/AuthContext'
 import { Composer } from '../components/Composer'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { DensitySelect, type Density } from '../components/DensitySelect'
 import { NoteCard } from '../components/NoteCard'
 import { NoteGrid } from '../components/NoteGrid'
 import { SortSelect, type SortKey } from '../components/SortSelect'
 import { TabSwitch } from '../components/TabSwitch'
 import { Topbar } from '../components/Topbar'
 import { useRenderWindow } from '../hooks/useRenderWindow'
+import {
+  boardKey,
+  getCachedBoard,
+  setCachedBoard,
+  subscribeBoards,
+  updateCachedBoard,
+} from '../lib/boardCache'
 import { BOARD_COPY, COMMON_COPY } from '../lib/copy'
 
 /**
@@ -67,6 +75,10 @@ function parseSort(value: string | null): SortKey {
   return value === 'created' || value === 'title' ? value : 'modified'
 }
 
+function parseDensity(value: string | null): Density {
+  return value === 'compact' ? 'compact' : 'full'
+}
+
 export default function BoardPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -74,7 +86,7 @@ export default function BoardPage() {
   const archived = params.get('archived') === '1'
   const tab: BoardTab = params.get('tab') === 'public' ? 'public' : 'mine'
   const sort = parseSort(params.get('sort'))
-  const [notes, setNotes] = useState<NoteOut[] | null>(null)
+  const density = parseDensity(params.get('density'))
   const [failed, setFailed] = useState(false)
   const [organizeFailed, setOrganizeFailed] = useState(false)
   const [query, setQuery] = useState('')
@@ -85,22 +97,38 @@ export default function BoardPage() {
   // The archived view is always the caller's own notes, regardless of tab.
   const listTab: BoardTab = archived ? 'mine' : tab
 
+  // The notes live in a cross-navigation cache (E11 perf): returning from the
+  // editor paints the cached list instantly instead of flashing « Chargement… »,
+  // and the edit made in the editor is already merged in. Local state mirrors the
+  // cache (the board's own optimistic writes and the editor's upserts both land
+  // there and emit here) — plain setState, so React batches it normally.
+  const key = boardKey(listTab, archived)
+  const [notes, setNotes] = useState<NoteOut[] | null>(() => getCachedBoard(key) ?? null)
+
+  useEffect(() => {
+    setNotes(getCachedBoard(key) ?? null)
+    return subscribeBoards(() => setNotes(getCachedBoard(key) ?? null))
+  }, [key])
+
+  // Stale-while-revalidate: the cached list (if any) is already on screen; fetch
+  // in the background and reconcile so membership and other-device edits catch up.
   useEffect(() => {
     let cancelled = false
-    setNotes(null)
     setFailed(false)
     setSelected(new Set())
     listNotes(listTab, archived)
       .then((list) => {
-        if (!cancelled) setNotes(list)
+        if (!cancelled) setCachedBoard(key, list)
       })
       .catch(() => {
-        if (!cancelled) setFailed(true)
+        // Only a first visit (nothing cached) surfaces the error; a stale-but-
+        // present list keeps showing rather than blanking on a transient failure.
+        if (!cancelled && getCachedBoard(key) === undefined) setFailed(true)
       })
     return () => {
       cancelled = true
     }
-  }, [listTab, archived])
+  }, [listTab, archived, key])
 
   // Merge URL params so switching a control keeps the others (and the omitted
   // default keeps the URL clean).
@@ -115,18 +143,20 @@ export default function BoardPage() {
 
   const switchTab = (next: BoardTab) => updateParams({ tab: next === 'mine' ? null : 'public' })
   const setSort = (next: SortKey) => updateParams({ sort: next === 'modified' ? null : next })
+  const setDensity = (next: Density) => updateParams({ density: next === 'full' ? null : next })
 
   const returnTo = `/${params.toString() === '' ? '' : `?${params.toString()}`}`
   // A freshly created note opens straight in the editor; it carries the board's
-  // URL so closing it returns to the same tab / filter / sort (E11-S1).
-  const onCreated = (note: NoteOut) => navigate(`/note/${note.id}`, { state: { from: returnTo } })
+  // URL (return to the same tab / sort, E11-S1) and the note itself so the editor
+  // paints without a fetch (E11 perf).
+  const onCreated = (note: NoteOut) =>
+    navigate(`/note/${note.id}`, { state: { from: returnTo, note } })
 
   // Pin / archive (E8) — optimistic: a (un)archived note leaves the current
   // view, a (un)pinned note re-sorts. On failure we resync from the server.
   const onOrganize = (target: NoteOut, patch: NotePatch) => {
     setOrganizeFailed(false)
-    setNotes((current) => {
-      if (current === null) return current
+    updateCachedBoard(key, (current) => {
       const leaves = patch.archived !== undefined // archive toggles cross views
       return leaves
         ? current.filter((n) => n.id !== target.id)
@@ -134,15 +164,13 @@ export default function BoardPage() {
     })
     patchNote(target.id, patch).catch(() => {
       setOrganizeFailed(true)
-      listNotes(listTab, archived)
-        .then(setNotes)
-        .catch(() => setFailed(true))
+      void resync()
     })
   }
 
   const resync = () =>
     listNotes(listTab, archived)
-      .then(setNotes)
+      .then((list) => setCachedBoard(key, list))
       .catch(() => setFailed(true))
 
   // Hard delete (E11) — optimistic removal, resync on failure. Works for a
@@ -151,7 +179,7 @@ export default function BoardPage() {
     if (ids.length === 0) return
     setOrganizeFailed(false)
     const removing = new Set(ids)
-    setNotes((current) => (current === null ? current : current.filter((n) => !removing.has(n.id))))
+    updateCachedBoard(key, (current) => current.filter((n) => !removing.has(n.id)))
     setSelected((current) => {
       const next = new Set(current)
       for (const id of ids) next.delete(id)
@@ -282,7 +310,10 @@ export default function BoardPage() {
               </>
             )}
           </div>
-          <SortSelect value={sort} onChange={setSort} />
+          <div className="kp-board__toolbar-right">
+            <DensitySelect value={density} onChange={setDensity} />
+            <SortSelect value={sort} onChange={setSort} />
+          </div>
         </div>
 
         {organizeFailed && (
@@ -304,6 +335,7 @@ export default function BoardPage() {
                 key={note.id}
                 note={note}
                 showAuthor={!archived && tab === 'public'}
+                compact={density === 'compact'}
                 canOrganize={canOrganize(note)}
                 archivedView={archived}
                 selectable={archived}
