@@ -88,35 +88,6 @@
   min-height: 34px;
 }
 
-/* Segmented visibility filter (Tout / Public / Privé) — mirrors .kp-tabs. */
-.kp-segmented {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: var(--track);
-  border-radius: var(--r-pill);
-  padding: 4px;
-}
-
-.kp-segmented__opt {
-  border: none;
-  background: none;
-  padding: 6px 14px;
-  border-radius: var(--r-pill);
-  font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink-soft);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.kp-segmented__opt--active {
-  background: var(--surface);
-  color: var(--ink);
-  box-shadow: 0 1px 2px rgba(46, 42, 32, 0.14);
-}
-
 /* Sort selector */
 .kp-sort {
   display: inline-flex;

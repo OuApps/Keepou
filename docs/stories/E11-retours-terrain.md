@@ -26,16 +26,18 @@ plus one small profile endpoint.
 | 7 | Maj + Entrée pour enregistrer une note en cours d'édition | E11-S3 |
 | 8 | Rendu fenêtré pour ne pas tout charger (300 notes, démarrage lent) | E11-S5 |
 | 9 | Trier par date de dernière modification | E11-S1 |
-| 10 / 11 | Afficher tout / public / privé — « tout » par défaut | E11-S1 |
+| 10 / 11 | Afficher tout / public / privé — couvert par l'onglet « Mes notes / Public » | E11-S1 |
 | 12 | Afficher l'année en plus de la date (notes Keep anciennes) | E11-S1 |
 
 ---
 
 ## Stories at a glance
 
-- [x] **E11-S1** — Board list controls: visibility filter (Tout/Public/Privé),
-      sort selector (Modifié/Créé/Titre), search reset (✕), year in old dates,
-      and preserving the board view when returning from the editor
+- [x] **E11-S1** — Board list controls: sort selector (Modifié/Créé/Titre),
+      search reset (✕), year in old dates, and preserving the board view when
+      returning from the editor. (A separate Tout/Public/Privé visibility filter
+      was shipped then removed — it duplicated the top-right « Mes notes / Public »
+      tab; see the follow-up note below.)
 - [x] **E11-S2** — Hard delete: card ⋯ « Supprimer définitivement » (confirm) +
       archive multi-select with « Tout sélectionner » and a bulk delete
 - [x] **E11-S3** — Editor: owner ⋯ menu (pin / archive / hard delete) + `Maj+Entrée`
@@ -48,16 +50,16 @@ plus one small profile endpoint.
 
 ## E11-S1 — Board list controls & return-state · L
 
-**Goal.** Make a large, imported board actually navigable: filter by
-visibility, sort it, clear the search in one click, read real years on old
-notes, and never lose your place when you open and close a note.
+**Goal.** Make a large, imported board actually navigable: sort it, clear the
+search in one click, read real years on old notes, and never lose your place
+when you open and close a note.
 
 **Tasks**
-- **Visibility filter (#10/#11).** On **Mes notes**, a segmented control
-  **Tout / Public / Privé** (default **Tout**), driven by `?vis=all|public|private`
-  (deep-linkable). Client-side filter over the already-loaded own notes
-  (« Mes notes » returns both private and owned-public). Hidden on the **Public**
-  tab (all public there) and in the archived view.
+- **Visibility filter (#10/#11) — removed.** A segmented **Tout / Public / Privé**
+  control was shipped on **Mes notes** (driven by `?vis=`) but then removed: it
+  duplicated the top-right **« Mes notes / Public »** tab that already separates
+  own private notes from public ones, so users saw two overlapping public/privé
+  toggles. See the follow-up note at the end of this story.
 - **Sort selector (#9).** **Modifié** (last edit, default) / **Créé** (creation
   date) / **Titre** (A→Z, accent-insensitive), driven by `?sort=`. Client-side,
   **pinned notes always first**. « Modifié » matches the server's default order,
@@ -70,16 +72,15 @@ notes, and never lose your place when you open and close a note.
   so imported Keep notes read correctly. Recent dates are unchanged.
 - **Return-state (#1).** Opening a note carries the board's current URL as
   navigation state (`from`); the editor's back / close / `Échap` returns there,
-  preserving the tab, the visibility filter and the sort.
+  preserving the tab and the sort.
 
 **Acceptance criteria**
-- [x] Mes notes can be filtered Tout / Public / Privé, Tout selected by default.
 - [x] The board can be sorted by last edit (default), creation date or title,
       pinned always first.
 - [x] The search field shows a ✕ that clears it and refocuses it.
 - [x] Dates outside the current year show the year, on cards and in history.
-- [x] Opening then closing a note returns to the same tab + filter + sort.
-- [x] Front tests cover filter, sort, reset, year and return-state.
+- [x] Opening then closing a note returns to the same tab + sort.
+- [x] Front tests cover sort, reset, year and return-state.
 
 ---
 
@@ -184,14 +185,27 @@ the cost was the DOM, so the window is purely client-side.
 
 ## Definition of "E11 done"
 
-- [x] Board is filterable (Tout/Public/Privé), sortable (Modifié/Créé/Titre),
-      the search resets in one click, and old notes show their year.
-- [x] Opening and closing a note preserves the tab, filter and sort.
+- [x] Board is sortable (Modifié/Créé/Titre), the search resets in one click,
+      and old notes show their year.
+- [x] Opening and closing a note preserves the tab and sort.
 - [x] Notes can be hard-deleted from the card, the editor, and in bulk from the
       archive (select-all included), each behind a confirmation.
 - [x] Pin / archive / delete are reachable from the editor; `Shift+Enter` saves.
 - [x] Members can change their display name.
 - [x] Large boards mount instantly (windowed rendering).
 - [x] Front + back tests green in CI; docs (EPICS, ARCHITECTURE, HANDOFF §7) synced.
-</content>
-</invoke>
+
+---
+
+## Follow-up — visibility filter removed (duplicate of the tab)
+
+The E11-S1 **Tout / Public / Privé** visibility filter (`?vis=`, rendered under
+the composer) was removed after field use: it overlapped the existing top-right
+**« Mes notes / Public »** tab (`?tab=`), leaving two public/privé toggles on the
+same screen. The tab already separates a member's own notes from the shared
+public board, so the extra filter was redundant.
+
+Removed: `web/src/components/VisibilityFilter.tsx`, the `?vis=` parsing / state /
+client filter in `BoardPage.tsx`, the `filterLabel` / `filterAll` / `filterPublic`
+/ `filterPrivate` copy in `web/src/lib/copy.ts`, and the associated front test.
+The « Mes notes / Public » tab and the sort selector are unchanged.

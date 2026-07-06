@@ -76,12 +76,6 @@ export const BOARD_COPY = {
   emptyMine: 'Aucune note pour l’instant — écris ta première note ci-dessus.',
   emptyPublic: 'Aucune note publique pour l’instant.',
 
-  // Visibility filter (E11) — Mes notes only
-  filterLabel: 'Filtrer par visibilité',
-  filterAll: 'Tout',
-  filterPublic: 'Public',
-  filterPrivate: 'Privé',
-
   // Sort selector (E11)
   sortLabel: 'Trier les notes',
   sortModified: 'Date de modification',

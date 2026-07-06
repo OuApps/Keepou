@@ -300,11 +300,12 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
 > a dedicated server endpoint can be added later if the note count grows.
 >
 > **Board controls (E11)** are all client-side over the loaded set and URL-driven
-> (so they survive an editor round-trip — « retour garde la sélection »): a
-> visibility filter on Mes notes (`?vis=all|public|private`), a sort selector
-> (`?sort=modified|created|title`, pinned always first), a search reset (✕), and
-> a **render window** that reveals cards incrementally so a large imported board
-> mounts instantly. The API still returns the full set in one call.
+> (so they survive an editor round-trip — « retour garde la sélection »): a sort
+> selector (`?sort=modified|created|title`, pinned always first), a search reset
+> (✕), and a **render window** that reveals cards incrementally so a large
+> imported board mounts instantly. The API still returns the full set in one call.
+> Filtering own notes by visibility is served by the top-right « Mes notes /
+> Public » tab (`?tab=`), so no separate visibility filter is needed.
 
 ## 8. Authentication & sessions
 
