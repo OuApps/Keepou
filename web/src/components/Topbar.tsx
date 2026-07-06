@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { BOARD_COPY, COMMON_COPY, IMPORT_COPY } from '../lib/copy'
+import { BOARD_COPY, COMMON_COPY, IMPORT_COPY, PROFILE_COPY } from '../lib/copy'
+import { ProfileDialog } from './ProfileDialog'
 import { ThemeToggle } from './ThemeToggle'
 
 /**
@@ -14,6 +15,7 @@ export function Topbar({ center, tabs }: { center?: ReactNode; tabs?: ReactNode 
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const initial = user?.display_name?.trim().charAt(0).toUpperCase() || '?'
 
@@ -63,6 +65,17 @@ export function Topbar({ center, tabs }: { center?: ReactNode; tabs?: ReactNode 
               <span className="kp-menu__name">{user?.display_name}</span>
               <span className="kp-menu__email">{user?.email}</span>
             </div>
+            <button
+              type="button"
+              className="kp-menu__item"
+              role="menuitem"
+              onClick={() => {
+                setMenuOpen(false)
+                setProfileOpen(true)
+              }}
+            >
+              {PROFILE_COPY.menuEntry}
+            </button>
             {user?.role === 'ADMIN' && (
               <button
                 type="button"
@@ -104,6 +117,8 @@ export function Topbar({ center, tabs }: { center?: ReactNode; tabs?: ReactNode 
           </div>
         )}
       </div>
+
+      {profileOpen && <ProfileDialog onClose={() => setProfileOpen(false)} />}
     </header>
   )
 }

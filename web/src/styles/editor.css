@@ -107,6 +107,39 @@
   font-size: 13px;
 }
 
+/* --- Owner actions menu (E11-S3): pin / archive / hard delete --- */
+.kp-editor__more-wrap {
+  position: relative;
+  flex: none;
+}
+
+.kp-editor__more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--ink-soft);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.kp-editor__more:hover {
+  background: rgba(46, 42, 32, 0.08);
+}
+
+[data-theme='dark'] .kp-editor__more:hover {
+  background: rgba(243, 236, 221, 0.1);
+}
+
+.kp-editor__menu {
+  min-width: 190px;
+}
+
 /* --- Single-editor lock (E5) --- */
 /* The 4 states of `Keepou - Éditeur & verrou.dc.html`. Each bar modifier
  * carries the state's wash/line/ink as variables so the strip (desktop) and

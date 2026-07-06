@@ -279,11 +279,12 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
 | POST | `/api/auth/login` | Sign in | Returns `{access, refresh}`; `401` bad creds, `403` if `DISABLED` |
 | POST | `/api/auth/refresh` | Renew the access token | Takes the refresh token; `401` if invalid/expired |
 | GET | `/api/auth/me` | Current user + role | Bearer-authenticated; drives client route guards |
+| PATCH | `/api/auth/me` | Change own display name | Bearer; `{display_name}` only (1..80, trimmed); email/role/status stay untouched (E11) |
 | GET | `/api/notes?tab=mine\|public` | List notes | `mine` = own; `public` = all members' public (with author); `?archived=true` = own archived view (E8); pinned-first ordering |
 | POST | `/api/notes` | Create note | |
 | GET | `/api/notes/:id` | Read a note | Visibility-checked |
 | PATCH | `/api/notes/:id` | Update note | `title`, `body`, `color`, `visibility`; `pinned`/`archived` (E8, owner-only, lock-free); content is lock-checked for public |
-| DELETE | `/api/notes/:id` | Delete note | Owner or admin |
+| DELETE | `/api/notes/:id` | Hard-delete note (+ its versions) | Owner or admin; surfaced in the UI (E11) from the card menu, the editor owner menu, and archive multi-select bulk delete |
 | POST | `/api/notes/:id/lock` | Acquire / heartbeat lock | `409` if held by another |
 | DELETE | `/api/notes/:id/lock` | Release lock | Ends the session → writes a version |
 | GET | `/api/notes/:id/versions` | Version history | Visibility-checked |
@@ -297,6 +298,13 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
 
 > **Search** is a **client-side filter** over the loaded board in the MVP (FR-S1);
 > a dedicated server endpoint can be added later if the note count grows.
+>
+> **Board controls (E11)** are all client-side over the loaded set and URL-driven
+> (so they survive an editor round-trip — « retour garde la sélection »): a
+> visibility filter on Mes notes (`?vis=all|public|private`), a sort selector
+> (`?sort=modified|created|title`, pinned always first), a search reset (✕), and
+> a **render window** that reveals cards incrementally so a large imported board
+> mounts instantly. The API still returns the full set in one call.
 
 ## 8. Authentication & sessions
 

@@ -107,7 +107,9 @@ export function BlockList({ blocks, onChange, onFlush, readOnly = false }: Block
               onChange={(e) => replace(i, { ...block, text: e.target.value })}
               onBlur={onFlush}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') {
+                // Shift+Enter is the editor's save shortcut (E11-S3), not a
+                // new checkbox — leave it for the editor's capture handler.
+                if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault()
                   if (block.text === '') exitChecklistAt(i)
                   else insertCheckAt(i + 1)

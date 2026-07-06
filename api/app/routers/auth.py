@@ -20,7 +20,7 @@ from sqlmodel import Session, select
 
 from app.db import SessionDep
 from app.models import AllowlistEntry, Role, User, UserStatus
-from app.schemas import AccessOut, LoginIn, RefreshIn, RegisterIn, TokenPair, UserOut
+from app.schemas import AccessOut, LoginIn, ProfilePatch, RefreshIn, RegisterIn, TokenPair, UserOut
 from app.security import (
     DETAIL_ACCOUNT_DISABLED,
     CurrentUser,
@@ -125,4 +125,15 @@ def refresh(data: RefreshIn, session: SessionDep) -> AccessOut:
 
 @router.get("/me", response_model=UserOut)
 def me(user: CurrentUser) -> User:
+    return user
+
+
+@router.patch("/me", response_model=UserOut)
+def update_me(data: ProfilePatch, user: CurrentUser, session: SessionDep) -> User:
+    """Self-service: change your own display name (E11). Only the display name is
+    editable here — email is the identity, role/status stay admin-only."""
+    user.display_name = data.display_name.strip()
+    session.add(user)
+    session.commit()
+    session.refresh(user)
     return user

@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { lockConflictOf } from '../../api/locks'
-import { getNote, patchNote, type NoteColor, type NoteOut, type Visibility } from '../../api/notes'
+import {
+  deleteNote,
+  getNote,
+  patchNote,
+  type NoteColor,
+  type NoteOut,
+  type Visibility,
+} from '../../api/notes'
 import { useAuth } from '../../auth/AuthContext'
 import { useAutosave } from '../../hooks/useAutosave'
 import { useNoteLock, type LockStatus } from '../../hooks/useNoteLock'
@@ -10,6 +17,7 @@ import { formatRelative } from '../../lib/time'
 import { BlockList } from './BlockList'
 import { blockId, withIds, type EditorBlock } from './blocks'
 import { ColorPicker } from './ColorPicker'
+import { ConfirmDialog } from '../ConfirmDialog'
 import {
   LockBanner,
   LockConflictPanel,
@@ -17,7 +25,7 @@ import {
   LockReadOnlyNote,
   LockTakeoverBar,
 } from './LockBanner'
-import { COMMON_COPY, EDITOR_COPY } from '../../lib/copy'
+import { BOARD_COPY, COMMON_COPY, EDITOR_COPY } from '../../lib/copy'
 import { SaveStatus } from './SaveStatus'
 import { VisibilityToggle } from './VisibilityToggle'
 
@@ -61,10 +69,18 @@ function draftOf(note: NoteOut): Draft {
 
 export function NoteEditor({ noteId }: { noteId: string }) {
   const navigate = useNavigate()
+  const location = useLocation()
+  // Where « back » goes (E11-S1): the board URL the note was opened from — same
+  // tab / visibility filter / sort — falling back to the board root on a deep link.
+  const returnTo = (location.state as { from?: string } | null)?.from ?? '/'
   const { user } = useAuth()
   const [note, setNote] = useState<NoteOut | null>(null)
   const [failed, setFailed] = useState(false)
   const [draft, setDraft] = useState<Draft | null>(null)
+  // Owner actions menu (E11-S3): pin / archive / hard delete.
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
   // "Last saved version" (HANDOFF §3.2) — moves only on a successful persist,
   // independently of the session state rendered by <SaveStatus>.
   const [lastSaved, setLastSaved] = useState<{ by: string; at: string } | null>(null)
@@ -185,30 +201,90 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     if (immediate) void flush()
   }
 
-  // Close = back to the board. The pending edit is flushed *before* leaving so
-  // the unmount lock release never overtakes the last save (which would 409).
+  // Close = back to the board (the tab/filter/sort it was opened from, E11-S1).
+  // The pending edit is flushed *before* leaving so the unmount lock release
+  // never overtakes the last save (which would 409).
   const close = async () => {
     await flush()
-    navigate('/')
+    navigate(returnTo)
   }
 
   // « Historique » (E6): same flush-first discipline; the unmount then ends
   // the editing session (lock release / close signal), so the history the
-  // user lands on already contains this session's version.
+  // user lands on already contains this session's version. Carry `from` so
+  // the whole board → editor → history → editor chain keeps its place.
   const openHistory = async () => {
     await flush()
-    navigate(`/note/${noteId}/history`)
+    navigate(`/note/${noteId}/history`, { state: { from: returnTo } })
   }
   const closeRef = useRef(close)
   closeRef.current = close
 
+  // Owner board actions from inside the editor (E11-S3): pin toggles in place;
+  // archive and delete leave for the board. Lock-free owner metadata (E8) — the
+  // server allows them even while another member edits a shared note.
+  const togglePin = () => {
+    setMenuOpen(false)
+    if (note === null) return
+    const pinned = !note.pinned
+    setNote({ ...note, pinned })
+    patchNote(noteId, { pinned }).catch(() => {
+      // Revert on failure (the board would show the truthful state on return).
+      setNote((current) => (current === null ? current : { ...current, pinned: !pinned }))
+    })
+  }
+
+  const archiveNote = async () => {
+    setMenuOpen(false)
+    await flush()
+    try {
+      await patchNote(noteId, { archived: true })
+      navigate(returnTo)
+    } catch {
+      // Stay in the editor; nothing was archived.
+    }
+  }
+
+  const removeNote = async () => {
+    setConfirmDelete(false)
+    try {
+      await deleteNote(noteId)
+      navigate(returnTo)
+    } catch {
+      // Stay in the editor; nothing was deleted.
+    }
+  }
+
+  // Escape closes an open overlay (owner menu / delete confirm) first, and only
+  // then the editor. A ref keeps the window listener from re-subscribing.
+  const overlayOpen = menuOpen || confirmDelete
+  const overlayOpenRef = useRef(overlayOpen)
+  overlayOpenRef.current = overlayOpen
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') void closeRef.current()
+      if (e.key !== 'Escape') return
+      if (overlayOpenRef.current) {
+        setMenuOpen(false)
+        setConfirmDelete(false)
+        return
+      }
+      void closeRef.current()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
+
+  // Dismiss the owner menu on an outside click.
+  useEffect(() => {
+    if (!menuOpen) return
+    const onPointerDown = (e: PointerEvent) => {
+      if (menuRef.current !== null && !menuRef.current.contains(e.target as Node))
+        setMenuOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    return () => document.removeEventListener('pointerdown', onPointerDown)
+  }, [menuOpen])
 
   if (failed) {
     return (
@@ -249,6 +325,15 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         aria-modal="true"
         aria-label={draft.title || EDITOR_COPY.untitled}
         onClick={(e) => e.stopPropagation()}
+        // Maj+Entrée saves & closes (E11-S3). Capture phase + preventDefault so
+        // it never lands as a newline in a paragraph or checkbox line; plain
+        // Enter (handled below) keeps its paragraph / checklist behavior.
+        onKeyDownCapture={(e) => {
+          if (e.key === 'Enter' && e.shiftKey) {
+            e.preventDefault()
+            void close()
+          }
+        }}
       >
         <header className={`kp-editor__bar${barModifier}`}>
           <button
@@ -274,6 +359,51 @@ export function NoteEditor({ noteId }: { noteId: string }) {
           ) : lock.status === 'locked' ? (
             <LockLiveDot />
           ) : null}
+          {isOwner && (
+            <div className="kp-editor__more-wrap" ref={menuRef}>
+              <button
+                type="button"
+                className="kp-editor__more"
+                onClick={() => setMenuOpen((open) => !open)}
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                aria-label={EDITOR_COPY.moreActions}
+              >
+                ⋯
+              </button>
+              {menuOpen && (
+                <div className="kp-menu kp-editor__menu" role="menu">
+                  <button
+                    type="button"
+                    className="kp-menu__item"
+                    role="menuitem"
+                    onClick={togglePin}
+                  >
+                    {note.pinned ? BOARD_COPY.unpin : BOARD_COPY.pin}
+                  </button>
+                  <button
+                    type="button"
+                    className="kp-menu__item"
+                    role="menuitem"
+                    onClick={() => void archiveNote()}
+                  >
+                    {BOARD_COPY.archive}
+                  </button>
+                  <button
+                    type="button"
+                    className="kp-menu__item kp-menu__item--danger"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      setConfirmDelete(true)
+                    }}
+                  >
+                    {BOARD_COPY.deleteAction}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
           <button type="button" className="kp-editor__ok" onClick={() => void close()}>
             {EDITOR_COPY.ok}
           </button>
@@ -345,6 +475,17 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             </button>
           </div>
         </footer>
+
+        {confirmDelete && (
+          <ConfirmDialog
+            title={BOARD_COPY.deleteConfirmTitle}
+            text={BOARD_COPY.deleteConfirmText}
+            confirmLabel={COMMON_COPY.delete}
+            danger
+            onConfirm={() => void removeNote()}
+            onCancel={() => setConfirmDelete(false)}
+          />
+        )}
       </section>
     </div>
   )

@@ -70,3 +70,8 @@ export function getNote(id: string): Promise<NoteOut> {
 export function patchNote(id: string, patch: NotePatch): Promise<NoteOut> {
   return api.patch<NoteOut>(`/api/notes/${id}`, patch)
 }
+
+/** Permanent delete (owner or admin, E3/FR-N6) — removes the note and its history. */
+export function deleteNote(id: string): Promise<void> {
+  return api.delete<void>(`/api/notes/${id}`)
+}

@@ -7,6 +7,7 @@
 @import './history.css';
 @import './admin.css';
 @import './import.css';
+@import './dialog.css';
 
 * {
   box-sizing: border-box;

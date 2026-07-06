@@ -14,6 +14,8 @@ export const COMMON_COPY = {
   cancel: 'Annuler',
   confirm: 'Confirmer',
   close: 'Fermer',
+  save: 'Enregistrer',
+  delete: 'Supprimer',
   networkError: 'Erreur réseau',
 } as const
 
@@ -61,6 +63,7 @@ export const AUTH_COPY = {
 
 export const BOARD_COPY = {
   searchPlaceholder: 'Rechercher dans mes notes…',
+  searchClear: 'Effacer la recherche',
   tablistLabel: 'Tableaux',
   tabMine: 'Mes notes',
   tabPublic: 'Public',
@@ -73,6 +76,18 @@ export const BOARD_COPY = {
   emptyMine: 'Aucune note pour l’instant — écris ta première note ci-dessus.',
   emptyPublic: 'Aucune note publique pour l’instant.',
 
+  // Visibility filter (E11) — Mes notes only
+  filterLabel: 'Filtrer par visibilité',
+  filterAll: 'Tout',
+  filterPublic: 'Public',
+  filterPrivate: 'Privé',
+
+  // Sort selector (E11)
+  sortLabel: 'Trier les notes',
+  sortModified: 'Date de modification',
+  sortCreated: 'Date de création',
+  sortTitle: 'Titre (A→Z)',
+
   // Archived view (E8) + pin / archive card actions
   archivedTitle: 'Notes archivées',
   archivedBack: 'Retour au board',
@@ -84,6 +99,23 @@ export const BOARD_COPY = {
   unarchive: 'Désarchiver',
   pinnedBadge: 'Épinglée',
   organizeFailed: 'Action impossible. Réessaie dans un instant.',
+
+  // Hard delete (E11)
+  deleteAction: 'Supprimer définitivement',
+  deleteConfirmTitle: 'Supprimer définitivement ?',
+  deleteConfirmText:
+    'Cette note et son historique seront supprimés. Cette action est irréversible.',
+  deleteFailed: 'La suppression a échoué. Réessaie dans un instant.',
+
+  // Archive multi-select (E11)
+  selectNote: (title: string) => `Sélectionner ${title || 'la note sans titre'}`,
+  selectAll: 'Tout sélectionner',
+  deselectAll: 'Tout désélectionner',
+  deleteSelected: (n: number) => `Supprimer définitivement (${n})`,
+  bulkDeleteConfirmTitle: (n: number) =>
+    n === 1 ? 'Supprimer 1 note ?' : `Supprimer ${n} notes ?`,
+  bulkDeleteConfirmText:
+    'Les notes sélectionnées et leur historique seront supprimés. Cette action est irréversible.',
 
   // Composer
   composerPlaceholder: 'Prends une note…',
@@ -127,6 +159,17 @@ export const EDITOR_COPY = {
   ok: 'OK',
   back: 'Retour au board',
   notFound: 'Note introuvable.',
+  // Owner actions menu (E11): reuses the board pin/archive/delete wording.
+  moreActions: 'Actions sur la note',
+} as const
+
+export const PROFILE_COPY = {
+  menuEntry: 'Modifier mon nom',
+  title: 'Modifier mon nom affiché',
+  label: 'Nom affiché',
+  save: 'Enregistrer',
+  emptyName: 'Choisis un nom affiché.',
+  failed: 'La modification a échoué. Réessaie dans un instant.',
 } as const
 
 /** « Quelqu'un » only ever shows on degraded payloads — the 409 names the holder. */

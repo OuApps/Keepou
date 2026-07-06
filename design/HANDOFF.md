@@ -370,6 +370,13 @@ Key front hooks: `useAutosave(noteId)` (debounce 1.5 s + flush on blur), `useNot
 - Summary: « N notes importées » · « N doublons ignorés » · « N fichier(s) illisible(s) » · « Tes notes Keep gardent leur date d'origine et restent privées. » · button « Voir mes notes »
 - Server errors (API detail, displayed as-is): « Le fichier n'est pas une archive ZIP valide. » · « Archive trop volumineuse (20 Mo maximum). » · « Aucune note Google Keep trouvée dans l'archive. »
 
+**Field-feedback follow-up (E11):**
+- Board controls: search reset button label « Effacer la recherche » · visibility filter (Mes notes) « Tout » / « Public » / « Privé » (group label « Filtrer par visibilité », « Tout » default) · sort selector (label « Trier les notes ») « Date de modification » / « Date de création » / « Titre (A→Z) ».
+- Hard delete: card / editor menu item « Supprimer définitivement » · confirmation « Supprimer définitivement ? » + « Cette note et son historique seront supprimés. Cette action est irréversible. » + button « Supprimer ».
+- Archive multi-select: per-card « Sélectionner <titre> » · « Tout sélectionner » / « Tout désélectionner » · « Supprimer définitivement (N) » · bulk confirmation « Supprimer N notes ? » + « Les notes sélectionnées et leur historique seront supprimés. Cette action est irréversible. ».
+- Editor owner menu (label « Actions sur la note »): « Épingler » / « Ne plus épingler » · « Archiver » · « Supprimer définitivement ». Shortcut: `Maj+Entrée` saves and closes the note.
+- Profile: avatar-menu entry « Modifier mon nom » · dialog title « Modifier mon nom affiché » · field label « Nom affiché » · button « Enregistrer » · empty error « Choisis un nom affiché. » · failure « La modification a échoué. Réessaie dans un instant. ».
+
 ---
 
 ## 8. Accessibility, responsive, PWA

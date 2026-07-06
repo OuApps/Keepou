@@ -130,7 +130,9 @@ export function MarkdownArea({
       spellCheck
       onInput={emit}
       onKeyDown={(e) => {
-        if (e.key === 'Enter') {
+        // Plain Enter = newline; Shift+Enter is left for the editor's save
+        // shortcut (E11-S3), handled in its capture phase.
+        if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault()
           insertText('\n')
         }
