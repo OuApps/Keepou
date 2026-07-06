@@ -142,6 +142,39 @@ describe('NoteEditor', () => {
     expect(screen.getByText('Marie')).toBeInTheDocument()
   })
 
+  it('paints a seeded note instantly, without waiting for the fetch (E11 perf)', async () => {
+    const seeded = note({ title: 'Titre pré-chargé', visibility: 'PRIVATE' })
+    // The GET hangs — if the editor blocked on it, we'd be stuck on « Chargement… ».
+    let resolveGet: (r: Response) => void = () => {}
+    stubFetch({
+      '/api/auth/me': () => json(200, ME),
+      [`/api/notes/${seeded.id}/lock`]: () => new Response(null, { status: 204 }),
+      [`/api/notes/${seeded.id}`]: (init) => {
+        if (init?.method === 'PATCH') return json(200, seeded)
+        return new Promise<Response>((resolve) => {
+          resolveGet = resolve
+        })
+      },
+    })
+    render(
+      <MemoryRouter
+        initialEntries={[{ pathname: `/note/${seeded.id}`, state: { from: '/', note: seeded } }]}
+      >
+        <App />
+      </MemoryRouter>,
+    )
+
+    // Content from the seed shows and is editable; the loading fallback never appears.
+    const title = await screen.findByDisplayValue('Titre pré-chargé')
+    expect(title).toBeEnabled()
+    expect(screen.queryByText('Chargement…')).not.toBeInTheDocument()
+
+    // Settle the hung revalidation so its state update lands inside act().
+    await act(async () => {
+      resolveGet(json(200, seeded))
+    })
+  })
+
   it('autosaves ~1.5 s after the last keystroke with the consolidated payload', async () => {
     const patches = stubEditor(note())
     renderEditor()

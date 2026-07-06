@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { NoteOut } from '../api/notes'
+import { clearBoardCache } from '../lib/boardCache'
 import App from '../App'
 
 /**
@@ -103,6 +104,11 @@ function renderBoard(path = '/') {
 
 describe('BoardPage', () => {
   beforeEach(() => {
+    // The board cache is module-level (survives navigation). Reset it here, not
+    // in afterEach: by now the previous test's board is unmounted, so clearing
+    // emits to no subscriber (an afterEach clear would setState on the still-
+    // mounted board outside act). Keeps one test's notes from leaking into the next.
+    clearBoardCache()
     localStorage.setItem('keepou.access', 'access-token')
     localStorage.setItem('keepou.refresh', 'refresh-token')
   })
@@ -401,6 +407,23 @@ describe('BoardPage', () => {
     fireEvent.change(screen.getByLabelText('Trier les notes'), { target: { value: 'title' } })
     const titles = [...document.querySelectorAll('.kp-note__title')].map((h) => h.textContent)
     expect(titles).toEqual(['Avocat', 'Zèbre'])
+  })
+
+  it('caps the card body in compact density (E11 follow-up)', async () => {
+    stubBoard()
+    renderBoard()
+    await screen.findByRole('button', { name: 'Courses du week-end' })
+    // Default « Notes entières »: bodies render in full, no cap.
+    expect(document.querySelector('.kp-note__body')).not.toHaveClass('kp-note__body--compact')
+
+    fireEvent.change(screen.getByLabelText('Densité d’affichage'), { target: { value: 'compact' } })
+    const bodies = [...document.querySelectorAll('.kp-note__body')]
+    expect(bodies).not.toHaveLength(0)
+    for (const body of bodies) expect(body).toHaveClass('kp-note__body--compact')
+
+    // Back to full removes the cap.
+    fireEvent.change(screen.getByLabelText('Densité d’affichage'), { target: { value: 'full' } })
+    expect(document.querySelector('.kp-note__body')).not.toHaveClass('kp-note__body--compact')
   })
 
   // --- E11: hard delete (single + archive multi-select) ---

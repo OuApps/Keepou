@@ -301,11 +301,23 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
 >
 > **Board controls (E11)** are all client-side over the loaded set and URL-driven
 > (so they survive an editor round-trip — « retour garde la sélection »): a sort
-> selector (`?sort=modified|created|title`, pinned always first), a search reset
-> (✕), and a **render window** that reveals cards incrementally so a large
-> imported board mounts instantly. The API still returns the full set in one call.
-> Filtering own notes by visibility is served by the top-right « Mes notes /
+> selector (`?sort=modified|created|title`, pinned always first), a **density**
+> selector (`?density=full|compact` — compact caps each card body via CSS so more
+> notes fit on one screen; display-only, it never changes the set or its order), a
+> search reset (✕), and a **render window** that reveals cards incrementally so a
+> large imported board mounts instantly. The API still returns the full set in one
+> call. Filtering own notes by visibility is served by the top-right « Mes notes /
 > Public » tab (`?tab=`), so no separate visibility filter is needed.
+>
+> **Perceived latency (E11 follow-up).** The editor is a separate route, so
+> BoardPage unmounts while a note is open. A module-level **board cache**
+> (`web/src/lib/boardCache.ts`) keeps the last-fetched lists across that
+> round-trip: returning paints the cached list instantly (stale-while-revalidate —
+> a background `listNotes()` reconciles), and the editor **upserts** the note it
+> just saved so the edit shows without a refetch. Opening a card passes the
+> already-loaded note in navigation state so the editor renders immediately and
+> `GET /api/notes/{id}` becomes a silent revalidation instead of a blocking load.
+> The cache is cleared on sign-out / session expiry.
 
 ## 8. Authentication & sessions
 
