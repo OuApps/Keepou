@@ -200,10 +200,12 @@ the cost was the DOM, so the window is purely client-side.
 ## Follow-up — visibility filter removed (duplicate of the tab)
 
 The E11-S1 **Tout / Public / Privé** visibility filter (`?vis=`, rendered under
-the composer) was removed after field use: it overlapped the existing top-right
+the composer) was removed after field use: it overlapped the existing board
 **« Mes notes / Public »** tab (`?tab=`), leaving two public/privé toggles on the
 same screen. The tab already separates a member's own notes from the shared
-public board, so the extra filter was redundant.
+public board, so the extra filter was redundant. (That tab was itself later moved
+under the composer and extended to « Tout / Mes notes / Public » — see the last
+follow-up.)
 
 Removed: `web/src/components/VisibilityFilter.tsx`, the `?vis=` parsing / state /
 client filter in `BoardPage.tsx`, the `filterLabel` / `filterAll` / `filterPublic`
@@ -243,3 +245,30 @@ Two field asks after living with a large imported board:
 
   Tests: `web/src/lib/boardCache.test.ts` (store), a board density test, and an
   editor seed test (a hung `getNote` still paints instantly from the seed).
+
+---
+
+## Follow-up — board tabs moved under the composer + a « Tout » tab
+
+The board scope was a two-way **« Mes notes / Public »** pill in the top-right of
+the header. Field ask: bring it back **under the composer, on the left**, and drop
+it from the header — and add a **« Tout »** tab so a member can see everything at
+once.
+
+The control is now a three-segment pill **« Tout / Mes notes / Public »**
+(`?tab=all|mine|public`) in the toolbar-left, under « Prends une note » (the header
+keeps only search + theme + avatar):
+
+- **« Tout »** (default) = the caller's own notes (private + public) **+** every
+  member's public note, deduplicated. Server-side: a new `tab=all` on
+  `GET /api/notes` (`owner_id == me OR visibility == PUBLIC`, non-archived) — one
+  query, one row per note, so no client merge and no duplicates.
+- **« Mes notes »** = own notes only; **« Public »** = all members' public notes
+  (unchanged).
+- On « Tout », a card owned by someone else shows the **author badge**; the
+  caller's own cards keep their **Privé / Public** meta (`showAuthor` is per-owner).
+
+Touched: `Tab.ALL` + the query branch and a pytest in `api/`; `BoardTab`, `parseTab`
+(default `all`), the `TabSwitch` (3-way), its move to the toolbar, per-owner
+`showAuthor`, `tabAll` / `emptyAll` copy, and the removal of the Topbar `tabs` slot
+(+ dead `.kp-topbar__tabs` CSS) in `web/`. Tests updated + a « Tout » board test.

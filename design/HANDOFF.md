@@ -85,7 +85,7 @@ These 5 shades are a note's color picker. Store an identifier (`gold|avocat|sals
 
 | Mockup | Screen | Covers (PRD, FR) |
 |---|---|---|
-| `Keepou - Board.dc.html` | Main board (canonical, light+dark, tabs, composer) | Note list, **Mes notes / Public** tabs, search, quick composer, color picker, private/public toggle, theme |
+| `Keepou - Board.dc.html` | Main board (canonical, light+dark, tabs, composer) | Note list, **Tout / Mes notes / Public** tabs (under the composer), search, quick composer, color picker, private/public toggle, theme |
 | `Keepou - Éditeur & verrou.dc.html` | Exploration of the 2 formats + **4 lock states** | Single-editor lock (yours / locked / expired / conflict), read-only, takeover |
 | `Keepou - Éditeur canonique.dc.html` | **Chosen editor**: desktop modal / mobile full screen, text + boxes, Markdown panel | Text + checklist editing, box insertion, color picker, private/public, autosave, **Markdown storage** |
 | `Keepou - Historique.dc.html` | History panel + read-only preview + restore (desktop & 2-screen mobile flow) | Version history, author + date, preview, restore |
@@ -254,7 +254,7 @@ Decoupled **React SPA** front (Vite); **FastAPI** back. The front consumes the A
 |---|---|---|
 | `/login` | Login | public |
 | `/register` | Account creation | public (fails if off-allowlist) |
-| `/` | Board (Mes notes / Public via `?tab=`) | authenticated |
+| `/` | Board (Tout / Mes notes / Public via `?tab=`, « Tout » default) | authenticated |
 | `/note/:id` | Editor — modal ≥ tablet / mobile full-screen page | authenticated + note access |
 | `/note/:id/history` | History (desktop panel / mobile screen) | authenticated + note access |
 | `/admin` | Administration | **admin only** (the real guard is the API) |
@@ -267,7 +267,7 @@ POST   /api/auth/login                    → {access, refresh} ; 401 credential
 POST   /api/auth/refresh                   (refresh token → new access token) ; 401 if invalid/expired
 GET    /api/auth/me                        (current user ; role to display /admin)   # logout is client-side (drop tokens)
 
-GET    /api/notes?tab=mine|public
+GET    /api/notes?tab=all|mine|public      (all = own + every public note ; default)
 POST   /api/notes                          (create)
 GET    /api/notes/{id}
 PATCH  /api/notes/{id}                      (title, body Markdown, color, visibility)
@@ -298,8 +298,8 @@ src/
   api/client.ts              // fetch wrapper (bearer token, typed errors)
   pages/Login.tsx, Register.tsx, Board.tsx, Admin.tsx
   components/
-    Topbar.tsx               // logo, search, pill tabs, theme, avatar+menu
-    TabSwitch.tsx            // Mes notes / Public (segmented pill)
+    Topbar.tsx               // logo, search, theme, avatar+menu
+    TabSwitch.tsx            // Tout / Mes notes / Public (segmented pill, under the composer)
     Composer.tsx             // quick input + colors + public toggle
     NoteCard.tsx             // board card (color, checklist, lock badge, author)
     NoteGrid.tsx             // responsive masonry column-count
@@ -371,7 +371,8 @@ Key front hooks: `useAutosave(noteId)` (debounce 1.5 s + flush on blur), `useNot
 - Server errors (API detail, displayed as-is): « Le fichier n'est pas une archive ZIP valide. » · « Archive trop volumineuse (20 Mo maximum). » · « Aucune note Google Keep trouvée dans l'archive. »
 
 **Field-feedback follow-up (E11):**
-- Board controls: search reset button label « Effacer la recherche » · sort selector (label « Trier les notes ») « Date de modification » / « Date de création » / « Titre (A→Z) » · density selector (label « Densité d’affichage ») « Notes entières » / « Aperçu » (« Notes entières » default; « Aperçu » caps the card body so more notes fit). (Separating own private vs. public notes is handled by the top-right « Mes notes » / « Public » tab, so there is no separate visibility filter.)
+- Board tabs (segmented pill under the composer, label « Tableaux ») « Tout » / « Mes notes » / « Public » (« Tout » default = own notes + every member's public note). Separating own private vs. public notes is handled by these tabs, so there is no separate visibility filter.
+- Board controls: search reset button label « Effacer la recherche » · sort selector (label « Trier les notes ») « Date de modification » / « Date de création » / « Titre (A→Z) » · density selector (label « Densité d’affichage ») « Notes entières » / « Aperçu » (« Notes entières » default; « Aperçu » caps the card body so more notes fit).
 - Hard delete: card / editor menu item « Supprimer définitivement » · confirmation « Supprimer définitivement ? » + « Cette note et son historique seront supprimés. Cette action est irréversible. » + button « Supprimer ».
 - Archive multi-select: per-card « Sélectionner <titre> » · « Tout sélectionner » / « Tout désélectionner » · « Supprimer définitivement (N) » · bulk confirmation « Supprimer N notes ? » + « Les notes sélectionnées et leur historique seront supprimés. Cette action est irréversible. ».
 - Editor owner menu (label « Actions sur la note »): « Épingler » / « Ne plus épingler » · « Archiver » · « Supprimer définitivement ». Shortcut: `Maj+Entrée` saves and closes the note.

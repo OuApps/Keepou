@@ -106,6 +106,11 @@ Lock enforcement on public-note mutations is added in E5 (409 without a held loc
 
 **Goal.** The segmented pill switching the two boards, reflected in the URL.
 
+> **Superseded (E11 follow-up).** The pill was later moved from the header to the
+> toolbar under the composer and extended to **« Tout / Mes notes / Public »**
+> (`?tab=all|mine|public`, « Tout » the new default, backed by a server `tab=all`).
+> See `stories/E11-retours-terrain.md`.
+
 **Tasks**
 - `components/TabSwitch.tsx` (segmented pill) → **Mes notes** / **Public**.
 - Drive the active board from `?tab=mine|public`; default `mine`. Fetch via E3-S2.

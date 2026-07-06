@@ -6,7 +6,7 @@ import { api } from './client'
 
 export type NoteColor = 'GOLD' | 'AVOCAT' | 'SALSA' | 'CLAY' | 'TEAL'
 export type Visibility = 'PRIVATE' | 'PUBLIC'
-export type BoardTab = 'mine' | 'public'
+export type BoardTab = 'all' | 'mine' | 'public'
 
 export interface LockHolder {
   id: string

@@ -29,7 +29,7 @@ export default function App() {
 
           {/* Authenticated */}
           <Route element={<RequireAuth />}>
-            {/* The Board composes its own shell (search + tabs in the Topbar). */}
+            {/* The Board composes its own shell (search in the Topbar, tabs below). */}
             <Route path="/" element={<BoardPage />} />
             <Route element={<AppShell />}>
               <Route path="/admin" element={<AdminPage />} />

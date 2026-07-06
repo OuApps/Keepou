@@ -164,11 +164,7 @@
   height: 1px;
 }
 
-/* --- Topbar: tabs pill (Mes notes / Public) --- */
-.kp-topbar__tabs {
-  flex: none;
-}
-
+/* --- Board tabs pill (Tout / Mes notes / Public), under the composer --- */
 .kp-tabs {
   display: flex;
   align-items: center;
@@ -681,13 +677,9 @@
     row-gap: 10px;
   }
 
-  /* Row 1: brand … theme + avatar — row 2: tabs pill + search. */
+  /* Row 1: brand … theme + avatar — row 2: search (full width). */
   .kp-topbar__brand {
     margin-right: auto;
-  }
-
-  .kp-topbar__tabs {
-    order: 9;
   }
 
   .kp-topbar__center {

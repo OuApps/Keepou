@@ -2,8 +2,11 @@
 Notes — board CRUD (E3) + single-editor lock (E5) + history & versions (E6).
 
 Endpoints (handoff §5):
-  GET    /api/notes?tab=mine|public   mine = caller's notes; public = all members'
-                                      PUBLIC notes (author + updated_at). Newest-first.
+  GET    /api/notes?tab=all|mine|public
+                                      all = caller's notes + every member's PUBLIC
+                                      note (the default board); mine = caller's own
+                                      notes; public = all members' PUBLIC notes
+                                      (author + updated_at). Newest-first.
   POST   /api/notes                   create (owner = caller) — writes the
                                       creation version (« Créée par X »)
   GET    /api/notes/{id}              visibility-checked; carries the lock state
@@ -31,7 +34,7 @@ Permissions (server-side, ARCHITECTURE §4.2):
 from enum import StrEnum
 
 from fastapi import APIRouter, HTTPException, status
-from sqlalchemy import delete
+from sqlalchemy import delete, or_
 from sqlmodel import Session, col, select
 
 from app.db import SessionDep
@@ -54,6 +57,7 @@ ORGANIZE_FIELDS = ("pinned", "archived")
 
 
 class Tab(StrEnum):
+    ALL = "all"
     MINE = "mine"
     PUBLIC = "public"
 
@@ -130,6 +134,14 @@ def list_notes(
         # `?archived=true` is the caller's dedicated archived view (own notes);
         # by default the board hides archived notes.
         query = query.where(Note.owner_id == user.id, col(Note.archived).is_(archived))
+    elif tab is Tab.ALL:
+        # Everything the caller may see: their own notes + every member's public
+        # note (a note owned *and* public is one row, so no duplicates). Archived
+        # notes leave every board until unarchived.
+        query = query.where(
+            or_(Note.owner_id == user.id, Note.visibility == Visibility.PUBLIC),
+            col(Note.archived).is_(False),
+        )
     else:
         # Archived notes leave every board — including Public — until unarchived.
         query = query.where(Note.visibility == Visibility.PUBLIC, col(Note.archived).is_(False))

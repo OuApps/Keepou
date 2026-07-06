@@ -7,11 +7,12 @@ import { ThemeToggle } from './ThemeToggle'
 
 /**
  * App topbar — sticky, blurred, faithful to `Keepou - Board.dc.html`: logo +
- * brand, a central slot (the Board's search), a `tabs` slot (segmented pill),
- * theme toggle, avatar + menu (display name + « Administration » for admins
- * only — the real /admin guard is the API, E7 — + « Se déconnecter »).
+ * brand, a central slot (the Board's search), theme toggle, avatar + menu
+ * (display name + « Administration » for admins only — the real /admin guard is
+ * the API, E7 — + « Se déconnecter »). The board tabs live under the composer,
+ * not here.
  */
-export function Topbar({ center, tabs }: { center?: ReactNode; tabs?: ReactNode }) {
+export function Topbar({ center }: { center?: ReactNode }) {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -43,8 +44,6 @@ export function Topbar({ center, tabs }: { center?: ReactNode; tabs?: ReactNode 
       </div>
 
       <div className="kp-topbar__center">{center}</div>
-
-      {tabs !== undefined && <div className="kp-topbar__tabs">{tabs}</div>}
 
       <ThemeToggle />
 
