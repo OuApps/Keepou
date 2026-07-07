@@ -139,7 +139,7 @@ def list_notes(
         # note (a note owned *and* public is one row, so no duplicates). Archived
         # notes leave every board until unarchived.
         query = query.where(
-            or_(Note.owner_id == user.id, Note.visibility == Visibility.PUBLIC),
+            or_(col(Note.owner_id) == user.id, col(Note.visibility) == Visibility.PUBLIC),
             col(Note.archived).is_(False),
         )
     else:
