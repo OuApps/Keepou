@@ -367,9 +367,12 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
 - **Theme**: `data-theme="light|dark"` on the root, CSS token variables; respects
   `prefers-color-scheme` on first load with a persisted manual override
   (localStorage).
-- **Responsive layout**: CSS multi-column masonry that collapses from 4 columns
-  (desktop) to 1–2 (mobile); touch-friendly targets; a single composer. The
-  breakpoint is ~640px (editor: modal ≥ tablet, full-screen below).
+- **Responsive layout**: masonry that collapses from 4 columns (desktop) to 1–2
+  (mobile); touch-friendly targets; a single composer. Cards are distributed
+  round-robin across flex columns (card N → column N % cols) so they read in
+  reading order (left→right, top→bottom) rather than the column-major fill of
+  CSS `column-count`. The breakpoint is ~640px (editor: modal ≥ tablet,
+  full-screen below).
 
 ## 10. Deployment (Railway)
 

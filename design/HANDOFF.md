@@ -76,7 +76,7 @@ These 5 shades are a note's color picker. Store an identifier (`gold|avocat|sals
 - Radii: cards `18px`, UI panels/cards `14–16px`, modal `20px`, fields `10px`, pills/buttons `999px`, checkboxes `5px` (desktop) / `6px` (mobile, `22px`).
 - Shadows: board card `0 8px 16px -13px rgba(46,42,32,.4)`; modal `0 40px 80px -30px rgba(46,42,32,.6)`; frame `0 30px 60px -40px rgba(46,42,32,.5)`.
 - Topbar: `backdrop-filter:blur(8px)`, background `rgba(251,244,230,.86)`, bottom border `--border`.
-- Board: masonry `column-count:4` (desktop) / `2` (mobile), `column-gap:16–18px`, cards `break-inside:avoid`.
+- Board: masonry 4 (desktop) / 2 (mobile) columns, gap 16–18px. Cards spread round-robin across flex columns (card N → column N % cols) so they read left→right, top→bottom — not the column-major fill of CSS `column-count`.
 - Mobile hit targets ≥ 44px.
 
 ---
@@ -302,7 +302,7 @@ src/
     TabSwitch.tsx            // Mes notes / Public (segmented pill)
     Composer.tsx             // quick input + colors + public toggle
     NoteCard.tsx             // board card (color, checklist, lock badge, author)
-    NoteGrid.tsx             // responsive masonry column-count
+    NoteGrid.tsx             // responsive masonry (flex columns, round-robin → reading order)
     editor/
       NoteEditor.tsx         // shell (desktop modal / mobile full screen)
       LockBanner.tsx         // 4 states (yours / locked / expired / conflict)
