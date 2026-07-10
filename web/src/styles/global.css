@@ -28,7 +28,8 @@ body {
   transition: background 0.25s;
 }
 
-/* Board masonry (column-count) — cards don't break. */
+/* Board masonry — cards never split across columns. Inert now that the grid uses
+ * flex columns (NoteGrid distributes cards round-robin), kept as a safety net. */
 .kp-card {
   break-inside: avoid;
   -webkit-column-break-inside: avoid;
