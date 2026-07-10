@@ -412,10 +412,20 @@
   color: var(--brand-salsa);
 }
 
-/* --- Masonry grid (4 → 2 columns, handoff §1/§8) --- */
+/* --- Masonry grid (4 → 2 columns, handoff §1/§8) ---
+ * Flex columns fed round-robin by NoteGrid so cards read left→right, top→bottom
+ * (reading order) instead of the column-major fill of CSS `column-count`. */
 .kp-grid {
-  column-count: 4;
-  column-gap: 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.kp-grid__col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .kp-board__status {
@@ -668,8 +678,7 @@
 /* --- Mobile (≤640px): masonry 2 columns, search wraps under the brand row --- */
 @media (max-width: 640px) {
   .kp-grid {
-    column-count: 2;
-    column-gap: 16px;
+    gap: 16px;
   }
 
   .kp-note {

@@ -168,13 +168,16 @@ inline parser is fine for the card in the meantime).
 **Goal.** The responsive board layout and a simple search.
 
 **Tasks**
-- `components/NoteGrid.tsx`: CSS masonry `column-count` **4 → 2** (~640px),
-  `column-gap` 16–18px.
+- `components/NoteGrid.tsx`: masonry **4 → 2** columns (~640px), gap 16–18px.
+  Cards are distributed **round-robin across flex columns** (card N → column
+  N % cols) so they read in **reading order** (left→right, top→bottom) rather
+  than the column-major fill of CSS `column-count`.
 - **Search** (FR-S1): client-side filter over the loaded board by title/body
   (simple text match), wired to the Topbar input.
 
 **Acceptance criteria**
 - [x] 4 columns on desktop, 2 on mobile, matching the mockup.
+- [x] Cards read left→right, top→bottom (reading order), not down one column then the next.
 - [x] Typing in search filters the visible cards (title + body match).
 - [x] No layout jump / broken columns on resize.
 
