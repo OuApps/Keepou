@@ -17,8 +17,8 @@ recorded here.
 | `design/Keepou - *.dc.html` | Validated mockups — **visual source of truth** | When building a screen |
 | [`docs/PRD.md`](./docs/PRD.md) | Product requirements (`FR-*`), scope, non-goals | For scope/behavior questions |
 | [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | System design: data model, auth, locking, history, API surface, deployment, security | For technical decisions |
-| [`docs/EPICS.md`](./docs/EPICS.md) | Macro breakdown into epics + **progress table** | To pick up / sequence work |
-| [`docs/stories/`](./docs/stories/) | **Detailed stories per epic** (E0…E9): goal, tasks, acceptance criteria, definition of done | Before implementing a story |
+| [`docs/internal/EPICS.md`](./docs/internal/EPICS.md) | Macro breakdown into epics + **progress table** | To pick up / sequence work |
+| [`docs/internal/stories/`](./docs/internal/stories/) | **Detailed stories per epic** (E0…E9): goal, tasks, acceptance criteria, definition of done | Before implementing a story |
 
 ## Working conventions
 
@@ -44,11 +44,11 @@ it** — stale docs are treated as a bug:
   `docs/PRD.md` if the product scope shifts).
 - **Deploy / env / ops change** → update the deployment section of
   `docs/ARCHITECTURE.md`, the `api/.env.example` / `web/.env.example` files, and the
-  E1 story (`docs/stories/E1-deploiement-railway.md`).
+  E1 story (`docs/internal/stories/E1-deploiement-railway.md`).
 - **As work completes, tick the checkboxes:**
-  - in the story file `docs/stories/E*.md` — the **acceptance criteria**, the
+  - in the story file `docs/internal/stories/E*.md` — the **acceptance criteria**, the
     **"Stories at a glance"** list, and the **"Definition of done"** (`[ ]` → `[x]`);
-  - in `docs/EPICS.md` — the **progress table** (`[ ]` → `[x]`, and the status
+  - in `docs/internal/EPICS.md` — the **progress table** (`[ ]` → `[x]`, and the status
     markers 🔨 / ✅).
 - Keep the epic/story wording consistent with what the code actually does; if an
   implementation choice diverges from a story, update the story (or note the change)
