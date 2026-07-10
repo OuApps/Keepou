@@ -1,0 +1,39 @@
+name: keepou
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: keepou
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-keepou}
+      POSTGRES_DB: keepou
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keepou"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build: ./api
+    environment:
+      DATABASE_URL: postgresql://keepou:${POSTGRES_PASSWORD:-keepou}@db:5432/keepou
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required — copy .env.example to .env and set it}
+      CORS_ORIGINS: ${APP_ORIGIN:-http://localhost:8080}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build: ./web
+    ports:
+      - "${APP_PORT:-8080}:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  db-data:

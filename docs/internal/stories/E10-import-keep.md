@@ -282,7 +282,7 @@ the two calls.
 **Acceptance criteria**
 - [x] Back tests green for parser + endpoint (including edge cases).
 - [x] The "import from Keep" how-to is written
-  ([`docs/HOWTO-import-google-keep.md`](../HOWTO-import-google-keep.md)).
+  ([`docs/HOWTO-import-google-keep.md`](../../HOWTO-import-google-keep.md)).
 - [x] Docs (ARCHITECTURE, PRD, EPICS, this story) reflect what shipped.
 
 ---

@@ -5,7 +5,7 @@ A Google Takeout export ships one JSON file per Keep note. This module turns
 one such object into the fields a Keepou `Note` needs — no DB, no HTTP — so
 the import endpoints (E10-S2) stay thin and the mapping is trivially testable.
 
-Mapping rules (docs/stories/E10-import-keep.md):
+Mapping rules (docs/internal/stories/E10-import-keep.md):
 - `textContent` + `listContent[]` → a single GFM Markdown body, serialized
   exactly like `web/src/lib/markdown.ts` so imported notes round-trip through
   the editor identically to natively-created ones;

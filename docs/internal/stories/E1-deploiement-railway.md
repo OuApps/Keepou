@@ -171,7 +171,7 @@ header, with CORS allowing the web origin (S6).
 - [x] The API only accepts the configured web origin(s) (strict CORS, `allow_credentials=False`) — `app/main.py`, covered by `tests/test_cors.py`.
 - [x] A disabled account is rejected on its next request (the server re-checks `status`) — `get_current_user` shipped in E2, covered by `tests/test_auth.py`.
 
-**Notes.** Decision recorded in [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md) §8: JWT bearer for the MVP; a httpOnly same-site cookie is a **documented later upgrade** (needs a custom domain). Impacts E2 (token issuance/validation). The CORS/credentials posture is done now; the token-dependent criteria are satisfied in E2.
+**Notes.** Decision recorded in [`docs/ARCHITECTURE.md`](../../ARCHITECTURE.md) §8: JWT bearer for the MVP; a httpOnly same-site cookie is a **documented later upgrade** (needs a custom domain). Impacts E2 (token issuance/validation). The CORS/credentials posture is done now; the token-dependent criteria are satisfied in E2.
 
 ---
 
