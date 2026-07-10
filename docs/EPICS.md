@@ -160,7 +160,7 @@ notes / Public**; quick composer; faithful cards (color, checklist, meta).
 - **Topbar** (logo, search, pill tabs, theme, avatar + menu).
 - **TabSwitch** My notes / Public · **Composer** (quick input + color + public toggle).
 - **NoteCard** (5 shades, Fredoka title, read-only checklist, visibility/author badge).
-- **NoteGrid** masonry `column-count` 4→2 responsive · search (minimal client-side filter).
+- **NoteGrid** masonry 4→2 responsive (flex columns fed round-robin → reading order) · search (minimal client-side filter).
 
 **Mockups.** `Keepou - Board.dc.html`.
 
