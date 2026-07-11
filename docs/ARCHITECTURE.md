@@ -393,6 +393,17 @@ service points at a **Root Directory** and listens on `$PORT`.
   string `$PORT` (« `'$PORT'` is not a valid integer »). The `sh -c` wrapper forces
   expansion and the `${PORT:-8000}` fallback keeps local `docker run` working —
   same pattern as the web `start` script and `api/docker-entrypoint.sh`.
+- **Railway builds with Nixpacks, not the self-host Dockerfiles**: the web
+  container's `Dockerfile` is named **`web/Dockerfile.selfhost`** (nginx,
+  single-origin, `/api` proxied — see *Self-hosting* below) precisely so Railway
+  does **not** auto-detect a root `web/Dockerfile` and build it. Railway would run
+  that nginx image (no `npm`, listening on `:80`, proxying `/api` to a
+  compose-only `api` host) and the deploy fails at *Create container* with
+  « The executable `npm` could not be found ». With no root `web/Dockerfile`,
+  Railway falls back to Nixpacks (`build.builder = NIXPACKS` in `web/railway.json`)
+  and runs `npm run start` → `serve -s dist -l $PORT`, the cross-origin
+  (`VITE_API_URL`) model above. The API Dockerfile is a plain uvicorn image and is
+  architecture-compatible either way, so it keeps its `Dockerfile` name.
 - **Migrations**: `alembic upgrade head` runs as a **pre-deploy** command on the
   API service, before traffic shifts (a no-op until the first real model lands in
   E2).
