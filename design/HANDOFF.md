@@ -375,6 +375,7 @@ Key front hooks: `useAutosave(noteId)` (debounce 1.5 s + flush on blur), `useNot
 - Hard delete: card / editor menu item « Supprimer définitivement » · confirmation « Supprimer définitivement ? » + « Cette note et son historique seront supprimés. Cette action est irréversible. » + button « Supprimer ».
 - Archive multi-select: per-card « Sélectionner <titre> » · « Tout sélectionner » / « Tout désélectionner » · « Supprimer définitivement (N) » · bulk confirmation « Supprimer N notes ? » + « Les notes sélectionnées et leur historique seront supprimés. Cette action est irréversible. ».
 - Editor owner menu (label « Actions sur la note »): « Épingler » / « Ne plus épingler » · « Archiver » · « Supprimer définitivement ». Shortcut: `Maj+Entrée` saves and closes the note.
+- Editor checklist: « Supprimer les cases cochées » — bottom action next to « Insérer une case à cocher », shown only when at least one box is checked; clears every ticked box in one click (no confirmation, recoverable via history).
 - Profile: avatar-menu entry « Modifier mon nom » · dialog title « Modifier mon nom affiché » · field label « Nom affiché » · button « Enregistrer » · empty error « Choisis un nom affiché. » · failure « La modification a échoué. Réessaie dans un instant. ».
 
 ---
