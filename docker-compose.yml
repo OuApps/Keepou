@@ -28,7 +28,12 @@ services:
     restart: unless-stopped
 
   web:
-    build: ./web
+    # Named Dockerfile.selfhost so Railway (which auto-builds any root
+    # `web/Dockerfile`) keeps using Nixpacks; this nginx image is for
+    # docker-compose self-hosting only.
+    build:
+      context: ./web
+      dockerfile: Dockerfile.selfhost
     ports:
       - "${APP_PORT:-8080}:80"
     depends_on:

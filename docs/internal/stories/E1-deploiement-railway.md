@@ -142,6 +142,11 @@ there is no real model (before E2), `alembic upgrade head` is a safe no-op.
 - Serve `dist/` statically **with SPA fallback** on `$PORT`:
   - simple option: start `npx serve -s dist -l $PORT` (add `serve` as a devDep or via `npx`),
   - or a small static server (Caddy/Nginx) depending on ops preference.
+- ⚠️ **Keep Railway on Nixpacks.** The self-host nginx image lives in
+  `web/Dockerfile.selfhost` (not `web/Dockerfile`) so Railway does not auto-detect
+  a root Dockerfile and build the compose-only nginx image (no `npm`, `:80`, `/api`
+  proxy to a compose host) — that fails at *Create container* with « npm could not
+  be found ». Nixpacks + `npm run start` (`serve -s dist -l $PORT`) is the Railway path.
 - Build variable **`VITE_API_URL`** = public URL of the API (S3). ⚠️ injected **at build time** (Vite inlines `import.meta.env`) → rebuild if the URL changes.
 - Generate the frontend **public domain**.
 
