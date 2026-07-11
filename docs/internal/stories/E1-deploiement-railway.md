@@ -90,7 +90,10 @@ exercised on the first Railway deploy.
 
 **Tasks**
 - **keepou-api** service, **Root Directory = `api/`**, Nixpacks builder (detects `requirements.txt`).
-- **Start command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
+- **Start command**: `sh -c 'uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}'`.
+  Railway runs a raw `startCommand` **without a shell** (exec form), so a bare
+  `--port $PORT` reaches uvicorn as the literal `$PORT`; the `sh -c` wrapper forces
+  expansion (`${PORT:-8000}` fallback for local runs).
 - `api/railway.json` (or `railway.toml`) file: builder, `startCommand`, `healthcheckPath = /api/health`, restart policy.
 - Variables: `DATABASE_URL` (Postgres reference), `SESSION_SECRET` (generated), `CORS_ORIGINS` (frontend URL, see S6).
 - Generate a **public domain** for the API service.
