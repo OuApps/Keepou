@@ -451,6 +451,62 @@ describe('NoteEditor', () => {
     expect(patches[0].title).toBe('Enregistré au clavier')
   })
 
+  // --- E11-S6: clear all checked boxes ---
+
+  it('offers the clear action only while at least one box is checked (E11-S6)', async () => {
+    stubEditor(note())
+    renderEditor()
+    await editorLoaded()
+
+    const name = 'Supprimer les cases cochées'
+    // The note loads with one box already checked → the action is offered.
+    expect(screen.getByRole('button', { name })).toBeInTheDocument()
+
+    // Unchecking the only ticked box hides it again.
+    await act(async () => {
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Réserver la salle' }))
+    })
+    expect(screen.queryByRole('button', { name })).not.toBeInTheDocument()
+  })
+
+  it('removes every checked box and saves the trimmed body immediately (E11-S6)', async () => {
+    const patches = stubEditor(note())
+    renderEditor()
+    await editorLoaded()
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Supprimer les cases cochées' }))
+    })
+
+    // The ticked box is gone, the unchecked one and the paragraph stay.
+    expect(screen.queryByRole('checkbox', { name: 'Réserver la salle' })).not.toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Tables & chaises' })).toBeInTheDocument()
+
+    // Saved right away (like a checkbox toggle), no debounce wait.
+    await screen.findByText(/Enregistré · à l'instant/)
+    expect(patches).toHaveLength(1)
+    expect(patches[0].body).toBe(
+      'Pour le repas de quartier on se répartit les tâches.\n\n- [ ] Tables & chaises',
+    )
+  })
+
+  it('keeps an empty paragraph when clearing removes the last block (E11-S6)', async () => {
+    const patches = stubEditor(note({ body: '- [x] Fait\n- [x] Aussi fait' }))
+    renderEditor()
+    await editorLoaded()
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Supprimer les cases cochées' }))
+    })
+
+    // No boxes left, but a normal paragraph remains to type into.
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Paragraphe')).toBeInTheDocument()
+    await screen.findByText(/Enregistré · à l'instant/)
+    expect(patches).toHaveLength(1)
+    expect(patches[0].body).toBe('')
+  })
+
   it('shows « Note introuvable. » when the note cannot be loaded', async () => {
     stubFetch({
       '/api/auth/me': () => json(200, ME),

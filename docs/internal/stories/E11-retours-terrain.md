@@ -28,6 +28,7 @@ plus one small profile endpoint.
 | 9 | Trier par date de dernière modification | E11-S1 |
 | 10 / 11 | Afficher tout / public / privé — couvert par l'onglet « Mes notes / Public » | E11-S1 |
 | 12 | Afficher l'année en plus de la date (notes Keep anciennes) | E11-S1 |
+| 13 | Bouton pour supprimer toutes les cases déjà cochées (édition) | E11-S6 |
 
 ---
 
@@ -45,6 +46,8 @@ plus one small profile endpoint.
 - [x] **E11-S4** — Profile: `PATCH /api/auth/me` + a « Modifier mon nom » dialog
 - [x] **E11-S5** — Windowed rendering of the board (render a growing slice so a
       300-note board mounts instantly)
+- [x] **E11-S6** — Editor: a « Supprimer les cases cochées » action that clears
+      every ticked checkbox at once, shown only when at least one box is checked
 
 ---
 
@@ -183,6 +186,42 @@ the cost was the DOM, so the window is purely client-side.
 
 ---
 
+## E11-S6 — Clear all checked boxes · S
+
+**Goal.** From the editor, once a checklist has ticked items, wipe them all in a
+single click — the frequent “I’m done with these” chore on a running to-do note.
+
+**Tasks**
+- **Trigger.** In `BlockList`, a **« Supprimer les cases cochées »** button in the
+  bottom action row next to **« Insérer une case à cocher »**, rendered **only
+  when at least one box is checked** and never in read-only mode.
+- **Behavior.** Drops every `type: 'check'` block whose `checked` is true (the
+  unticked boxes, paragraphs and their order are untouched). If nothing is left,
+  keep an **empty paragraph** so there is still a surface to type into (mirrors
+  `draftOf`). Saves **immediately** (flush, like a checkbox toggle), not on the
+  ~1.5 s debounce.
+- **No confirmation.** The pre-clear content stays in the previous version
+  (1 session = 1 version), so the action is recoverable through history — a
+  frictionless, Keep-like clear rather than a guarded destructive delete. Style
+  is low-key (muted, terracotta on hover) to set it apart from the primary
+  insert affordance.
+
+**Copy.** `EDITOR_COPY.clearChecked = 'Supprimer les cases cochées'`
+(`web/src/lib/copy.ts`, mirrored in HANDOFF §7).
+
+**Acceptance criteria**
+- [x] The clear action shows only while ≥ 1 box is checked, and is hidden in
+      read-only mode.
+- [x] Clicking it removes every ticked box, keeps the rest, and saves right away.
+- [x] Clearing the last block leaves an empty paragraph to type into.
+- [x] Front tests cover the visibility toggle, the clear + serialized body, and
+      the empty-note fallback.
+
+**Notes.** Pure front UX on the existing block flow / autosave — no API, schema
+or Markdown-format change (bodies stay GFM task lists).
+
+---
+
 ## Definition of "E11 done"
 
 - [x] Board is sortable (Modifié/Créé/Titre), the search resets in one click,
@@ -191,6 +230,8 @@ the cost was the DOM, so the window is purely client-side.
 - [x] Notes can be hard-deleted from the card, the editor, and in bulk from the
       archive (select-all included), each behind a confirmation.
 - [x] Pin / archive / delete are reachable from the editor; `Shift+Enter` saves.
+- [x] The editor can clear every checked box at once (« Supprimer les cases
+      cochées »), shown only when at least one is ticked.
 - [x] Members can change their display name.
 - [x] Large boards mount instantly (windowed rendering).
 - [x] Front + back tests green in CI; docs (EPICS, ARCHITECTURE, HANDOFF §7) synced.

@@ -477,8 +477,17 @@
 }
 
 /* « Insérer une case à cocher » — at the BOTTOM of the flow (HANDOFF §3.3). */
-.kp-blocks__insert {
+/* Bottom action row: « Insérer une case » + (when any box is ticked) the
+ * clear-checked action (E11-S6). */
+.kp-blocks__foot {
   margin-top: 13px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
+.kp-blocks__insert {
   align-self: flex-start;
   display: inline-flex;
   align-items: center;
@@ -491,6 +500,27 @@
   font-size: 13px;
   font-weight: 700;
   color: var(--check);
+}
+
+/* Low-key by default (a chore, not a primary CTA); terracotta on hover/focus
+ * to signal removal, consistent with the danger menu item. */
+.kp-blocks__clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: none;
+  background: none;
+  padding: 5px 0;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.kp-blocks__clear:hover,
+.kp-blocks__clear:focus-visible {
+  color: var(--brand-salsa);
 }
 
 .kp-blocks__insert-box {
@@ -775,9 +805,17 @@
     border-radius: 6px;
   }
 
-  .kp-blocks__insert {
+  .kp-blocks__foot {
     margin-top: auto;
     padding-top: 16px;
+  }
+
+  .kp-blocks__insert {
+    font-size: 14px;
+    gap: 8px;
+  }
+
+  .kp-blocks__clear {
     font-size: 14px;
     gap: 8px;
   }

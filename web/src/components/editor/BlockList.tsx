@@ -63,6 +63,20 @@ export function BlockList({ blocks, onChange, onFlush, readOnly = false }: Block
     onChange(blocks.map((block, i) => (i === index ? { id, type: 'text', text: '' } : block)))
   }
 
+  // Bulk-clear every ticked box (E11-S6): once at least one item is done, a
+  // single action drops them all. Recoverable via history (the pre-clear state
+  // stays in the previous version), so no confirmation — Keep-like. Save right
+  // away (like a checkbox toggle) instead of waiting for the debounce. If the
+  // note ends up empty, keep an empty paragraph so there is still a surface to
+  // type into (mirrors `draftOf`).
+  const hasChecked = blocks.some((block) => block.type === 'check' && block.checked)
+
+  const clearChecked = () => {
+    const kept = blocks.filter((block) => !(block.type === 'check' && block.checked))
+    onChange(kept.length > 0 ? kept : [{ id: blockId(), type: 'text', text: '' }])
+    onFlush()
+  }
+
   return (
     <div className="kp-blocks" ref={rootRef}>
       {blocks.map((block, i) =>
@@ -124,16 +138,33 @@ export function BlockList({ blocks, onChange, onFlush, readOnly = false }: Block
       )}
 
       {!readOnly && (
-        <button
-          type="button"
-          className="kp-blocks__insert"
-          onClick={() => insertCheckAt(blocks.length)}
-        >
-          <span className="kp-blocks__insert-box" aria-hidden="true">
-            +
-          </span>
-          {EDITOR_COPY.insertCheckbox}
-        </button>
+        <div className="kp-blocks__foot">
+          <button
+            type="button"
+            className="kp-blocks__insert"
+            onClick={() => insertCheckAt(blocks.length)}
+          >
+            <span className="kp-blocks__insert-box" aria-hidden="true">
+              +
+            </span>
+            {EDITOR_COPY.insertCheckbox}
+          </button>
+          {hasChecked && (
+            <button type="button" className="kp-blocks__clear" onClick={clearChecked}>
+              <svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true">
+                <path
+                  d="M4 6 H16 M8 6 V4.5 H12 V6 M6.5 6 L7.2 16.5 H12.8 L13.5 6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              {EDITOR_COPY.clearChecked}
+            </button>
+          )}
+        </div>
       )}
     </div>
   )

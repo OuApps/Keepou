@@ -147,6 +147,8 @@ export const EDITOR_COPY = {
   checkboxItemLabel: 'Intitulé de la case',
   checkboxItemPlaceholder: 'Nouvel élément',
   insertCheckbox: 'Insérer une case à cocher',
+  // Appears only when ≥ 1 box is checked (E11-S6); clears every ticked item.
+  clearChecked: 'Supprimer les cases cochées',
   colorLabel: 'Couleur de la note',
   visibilityPublic: 'Public',
   confirmPrivateLabel: 'Confirmer le passage en privé',
