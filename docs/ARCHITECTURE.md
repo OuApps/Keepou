@@ -383,10 +383,16 @@ service points at a **Root Directory** and listens on `$PORT`.
 
 | Service | Root | Build / Start | Public URL |
 | --- | --- | --- | --- |
-| **keepou-api** | `api/` | Nixpacks; `uvicorn app.main:app --host 0.0.0.0 --port $PORT` | `https://<api>.up.railway.app` · `/api/health` |
+| **keepou-api** | `api/` | Nixpacks; `sh -c 'uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}'` | `https://<api>.up.railway.app` · `/api/health` |
 | **keepou-web** | `web/` | `npm ci && npm run build` → serve `dist/` on `$PORT` (SPA fallback) | `https://<web>.up.railway.app` |
 | **Postgres** | — | managed plugin | injects `DATABASE_URL` |
 
+- **`$PORT` must be shell-expanded**: the API `startCommand` is wrapped in
+  `sh -c '… --port ${PORT:-8000}'`. Railway runs a raw `startCommand` in **exec
+  form** (no shell), so a bare `--port $PORT` reaches uvicorn as the literal
+  string `$PORT` (« `'$PORT'` is not a valid integer »). The `sh -c` wrapper forces
+  expansion and the `${PORT:-8000}` fallback keeps local `docker run` working —
+  same pattern as the web `start` script and `api/docker-entrypoint.sh`.
 - **Migrations**: `alembic upgrade head` runs as a **pre-deploy** command on the
   API service, before traffic shifts (a no-op until the first real model lands in
   E2).
