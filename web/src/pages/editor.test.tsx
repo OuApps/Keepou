@@ -507,6 +507,55 @@ describe('NoteEditor', () => {
     expect(patches[0].body).toBe('')
   })
 
+  it('copies the whole note — title + serialized text — in one click (E11-S7)', async () => {
+    const writeText = vi.fn<(text: string) => Promise<void>>().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    })
+    stubEditor(note())
+    renderEditor()
+    await editorLoaded()
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Copier la note' }))
+    })
+
+    expect(writeText).toHaveBeenCalledWith('Repas de quartier\n\n' + BODY)
+    // Transient feedback: the icon flips to a checkmark and announces the copy.
+    expect(screen.getByRole('button', { name: 'Note copiée' })).toBeInTheDocument()
+
+    Reflect.deleteProperty(navigator, 'clipboard')
+  })
+
+  it('keeps the copy action available in read-only mode (E11-S7)', async () => {
+    const writeText = vi.fn<(text: string) => Promise<void>>().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    })
+    const locked = note({
+      owner_id: 'u-paul',
+      locked_by: { id: 'u-paul', display_name: 'Paul' },
+      lock_expires_at: new Date(Date.now() + 60_000).toISOString(),
+    })
+    stubFetch({
+      '/api/auth/me': () => json(200, ME),
+      [`/api/notes/${locked.id}`]: () => json(200, locked),
+    })
+    renderEditor()
+    await screen.findByText(/est en cours d'édition/)
+
+    // Every editing control is disabled, but the copy button still works.
+    expect(screen.getByLabelText('Titre de la note')).toBeDisabled()
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Copier la note' }))
+    })
+    expect(writeText).toHaveBeenCalledWith('Repas de quartier\n\n' + BODY)
+
+    Reflect.deleteProperty(navigator, 'clipboard')
+  })
+
   it('shows « Note introuvable. » when the note cannot be loaded', async () => {
     stubFetch({
       '/api/auth/me': () => json(200, ME),

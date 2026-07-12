@@ -20,7 +20,7 @@
 - [ ] 🔨 **E8** — Polish (PWA, a11y, formatting, **pin + archive**, i18n, quality) · ✅ detailed → [`stories/E8-polish-pwa-a11y-i18n.md`](./stories/E8-polish-pwa-a11y-i18n.md) — *S1–S11 shipped (PWA install surface + minimal SW, a11y pass + ink-contrast policy, FR copy centralized in `lib/copy.ts`, tests + CI green, mobile-keyboard handling, autofill markup, dark tokens WCAG AA, inline bold/italic/headings as-you-type, text under a checkbox, **pin + archive** — `Note.pinned`/`archived` migration, owner-only lock-free PATCH, `?archived=` view, card ⋯ menu + pinned-first ordering, new notebook+pen logo/icon set); remaining: on-device checks only (Android/iOS install & keyboard, Bitwarden)*
 - [ ] **E9** — Database cold backups & restore · ✅ detailed → [`stories/E9-backups-restore.md`](./stories/E9-backups-restore.md) — *Scaleway Object Storage + Railway cron*
 - [x] **E10** — Import from Google Keep · ✅ detailed → [`stories/E10-import-keep.md`](./stories/E10-import-keep.md) — *shipped (Takeout parser, preview/confirm endpoints, validated mockup `Keepou - Import Keep.dc.html`, `/import` flow — upload → review « mode tunnel » → summary —, tests back & front, user how-to)*
-- [x] **E11** — Field-feedback follow-up · ✅ detailed → [`stories/E11-retours-terrain.md`](./stories/E11-retours-terrain.md) — *shipped (board sort + density selectors + search reset + year-in-old-dates + return-state; hard delete from the card, the editor and archive multi-select/select-all; owner pin/archive/delete + `Maj+Entrée` in the editor; self-service display-name change `PATCH /api/auth/me`; windowed board rendering; instant open/close via a board cache with optimistic upserts; editor « Supprimer les cases cochées » to clear all ticked boxes (S6); tests back & front)*
+- [x] **E11** — Field-feedback follow-up · ✅ detailed → [`stories/E11-retours-terrain.md`](./stories/E11-retours-terrain.md) — *shipped (board sort + density selectors + search reset + year-in-old-dates + return-state; hard delete from the card, the editor and archive multi-select/select-all; owner pin/archive/delete + `Maj+Entrée` in the editor; self-service display-name change `PATCH /api/auth/me`; windowed board rendering; instant open/close via a board cache with optimistic upserts; editor « Supprimer les cases cochées » to clear all ticked boxes (S6); editor « Copier la note » one-click whole-note copy (S7); tests back & front)*
 
 ---
 
@@ -410,6 +410,9 @@ product rule.
 **Scope — Editor / profile**
 - Editor **owner ⋯ menu** (pin / archive / hard delete) and **`Maj+Entrée`**
   (save & close, capture-phase so it never inserts a newline).
+- **« Copier la note »**: a discreet top-bar button that puts the whole note
+  (title + text) on the clipboard in one click — a selection can't span the
+  per-block fields — available in read-only too.
 - **Change display name**: `PATCH /api/auth/me {display_name}` + a « Modifier mon
   nom » dialog, reflected immediately in the UI.
 
@@ -457,5 +460,5 @@ Two points to keep in mind:
   user how-to in `docs/HOWTO-import-google-keep.md`.
 - **E11** (field-feedback follow-up) is **shipped** — board filter/sort/search-reset/
   year + return-state, hard delete (card / editor / archive bulk), editor owner
-  actions + `Maj+Entrée`, self-service display-name change, windowed rendering;
-  tests back & front, docs synced.
+  actions + `Maj+Entrée`, one-click whole-note copy, self-service display-name
+  change, windowed rendering; tests back & front, docs synced.

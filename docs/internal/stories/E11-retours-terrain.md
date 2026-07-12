@@ -29,6 +29,7 @@ plus one small profile endpoint.
 | 10 / 11 | Afficher tout / public / privé — couvert par l'onglet « Mes notes / Public » | E11-S1 |
 | 12 | Afficher l'année en plus de la date (notes Keep anciennes) | E11-S1 |
 | 13 | Bouton pour supprimer toutes les cases déjà cochées (édition) | E11-S6 |
+| 14 | Copier une note complète en un clic — Ctrl+A / cliquer-glisser restent limités au bloc | E11-S7 |
 
 ---
 
@@ -48,6 +49,8 @@ plus one small profile endpoint.
       300-note board mounts instantly)
 - [x] **E11-S6** — Editor: a « Supprimer les cases cochées » action that clears
       every ticked checkbox at once, shown only when at least one box is checked
+- [x] **E11-S7** — Editor: a discreet « Copier la note » header button that puts
+      the whole note (title + text) on the clipboard, available in read-only too
 
 ---
 
@@ -222,6 +225,45 @@ or Markdown-format change (bodies stay GFM task lists).
 
 ---
 
+## E11-S7 — Copy the whole note · S
+
+**Goal.** Copying a full note (to paste it into a chat, an e-mail…) was a chore:
+the editor's block flow is made of separate form fields (`<textarea>` per
+paragraph, `<input>` per checkbox line), and a browser selection can never span
+multiple fields — `Ctrl+A` and drag-selection stop at the current block, by
+construction. One click must copy the entire note instead.
+
+**Tasks**
+- **Trigger.** A discreet icon button in the editor's top bar (next to the owner
+  ⋯ menu), **« Copier la note »**, shown in every lock state — copying a note
+  someone else is editing (read-only) is precisely the frequent case.
+- **Behavior.** Puts `title + blank line + serialize(blocks)` on the clipboard
+  (just the body when the title is empty), from the **current draft** so unsaved
+  keystrokes are included. Checkboxes keep their GFM form (`- [ ]` / `- [x]`),
+  the note's canonical text — pasting into another Keepou note round-trips.
+  `navigator.clipboard.writeText`, with an `execCommand('copy')` fallback for a
+  self-hosted deployment served over plain HTTP.
+- **Feedback.** On success the icon flips to a green checkmark and the
+  accessible name becomes **« Note copiée »** for ~2 s, then reverts. No toast,
+  no layout shift.
+
+**Copy.** `EDITOR_COPY.copyNote = 'Copier la note'` ·
+`EDITOR_COPY.copyNoteDone = 'Note copiée'` (`web/src/lib/copy.ts`, mirrored in
+HANDOFF §7).
+
+**Acceptance criteria**
+- [x] One click copies the whole note — title + text, checkboxes as GFM task
+      lines — including unsaved keystrokes.
+- [x] The button is available in read-only mode (note locked by another member).
+- [x] A transient checkmark + « Note copiée » confirms the copy.
+- [x] Front tests cover the copied payload, the feedback, and the read-only case.
+
+**Notes.** Pure front UX — no API or schema change. Cross-block selection was
+considered and rejected: it would require replacing the per-block fields with a
+single `contenteditable` surface, a rewrite of the E4 editor for marginal gain.
+
+---
+
 ## Definition of "E11 done"
 
 - [x] Board is sortable (Modifié/Créé/Titre), the search resets in one click,
@@ -232,6 +274,8 @@ or Markdown-format change (bodies stay GFM task lists).
 - [x] Pin / archive / delete are reachable from the editor; `Shift+Enter` saves.
 - [x] The editor can clear every checked box at once (« Supprimer les cases
       cochées »), shown only when at least one is ticked.
+- [x] The whole note can be copied in one click (« Copier la note »), including
+      from the read-only view.
 - [x] Members can change their display name.
 - [x] Large boards mount instantly (windowed rendering).
 - [x] Front + back tests green in CI; docs (EPICS, ARCHITECTURE, HANDOFF §7) synced.

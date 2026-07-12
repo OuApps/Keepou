@@ -42,6 +42,33 @@ import { VisibilityToggle } from './VisibilityToggle'
  * edits. A version is born on session end in E6.
  */
 
+/**
+ * Put plain text on the clipboard; falls back to `execCommand` where the
+ * Clipboard API is unavailable (a self-hosted deployment over plain HTTP).
+ */
+async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch {
+    const area = document.createElement('textarea')
+    area.value = text
+    area.setAttribute('readonly', '')
+    area.style.position = 'fixed'
+    area.style.opacity = '0'
+    document.body.appendChild(area)
+    area.select()
+    let done = false
+    try {
+      done = document.execCommand('copy')
+    } catch {
+      done = false
+    }
+    area.remove()
+    return done
+  }
+}
+
 const SHADE_CLASS: Record<NoteColor, string> = {
   GOLD: 'kp-editor--gold',
   AVOCAT: 'kp-editor--avocat',
@@ -87,6 +114,10 @@ export function NoteEditor({ noteId }: { noteId: string }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  // Whole-note copy (E11-S7): the block flow is separate form fields, so a
+  // selection can never span the note — one click copies title + text instead.
+  const [copied, setCopied] = useState(false)
+  const copiedTimer = useRef<number | null>(null)
   // "Last saved version" (HANDOFF §3.2) — moves only on a successful persist,
   // independently of the session state rendered by <SaveStatus>.
   const [lastSaved, setLastSaved] = useState<{ by: string; at: string } | null>(() =>
@@ -272,6 +303,27 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     }
   }
 
+  // Copy the whole note (E11-S7): title + serialized text, from the current
+  // draft (unsaved keystrokes included). Works in read-only too — copying a
+  // note someone else is editing is precisely the frequent case.
+  const copyAll = async () => {
+    const current = draftRef.current
+    if (current === null) return
+    const body = serialize(current.blocks)
+    const text = current.title.trim() === '' ? body : `${current.title}\n\n${body}`
+    if (!(await copyText(text))) return
+    setCopied(true)
+    if (copiedTimer.current !== null) window.clearTimeout(copiedTimer.current)
+    copiedTimer.current = window.setTimeout(() => setCopied(false), 2000)
+  }
+
+  useEffect(
+    () => () => {
+      if (copiedTimer.current !== null) window.clearTimeout(copiedTimer.current)
+    },
+    [],
+  )
+
   const removeNote = async () => {
     setConfirmDelete(false)
     try {
@@ -387,6 +439,46 @@ export function NoteEditor({ noteId }: { noteId: string }) {
           ) : lock.status === 'locked' ? (
             <LockLiveDot />
           ) : null}
+          <button
+            type="button"
+            className={`kp-editor__copy${copied ? ' kp-editor__copy--done' : ''}`}
+            onClick={() => void copyAll()}
+            aria-label={copied ? EDITOR_COPY.copyNoteDone : EDITOR_COPY.copyNote}
+            title={copied ? EDITOR_COPY.copyNoteDone : EDITOR_COPY.copyNote}
+          >
+            {copied ? (
+              <svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true">
+                <path
+                  d="M4.5 10.5 L8.5 14.5 L15.5 6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true">
+                <rect
+                  x="7"
+                  y="7"
+                  width="9.5"
+                  height="9.5"
+                  rx="2"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                />
+                <path
+                  d="M13 5v-.5A1.5 1.5 0 0 0 11.5 3H5a2 2 0 0 0-2 2v6.5A1.5 1.5 0 0 0 4.5 13H5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                />
+              </svg>
+            )}
+          </button>
           {isOwner && (
             <div className="kp-editor__more-wrap" ref={menuRef}>
               <button

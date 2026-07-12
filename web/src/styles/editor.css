@@ -140,6 +140,34 @@
   min-width: 190px;
 }
 
+/* --- Whole-note copy (E11-S7): the block flow is separate fields, so a
+ * selection can't span the note — this puts title + text on the clipboard. --- */
+.kp-editor__copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.kp-editor__copy:hover {
+  background: rgba(46, 42, 32, 0.08);
+}
+
+[data-theme='dark'] .kp-editor__copy:hover {
+  background: rgba(243, 236, 221, 0.1);
+}
+
+.kp-editor__copy--done {
+  color: var(--check);
+}
+
 /* --- Single-editor lock (E5) --- */
 /* The 4 states of `Keepou - Éditeur & verrou.dc.html`. Each bar modifier
  * carries the state's wash/line/ink as variables so the strip (desktop) and
