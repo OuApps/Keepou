@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from 'react'
-import { EDITOR_COPY } from '../../lib/copy'
+import { useI18n } from '../../i18n'
 import { highlightMarkdown } from '../../lib/highlight'
 
 /**
@@ -82,6 +82,7 @@ export function MarkdownArea({
   placeholder,
   blockKey,
 }: MarkdownAreaProps) {
+  const { EDITOR_COPY } = useI18n()
   const ref = useRef<HTMLDivElement>(null)
   // Caret target for the re-render that follows a programmatic splice.
   const pendingCaret = useRef<number | null>(null)

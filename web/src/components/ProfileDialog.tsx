@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../auth/AuthContext'
-import { COMMON_COPY, PROFILE_COPY } from '../lib/copy'
+import { useI18n } from '../i18n'
 
 /**
  * « Modifier mon nom » (E11-S4): a small modal to change the current user's
@@ -9,6 +9,7 @@ import { COMMON_COPY, PROFILE_COPY } from '../lib/copy'
  * the menu header and future « Modifié par » reflect the new name at once.
  */
 export function ProfileDialog({ onClose }: { onClose: () => void }) {
+  const { COMMON_COPY, PROFILE_COPY } = useI18n()
   const { user, changeDisplayName } = useAuth()
   const [name, setName] = useState(user?.display_name ?? '')
   const [saving, setSaving] = useState(false)

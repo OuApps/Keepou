@@ -27,6 +27,16 @@ class Settings(BaseSettings):
     access_token_ttl_minutes: int = 15
     refresh_token_ttl_days: int = 30
 
+    # MCP agent access (E13). The streamable-HTTP MCP server is mounted at
+    # `<api>/mcp` and authenticated by Personal Access Tokens. `mcp_public_url`
+    # is the externally reachable MCP endpoint (used for the OAuth-style resource
+    # metadata the spec advertises). DNS-rebinding protection is off by default:
+    # the endpoint is a bearer-authenticated public API, not a localhost server
+    # (the attack it guards against targets browsers reaching 127.0.0.1).
+    mcp_enabled: bool = True
+    mcp_public_url: str = "http://localhost:8000/mcp"
+    mcp_dns_rebinding_protection: bool = False
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @model_validator(mode="after")

@@ -1,5 +1,5 @@
 import type { ImportSummaryOut } from '../../api/importKeep'
-import { IMPORT_COPY as COPY } from '../../lib/copy'
+import { useI18n } from '../../i18n'
 
 /**
  * Import step 3 (E10-S3) — the summary card: what was created, what was
@@ -12,6 +12,7 @@ export function ImportSummary({
   summary: ImportSummaryOut
   onDone: () => void
 }) {
+  const { IMPORT_COPY: COPY } = useI18n()
   const details = [
     summary.skipped_duplicate > 0 ? COPY.duplicates(summary.skipped_duplicate) : null,
     summary.failed.length > 0 ? COPY.failedFiles(summary.failed.length) : null,

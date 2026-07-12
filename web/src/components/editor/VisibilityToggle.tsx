@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Visibility } from '../../api/notes'
-import { COMMON_COPY, EDITOR_COPY } from '../../lib/copy'
+import { useI18n } from '../../i18n'
 
 /**
  * Private/public switch (E4-S5, FR-N5 — owner only, enforced server-side).
@@ -18,6 +18,7 @@ export function VisibilityToggle({
   /** Read-only mode (E5): the switch is visible but inert. */
   disabled?: boolean
 }) {
+  const { COMMON_COPY, EDITOR_COPY } = useI18n()
   const [confirming, setConfirming] = useState(false)
   const isPublic = visibility === 'PUBLIC'
 

@@ -1,5 +1,5 @@
 import type { NoteVersionOut } from '../../api/versions'
-import { HISTORY_COPY } from '../../lib/copy'
+import { useI18n } from '../../i18n'
 import { formatVersionWhen } from '../../lib/time'
 
 /**
@@ -47,6 +47,7 @@ export function VersionRow({
   onSelect,
   onRestore,
 }: VersionRowProps) {
+  const { HISTORY_COPY } = useI18n()
   const shade = avatarShadeOf(version.author_id)
   return (
     <li className={`kp-vrow${selected ? ' kp-vrow--selected' : ''}`}>

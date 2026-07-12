@@ -42,6 +42,15 @@ class UserStatus(StrEnum):
     DISABLED = "DISABLED"  # never deleted (claude.md §5)
 
 
+class Language(StrEnum):
+    """UI language preference (E12). Stored server-side so it follows the member
+    across devices; the front mirrors it in localStorage for a flash-free boot.
+    The product is francophone-first, so FR is the default (design/claude.md)."""
+
+    FR = "FR"
+    EN = "EN"
+
+
 class User(SQLModel, table=True):
     """A member of the instance. Emails are stored normalized (lowercase)."""
 
@@ -51,6 +60,9 @@ class User(SQLModel, table=True):
     password_hash: str
     role: Role = Role.MEMBER
     status: UserStatus = UserStatus.ACTIVE
+    # Preferred UI language (E12) — the source of truth is the server; the SPA
+    # keeps a localStorage cache so it can render before /auth/me resolves.
+    language: Language = Language.FR
     created_at: datetime = Field(default_factory=_utcnow)
 
 
@@ -130,3 +142,24 @@ class NoteVersion(SQLModel, table=True):
     color: NoteColor
     visibility: Visibility
     created_at: datetime = Field(default_factory=_utcnow)
+
+
+class PersonalAccessToken(SQLModel, table=True):
+    """A long-lived bearer token an agent uses to reach Keepou over MCP (E13).
+
+    JWT access tokens live ~15 min — too short for an always-on agent — so a
+    member mints a Personal Access Token instead, shown once at creation. Only
+    its SHA-256 hash is stored (never the secret, like a password): resolving a
+    presented token is a single indexed lookup on `token_hash`. `prefix` keeps a
+    non-secret display label (« kpat_abcd… »); `revoked_at` disables it without
+    deleting the row, so a revoked token can never be silently re-enabled.
+    """
+
+    id: str = Field(default_factory=_id, primary_key=True)
+    user_id: str = Field(foreign_key="user.id", index=True)
+    name: str  # member-chosen label, e.g. « Bot WhatsApp »
+    token_hash: str = Field(unique=True, index=True)  # sha256 hex of the secret
+    prefix: str  # first chars of the secret, for display only
+    created_at: datetime = Field(default_factory=_utcnow)
+    last_used_at: datetime | None = None
+    revoked_at: datetime | None = None  # set = disabled (never deleted on revoke)

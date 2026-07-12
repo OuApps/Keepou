@@ -1,5 +1,5 @@
 import { useId } from 'react'
-import { IMPORT_COPY as COPY } from '../../lib/copy'
+import { useI18n } from '../../i18n'
 
 /**
  * Import step 1 (E10-S3) — the upload card, faithful to
@@ -22,6 +22,7 @@ export function ImportUpload({
   onContinue: () => void
   onCancel: () => void
 }) {
+  const { IMPORT_COPY: COPY } = useI18n()
   const inputId = useId()
 
   return (

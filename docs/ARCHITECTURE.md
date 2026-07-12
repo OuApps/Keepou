@@ -64,6 +64,7 @@ erDiagram
     User ||--o{ Note : owns
     User ||--o{ NoteVersion : authored
     User ||--o{ AllowlistEntry : invited
+    User ||--o{ PersonalAccessToken : "owns (agent access)"
     Note ||--o{ NoteVersion : "has history"
     User ||--o| Note : "locks (0..1 active)"
 
@@ -74,7 +75,18 @@ erDiagram
         string password_hash
         enum role "ADMIN | MEMBER"
         enum status "ACTIVE | DISABLED"
+        enum language "FR | EN"
         datetime created_at
+    }
+    PersonalAccessToken {
+        string id PK
+        string user_id FK
+        string name
+        string token_hash UK "sha256"
+        string prefix "display only"
+        datetime created_at
+        datetime last_used_at "nullable"
+        datetime revoked_at "nullable"
     }
     AllowlistEntry {
         string id PK
@@ -117,6 +129,18 @@ erDiagram
   request** (the bearer token only asserts identity — the API re-loads the user
   and verifies `ACTIVE`), so disabling takes effect immediately even if the user
   still holds a valid token.
+- **User.language** — the member's preferred UI language (`FR` / `EN`, default
+  `FR`), stored server-side so it **follows them across devices** (E12). The SPA
+  mirrors it in `localStorage` for a flash-free boot and adopts the server value
+  on session load; the member changes it from the account menu
+  (`PATCH /api/auth/me {language}`). French stays the reference locale — the
+  frozen UI copy (HANDOFF §7) is the FR source, `en.ts` its faithful mirror.
+- **PersonalAccessToken** — a long-lived bearer secret an agent uses to reach
+  Keepou over **MCP** (E13, §13). JWT access tokens are short-lived (~15 min), so
+  a member mints a `kpat_…` token instead. Only its **SHA-256 hash** is stored
+  (never the secret, shown once at creation); `prefix` is a non-secret display
+  label; `revoked_at` disables it without deleting the row. Resolving a presented
+  token is one indexed lookup that also re-checks the owner is `ACTIVE`.
 - **AllowlistEntry** — the allowlist. An email here may sign up; once they do, a
   `User` row exists. A `LEFT JOIN User ON User.email = AllowlistEntry.email` lets
   the admin UI show "allowed (pending)" vs "registered" (FR-U2).
@@ -279,7 +303,7 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
 | POST | `/api/auth/login` | Sign in | Returns `{access, refresh}`; `401` bad creds, `403` if `DISABLED` |
 | POST | `/api/auth/refresh` | Renew the access token | Takes the refresh token; `401` if invalid/expired |
 | GET | `/api/auth/me` | Current user + role | Bearer-authenticated; drives client route guards |
-| PATCH | `/api/auth/me` | Change own display name | Bearer; `{display_name}` only (1..80, trimmed); email/role/status stay untouched (E11) |
+| PATCH | `/api/auth/me` | Change own display name / language | Bearer; `{display_name?, language?}` — partial (E11 name, E12 language); email/role/status stay untouched |
 | GET | `/api/notes?tab=mine\|public` | List notes | `mine` = own; `public` = all members' public (with author); `?archived=true` = own archived view (E8); pinned-first ordering |
 | POST | `/api/notes` | Create note | |
 | GET | `/api/notes/:id` | Read a note | Visibility-checked |
@@ -295,6 +319,10 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
 | PATCH | `/api/admin/users/:id` | Set `role` or `status` | Admin; last-admin guard; never deletes |
 | POST | `/api/import/keep/preview` | Parse a Takeout export | Bearer; ZIP upload → parsed notes with a stable index, **no writes** — feeds the review/selection view (E10) |
 | POST | `/api/import/keep` | Import selected notes | Bearer; same ZIP + selected indices → create only the checked notes (private, dates preserved); returns a summary (E10) |
+| GET | `/api/tokens` | List own agent tokens | Bearer; metadata only, never the secret (E13) |
+| POST | `/api/tokens` | Mint an agent token | Bearer; `{name}` → the `kpat_…` secret **once** (`201`); only its hash is stored |
+| DELETE | `/api/tokens/:id` | Revoke an agent token | Bearer; owner-scoped (`404` otherwise); sets `revoked_at`, never deletes |
+| POST | `/mcp` | MCP endpoint (streamable HTTP) | Bearer **Personal Access Token**; the agent surface (§13) — not part of the REST/JSON app, mounted separately |
 
 > **Search** is a **client-side filter** over the loaded board in the MVP (FR-S1);
 > a dedicated server endpoint can be added later if the note count grows.
@@ -346,6 +374,12 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
   + API under **one domain** (custom domain + `/api` reverse proxy) or sibling
   subdomains — deferred until a custom domain is available. The data model is
   unchanged, so the migration stays localized to auth.
+- **Personal Access Tokens (agent access, E13).** Separately from the JWT flow,
+  a member can mint long-lived **`kpat_…`** tokens for an agent (the JWT access
+  token's ~15-min TTL is too short for an always-on agent). They are the bearer
+  credential for the **MCP** endpoint (§13): only the SHA-256 **hash** is stored,
+  the secret is shown once, and each use re-checks the owner is `ACTIVE` — so
+  revoking a token or disabling the owner cuts agent access immediately.
 
 ## 9. PWA & responsiveness
 
@@ -499,3 +533,58 @@ constrained by how Keep lets data out:
 > The mapper is isolated from the endpoint, so a second importer (Standard Notes,
 > Evernote, a plain Markdown folder) could be added later without touching the
 > upload plumbing.
+
+## 13. Internationalization (E12)
+
+Keepou ships in **French and English**. French is the **reference locale** — the
+frozen UI copy (HANDOFF §7) is the source of truth; `web/src/i18n/en.ts` is its
+faithful mirror.
+
+- **Where strings live.** `web/src/i18n/fr.ts` holds the reference dictionary
+  (grouped `*_COPY` objects); `en.ts` is typed `Copy = typeof fr`, so the
+  compiler rejects any missing key or mismatched function signature — the two
+  locales **cannot drift out of shape**. Components read the active dictionary via
+  `useI18n()` (a React context), so a language switch re-renders every consumer.
+- **The preference.** Stored **server-side** on `User.language` (§3) so it follows
+  the member across devices, with a **`localStorage` mirror** (`keepou.language`)
+  for a flash-free first paint and the pre-login screens. On session load the
+  front adopts `User.language`; the account-menu switcher applies the new locale
+  immediately, then persists it via `PATCH /api/auth/me {language}` (a failed
+  sync keeps the local switch — offline-safe).
+- **Timestamps.** The relative/absolute date formatters (`web/src/lib/time.ts`)
+  read a module-level active locale kept in sync by the i18n provider, so an
+  English UI never shows French dates without threading the locale through every
+  call site.
+- **Default.** French, unless the browser is clearly English on first visit
+  (`navigator.language`) — the product is francophone-first (design/claude.md).
+
+## 14. Agent access over MCP (E13)
+
+Keepou exposes its notes to an **agent** over the **Model Context Protocol**, so a
+member can read and manage their notes from an assistant — and, later, from a
+**WhatsApp / Telegram bot** that speaks MCP. The agent acts **as the member**,
+under the exact same server-side rules as the web app.
+
+- **Transport.** A **streamable-HTTP** MCP server (`app/mcp_server.py`, built on
+  the `mcp` SDK's `FastMCP`, **stateless**) **mounted inside the FastAPI app** at
+  **`/mcp`** — future-proof for a remote bot that connects to it directly. The
+  session manager runs in the app lifespan (rebuilt per lifespan behind a stable
+  ASGI wrapper, so the test harness can open many clients). `MCP_ENABLED=false`
+  turns the whole surface off.
+- **Auth.** Bearer **Personal Access Token** (§8). FastMCP's `token_verifier`
+  resolves the presented `kpat_…` to its `ACTIVE` owner; inside a tool,
+  `get_access_token().subject` is that user's id, so every action runs as them.
+  A missing/invalid/revoked token is `401`.
+- **Tools** (7, thin adapters over `app/services/agent.py`, which mirrors the REST
+  rules — visibility gating, single-editor lock, versioning, owner/admin
+  permissions): `list_notes`, `search_notes`, `get_note`, `create_note`,
+  `update_note`, `organize_note` (pin/archive), `delete_note`. Editing a **public**
+  note **borrows the single-editor lock** around the change and yields to a live
+  editor (`409` → a clean tool error); each content edit records the session's
+  version, exactly like the web editor.
+- **Separation of concerns.** The note logic lives in `services/agent.py`
+  (transport-free, unit-tested); the MCP tools are adapters that open a session,
+  resolve the current user and delegate. Tool text is **English** (an agent-facing
+  API, not product UI copy).
+
+See [`docs/HOWTO-mcp-agent.md`](./HOWTO-mcp-agent.md) for connecting an agent.

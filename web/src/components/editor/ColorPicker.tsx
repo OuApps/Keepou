@@ -1,6 +1,6 @@
 import type { NoteColor } from '../../api/notes'
+import { useI18n } from '../../i18n'
 import { SWATCHES } from '../../lib/colors'
-import { EDITOR_COPY } from '../../lib/copy'
 
 /**
  * Editor color picker (E4-S5): the 5 shades as round swatches, the active one
@@ -16,6 +16,7 @@ export function ColorPicker({
   /** Read-only mode (E5): the swatches are visible but inert. */
   disabled?: boolean
 }) {
+  const { EDITOR_COPY, COLOR_LABELS } = useI18n()
   return (
     <div className="kp-editor__colors" role="radiogroup" aria-label={EDITOR_COPY.colorLabel}>
       {SWATCHES.map((s) => (
@@ -24,7 +25,7 @@ export function ColorPicker({
           type="button"
           role="radio"
           aria-checked={value === s.color}
-          aria-label={s.label}
+          aria-label={COLOR_LABELS[s.color]}
           disabled={disabled}
           className={`kp-editor__swatch${value === s.color ? ' kp-editor__swatch--active' : ''}`}
           style={{ background: s.bg, borderColor: value === s.color ? undefined : s.bd }}

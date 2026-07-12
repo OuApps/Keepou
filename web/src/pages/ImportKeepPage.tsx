@@ -7,7 +7,7 @@ import {
   type ImportSummaryOut,
 } from '../api/importKeep'
 import { ApiError } from '../api/client'
-import { COMMON_COPY, IMPORT_COPY as COPY } from '../lib/copy'
+import { useI18n } from '../i18n'
 import { ImportReview } from '../components/importer/ImportReview'
 import { ImportSummary } from '../components/importer/ImportSummary'
 import { ImportUpload } from '../components/importer/ImportUpload'
@@ -25,11 +25,14 @@ type Step =
   | { name: 'review'; preview: ImportPreviewOut }
   | { name: 'summary'; summary: ImportSummaryOut }
 
-function errorMessage(err: unknown): string {
-  return err instanceof ApiError ? err.message : COMMON_COPY.networkError
+// The server's error `detail` is already localized-agnostic (E10 API); the
+// fallback (network failure) comes from the active locale, passed in.
+function errorMessage(err: unknown, networkError: string): string {
+  return err instanceof ApiError ? err.message : networkError
 }
 
 export default function ImportKeepPage() {
+  const { COMMON_COPY, IMPORT_COPY: COPY } = useI18n()
   const navigate = useNavigate()
   const [step, setStep] = useState<Step>({ name: 'upload' })
   const [file, setFile] = useState<File | null>(null)
@@ -47,7 +50,7 @@ export default function ImportKeepPage() {
       setSelected(new Set(preview.items.filter((i) => !i.is_trashed).map((i) => i.index)))
       setStep({ name: 'review', preview })
     } catch (err) {
-      setError(errorMessage(err))
+      setError(errorMessage(err, COMMON_COPY.networkError))
     } finally {
       setBusy(false)
     }
@@ -78,7 +81,7 @@ export default function ImportKeepPage() {
       )
       setStep({ name: 'summary', summary })
     } catch (err) {
-      setError(errorMessage(err))
+      setError(errorMessage(err, COMMON_COPY.networkError))
     } finally {
       setBusy(false)
     }

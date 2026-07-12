@@ -6,7 +6,7 @@ import { listVersions, restoreVersion, type NoteVersionOut } from '../api/versio
 import { HistoryPanel } from '../components/history/HistoryPanel'
 import { RestoreConfirm } from '../components/history/RestoreConfirm'
 import { VersionPreview } from '../components/history/VersionPreview'
-import { COMMON_COPY, HISTORY_COPY } from '../lib/copy'
+import { useI18n } from '../i18n'
 import { formatVersionMoment, formatVersionWhen } from '../lib/time'
 
 /**
@@ -26,6 +26,7 @@ const SHADE_CLASS: Record<NoteColor, string> = {
 }
 
 export default function HistoryPage() {
+  const { COMMON_COPY, HISTORY_COPY } = useI18n()
   const { id } = useParams()
   const noteId = id!
   const navigate = useNavigate()

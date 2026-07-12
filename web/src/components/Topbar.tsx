@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { BOARD_COPY, COMMON_COPY, IMPORT_COPY, PROFILE_COPY } from '../lib/copy'
+import { useI18n, useLocale } from '../i18n'
 import { ProfileDialog } from './ProfileDialog'
 import { ThemeToggle } from './ThemeToggle'
+import { TokenManager } from './TokenManager'
 
 /**
  * App topbar — sticky, blurred, faithful to `Keepou - Board.dc.html`: logo +
@@ -12,10 +13,13 @@ import { ThemeToggle } from './ThemeToggle'
  * only — the real /admin guard is the API, E7 — + « Se déconnecter »).
  */
 export function Topbar({ center, tabs }: { center?: ReactNode; tabs?: ReactNode }) {
-  const { user, signOut } = useAuth()
+  const { user, signOut, changeLanguage } = useAuth()
+  const { BOARD_COPY, COMMON_COPY, IMPORT_COPY, PROFILE_COPY, LANG_COPY, TOKEN_COPY } = useI18n()
+  const { locale } = useLocale()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [tokensOpen, setTokensOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const initial = user?.display_name?.trim().charAt(0).toUpperCase() || '?'
 
@@ -76,6 +80,27 @@ export function Topbar({ center, tabs }: { center?: ReactNode; tabs?: ReactNode 
             >
               {PROFILE_COPY.menuEntry}
             </button>
+            {/* Language switcher (E12) — sits right under « Modifier mon nom ». The
+                menu stays open so the change is visible immediately. */}
+            <div className="kp-menu__lang" role="group" aria-label={LANG_COPY.label}>
+              <span className="kp-menu__lang-label">{LANG_COPY.label}</span>
+              <div className="kp-menu__lang-options">
+                {(['fr', 'en'] as const).map((code) => (
+                  <button
+                    key={code}
+                    type="button"
+                    className={`kp-menu__lang-btn${locale === code ? ' kp-menu__lang-btn--on' : ''}`}
+                    aria-pressed={locale === code}
+                    aria-label={LANG_COPY.switchTo(
+                      code === 'fr' ? LANG_COPY.french : LANG_COPY.english,
+                    )}
+                    onClick={() => void changeLanguage(code)}
+                  >
+                    {code === 'fr' ? LANG_COPY.french : LANG_COPY.english}
+                  </button>
+                ))}
+              </div>
+            </div>
             {user?.role === 'ADMIN' && (
               <button
                 type="button"
@@ -111,6 +136,17 @@ export function Topbar({ center, tabs }: { center?: ReactNode; tabs?: ReactNode 
             >
               {IMPORT_COPY.menuEntry}
             </button>
+            <button
+              type="button"
+              className="kp-menu__item"
+              role="menuitem"
+              onClick={() => {
+                setMenuOpen(false)
+                setTokensOpen(true)
+              }}
+            >
+              {TOKEN_COPY.menuEntry}
+            </button>
             <button type="button" className="kp-menu__item" role="menuitem" onClick={signOut}>
               {BOARD_COPY.signOut}
             </button>
@@ -119,6 +155,7 @@ export function Topbar({ center, tabs }: { center?: ReactNode; tabs?: ReactNode 
       </div>
 
       {profileOpen && <ProfileDialog onClose={() => setProfileOpen(false)} />}
+      {tokensOpen && <TokenManager onClose={() => setTokensOpen(false)} />}
     </header>
   )
 }

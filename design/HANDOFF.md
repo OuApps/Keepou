@@ -379,6 +379,20 @@ Key front hooks: `useAutosave(noteId)` (debounce 1.5 s + flush on blur), `useNot
 - Editor top bar: « Copier la note » — a discreet icon button that copies the whole note (title + text) to the clipboard in one click, available in read-only too; transient confirmation « Note copiée » (green checkmark, ~2 s).
 - Profile: avatar-menu entry « Modifier mon nom » · dialog title « Modifier mon nom affiché » · field label « Nom affiché » · button « Enregistrer » · empty error « Choisis un nom affiché. » · failure « La modification a échoué. Réessaie dans un instant. ».
 
+**Internationalization (E12):**
+- Language switcher (account menu, under « Modifier mon nom »): label « Langue » ·
+  the two options are endonyms shown the same in both locales — « Français » /
+  « English ». The English strings are the mirror of this §7 copy, in
+  `web/src/i18n/en.ts`.
+
+**Agent access / MCP (E13):**
+- Avatar-menu entry « Accès agent (MCP) » · dialog title « Accès agent (MCP) » ·
+  « Adresse du serveur MCP » (+ « Copier l'adresse ») · « Nom du jeton » · « Générer
+  un jeton » · created-once panel « Copie ton jeton maintenant » + warning + « Copier
+  le jeton » / « J'ai copié le jeton » · list « Jetons actifs » · « Révoquer »
+  (confirmation « Révoquer ce jeton ? »). MCP **tool** text (the agent-facing API,
+  not product UI) is in **English** — see `docs/HOWTO-mcp-agent.md`.
+
 ---
 
 ## 8. Accessibility, responsive, PWA
@@ -386,7 +400,12 @@ Key front hooks: `useAutosave(noteId)` (debounce 1.5 s + flush on blur), `useNot
 - **Theme**: `data-theme="light|dark"` on the root, CSS variables from §1. Respect `prefers-color-scheme` on first load, persistent manual override (localStorage).
 - **A11y**: checkboxes = real `<input type=checkbox>` + label; fields with labels; lock banners as `role="status"` (aria-live polite); text/ink contrasts OK on light cards.
 - **PWA**: manifest (icon = mascot), responsive, offline-first not required for MVP but avoid blocking assumptions.
-- **i18n**: current copy in French; centralize the strings (cf. §7) to ease a later translation.
+- **i18n** (E12): the app is now **bilingual (French + English)**. French stays the
+  **reference locale** — the frozen copy below (§7) is the FR source of truth, and
+  `web/src/i18n/en.ts` is its faithful English mirror (typed so the two can't drift
+  out of shape). The member picks their language from the account menu (under
+  « Modifier mon nom »); the choice is stored server-side (`User.language`) and
+  follows them across devices. See `docs/ARCHITECTURE.md` §13.
 
 ---
 

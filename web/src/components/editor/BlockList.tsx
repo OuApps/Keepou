@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { EDITOR_COPY } from '../../lib/copy'
+import { useI18n } from '../../i18n'
 import { RichBlockText } from '../RichText'
 import { blockId, type EditorBlock } from './blocks'
 import { MarkdownArea } from './MarkdownArea'
@@ -26,6 +26,7 @@ interface BlockListProps {
 }
 
 export function BlockList({ blocks, onChange, onFlush, readOnly = false }: BlockListProps) {
+  const { EDITOR_COPY } = useI18n()
   const rootRef = useRef<HTMLDivElement>(null)
   // Focus follows a freshly inserted box (or the neighbor of a removed one).
   const pendingFocus = useRef<string | null>(null)

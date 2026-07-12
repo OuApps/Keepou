@@ -10,8 +10,9 @@ your own server. Installable PWA, light and dark, works on desktop and mobile.
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
 ![React](https://img.shields.io/badge/React-149ECA?logo=react&logoColor=white)
 
-> Keepou's interface is in **French** — it was built for a francophone community.
-> The code, the docs and this README are in English.
+> Keepou's interface is available in **French and English** — it was built for a
+> francophone community, with French as the default. The code, the docs and this
+> README are in English.
 
 ![Keepou board](docs/screenshots/board-light.png)
 
@@ -47,6 +48,13 @@ your own server. Installable PWA, light and dark, works on desktop and mobile.
   never deleted).
 - **Import from Google Keep.** Bring notes over from a Google Takeout export,
   reviewing and picking which ones to keep.
+- **Bilingual (French / English).** Each member picks their language from the
+  account menu; the choice is saved to their profile and follows them across
+  devices.
+- **Agent access over MCP.** Generate a Personal Access Token and connect an AI
+  agent (over the Model Context Protocol) to read and manage your notes — handy
+  for a future WhatsApp/Telegram bot. See
+  [`docs/HOWTO-mcp-agent.md`](./docs/HOWTO-mcp-agent.md).
 - **Installable PWA.** Add it to a phone home screen; light and dark themes,
   responsive from mobile to desktop.
 
@@ -148,6 +156,8 @@ Quality checks (the same ones CI runs):
 - [`design/HANDOFF.md`](./design/HANDOFF.md) — design system and the French UI copy.
 - [`docs/HOWTO-import-google-keep.md`](./docs/HOWTO-import-google-keep.md) — the
   Google Keep import.
+- [`docs/HOWTO-mcp-agent.md`](./docs/HOWTO-mcp-agent.md) — connect an AI agent to
+  your notes over MCP.
 
 The [`docs/internal/`](./docs/internal/) folder keeps the original planning notes
 (epics and stories); it's history, not something you need to run Keepou.

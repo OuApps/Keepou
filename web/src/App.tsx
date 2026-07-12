@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthContext'
 import { RequireAuth } from './auth/RequireAuth'
+import { I18nProvider } from './i18n'
 import { ThemeProvider } from './theme/ThemeProvider'
 import { AppShell } from './components/AppShell'
 import LoginPage from './pages/LoginPage'
@@ -20,29 +21,31 @@ import NotFoundPage from './pages/NotFoundPage'
  */
 export default function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <Routes>
-          {/* Public */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+    <I18nProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <Routes>
+            {/* Public */}
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
 
-          {/* Authenticated */}
-          <Route element={<RequireAuth />}>
-            {/* The Board composes its own shell (search + tabs in the Topbar). */}
-            <Route path="/" element={<BoardPage />} />
-            <Route element={<AppShell />}>
-              <Route path="/admin" element={<AdminPage />} />
+            {/* Authenticated */}
+            <Route element={<RequireAuth />}>
+              {/* The Board composes its own shell (search + tabs in the Topbar). */}
+              <Route path="/" element={<BoardPage />} />
+              <Route element={<AppShell />}>
+                <Route path="/admin" element={<AdminPage />} />
+              </Route>
+              {/* The import flow brings its own full-page shell (E10-S3). */}
+              <Route path="/import" element={<ImportKeepPage />} />
+              <Route path="/note/:id" element={<NoteEditorPage />} />
+              <Route path="/note/:id/history" element={<HistoryPage />} />
             </Route>
-            {/* The import flow brings its own full-page shell (E10-S3). */}
-            <Route path="/import" element={<ImportKeepPage />} />
-            <Route path="/note/:id" element={<NoteEditorPage />} />
-            <Route path="/note/:id/history" element={<HistoryPage />} />
-          </Route>
 
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </AuthProvider>
-    </ThemeProvider>
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </AuthProvider>
+      </ThemeProvider>
+    </I18nProvider>
   )
 }

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { COMMON_COPY } from '../lib/copy'
+import { useI18n } from '../i18n'
 
 /**
  * App-wide, centered confirmation modal (E11). Unlike the editor-scoped
@@ -15,8 +15,8 @@ import { COMMON_COPY } from '../lib/copy'
 export function ConfirmDialog({
   title,
   text,
-  confirmLabel = COMMON_COPY.confirm,
-  cancelLabel = COMMON_COPY.cancel,
+  confirmLabel,
+  cancelLabel,
   danger = false,
   onConfirm,
   onCancel,
@@ -29,6 +29,10 @@ export function ConfirmDialog({
   onConfirm: () => void
   onCancel: () => void
 }) {
+  const { COMMON_COPY } = useI18n()
+  // Defaults resolve here (a hook can't run in a default parameter value).
+  const confirm = confirmLabel ?? COMMON_COPY.confirm
+  const cancel = cancelLabel ?? COMMON_COPY.cancel
   const confirmRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
@@ -67,7 +71,7 @@ export function ConfirmDialog({
               onCancel()
             }}
           >
-            {cancelLabel}
+            {cancel}
           </button>
           <button
             ref={confirmRef}
@@ -78,7 +82,7 @@ export function ConfirmDialog({
               onConfirm()
             }}
           >
-            {confirmLabel}
+            {confirm}
           </button>
         </div>
       </div>

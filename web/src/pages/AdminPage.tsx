@@ -1,6 +1,6 @@
 import { useAuth } from '../auth/AuthContext'
 import { AccessManager } from '../components/admin/AccessManager'
-import { ADMIN_COPY } from '../lib/copy'
+import { useI18n } from '../i18n'
 
 /**
  * /admin — access administration (E7). The real guard is the API: every
@@ -9,6 +9,7 @@ import { ADMIN_COPY } from '../lib/copy'
  * without a doomed API round-trip.
  */
 export default function AdminPage() {
+  const { ADMIN_COPY } = useI18n()
   const { user } = useAuth()
 
   if (user?.role !== 'ADMIN') {

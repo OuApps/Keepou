@@ -9,12 +9,16 @@ export interface TokenPair {
   refresh: string
 }
 
+export type ServerLanguage = 'FR' | 'EN'
+
 export interface UserOut {
   id: string
   email: string
   display_name: string
   role: 'MEMBER' | 'ADMIN'
   status: 'ACTIVE' | 'DISABLED'
+  /** Preferred UI language (E12) — the front adopts it on load. */
+  language: ServerLanguage
   created_at: string
 }
 
@@ -36,7 +40,11 @@ export function fetchMe(): Promise<UserOut> {
   return api.get<UserOut>('/api/auth/me')
 }
 
-/** Self-service profile update (E11) — the display name only. */
-export function updateMe(display_name: string): Promise<UserOut> {
-  return api.patch<UserOut>('/api/auth/me', { display_name })
+/** Self-service profile update (E11 display name / E12 language) — only the
+ * provided fields change server-side. */
+export function updateMe(patch: {
+  display_name?: string
+  language?: ServerLanguage
+}): Promise<UserOut> {
+  return api.patch<UserOut>('/api/auth/me', patch)
 }

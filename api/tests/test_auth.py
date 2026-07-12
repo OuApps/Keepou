@@ -234,6 +234,42 @@ def test_update_me_rejects_empty_or_too_long(client) -> None:
     assert patch_name("x" * 81).status_code == 422
 
 
+# --- profile: UI language preference (E12) ---
+
+
+def test_new_user_language_defaults_to_fr(client) -> None:
+    tokens = bootstrap_admin(client)
+    me = client.get("/api/auth/me", headers={"Authorization": f"Bearer {tokens['access']}"})
+    assert me.json()["language"] == "FR"
+
+
+def test_update_me_changes_language(client) -> None:
+    tokens = bootstrap_admin(client)
+    headers = {"Authorization": f"Bearer {tokens['access']}"}
+    res = client.patch("/api/auth/me", json={"language": "EN"}, headers=headers)
+    assert res.status_code == 200
+    assert res.json()["language"] == "EN"
+    # Persisted, and the display name was left untouched (partial patch).
+    me = client.get("/api/auth/me", headers=headers).json()
+    assert me["language"] == "EN"
+    assert me["display_name"] == "Marie"
+
+
+def test_update_me_rejects_unknown_language(client) -> None:
+    tokens = bootstrap_admin(client)
+    headers = {"Authorization": f"Bearer {tokens['access']}"}
+    assert client.patch("/api/auth/me", json={"language": "ES"}, headers=headers).status_code == 422
+
+
+def test_update_me_empty_body_is_noop(client) -> None:
+    tokens = bootstrap_admin(client)
+    headers = {"Authorization": f"Bearer {tokens['access']}"}
+    res = client.patch("/api/auth/me", json={}, headers=headers)
+    assert res.status_code == 200
+    assert res.json()["display_name"] == "Marie"
+    assert res.json()["language"] == "FR"
+
+
 # --- password hashing (bcrypt_sha256: no 72-byte truncation) ---
 
 

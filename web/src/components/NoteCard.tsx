@@ -4,7 +4,7 @@ import type { NoteOut, NotePatch } from '../api/notes'
 import { SHADE_CLASS } from '../lib/colors'
 import { parsePreview } from '../lib/preview'
 import { formatRelative } from '../lib/time'
-import { BOARD_COPY, COMMON_COPY } from '../lib/copy'
+import { useI18n } from '../i18n'
 import { ConfirmDialog } from './ConfirmDialog'
 import { InlineText } from './RichText'
 
@@ -101,6 +101,7 @@ export function NoteCard({
   onDelete?: () => void
   onToggleSelect?: () => void
 }) {
+  const { BOARD_COPY, COMMON_COPY } = useI18n()
   const navigate = useNavigate()
   const location = useLocation()
   const blocks = parsePreview(note.body)

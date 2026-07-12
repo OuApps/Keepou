@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom'
-import { COMMON_COPY, NOT_FOUND_COPY } from '../lib/copy'
+import { useI18n } from '../i18n'
 
 /** 404 — unknown route. */
 export default function NotFoundPage() {
+  const { COMMON_COPY, NOT_FOUND_COPY } = useI18n()
   return (
     <div className="kp-center">
       <div className="kp-brand">
