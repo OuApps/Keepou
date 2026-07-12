@@ -587,4 +587,7 @@ under the exact same server-side rules as the web app.
   resolve the current user and delegate. Tool text is **English** (an agent-facing
   API, not product UI copy).
 
-See [`docs/HOWTO-mcp-agent.md`](./HOWTO-mcp-agent.md) for connecting an agent.
+Connecting an agent is entirely UI-driven: a member creates an API key and copies
+the endpoint from the **« Accès agent (MCP) »** dialog (account menu). The
+[README](../README.md#agent-access-mcp) documents the key creation and the
+expected bearer auth.

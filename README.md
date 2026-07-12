@@ -51,10 +51,9 @@ your own server. Installable PWA, light and dark, works on desktop and mobile.
 - **Bilingual (French / English).** Each member picks their language from the
   account menu; the choice is saved to their profile and follows them across
   devices.
-- **Agent access over MCP.** Generate a Personal Access Token and connect an AI
+- **Agent access over MCP.** Generate an API key from the app and connect an AI
   agent (over the Model Context Protocol) to read and manage your notes — handy
-  for a future WhatsApp/Telegram bot. See
-  [`docs/HOWTO-mcp-agent.md`](./docs/HOWTO-mcp-agent.md).
+  for a future WhatsApp/Telegram bot. See [Agent access (MCP)](#agent-access-mcp).
 - **Installable PWA.** Add it to a phone home screen; light and dark themes,
   responsive from mobile to desktop.
 
@@ -108,6 +107,55 @@ A few deliberate choices shape the app:
 - **Security lives on the server.** The allowlist, the admin role and the lock are
   all enforced by the API. The front-end just renders what the API allows.
 
+## Agent access (MCP)
+
+Keepou exposes your notes to an AI agent over the
+[Model Context Protocol (MCP)](https://modelcontextprotocol.io), so an assistant
+can read, search, create and update **your** notes (for example to add an item to
+a shopping list). The same endpoint is what a future WhatsApp/Telegram bot will
+connect to. The agent acts **as you**, under the exact same rules as the web app.
+
+**1. Create an API key — from the app, no config files.** Click your avatar
+(top-right) → **« Accès agent (MCP) »**, name the key, and click **Generate**. The
+key is shown **once** — copy it now (Keepou only stores a hash). The same dialog
+shows the **MCP endpoint URL** to copy, lists your active keys, and lets you
+**revoke** any of them at any time (revoking cuts the agent's access immediately).
+
+**2. Expected auth.** The endpoint is **streamable HTTP** at `POST <base-url>/mcp`
+and authenticates with the key as a **bearer token** — no OAuth flow:
+
+```
+POST https://your-keepou.example.org/mcp
+Authorization: Bearer kpat_xxxxxxxx…
+```
+
+**3. Point your agent at it.** A client with native remote-MCP support just needs
+the endpoint URL and that `Authorization` header. For a stdio-only client (e.g.
+Claude Desktop), bridge it with [`mcp-remote`](https://www.npmjs.com/package/mcp-remote):
+
+```json
+{
+  "mcpServers": {
+    "keepou": {
+      "command": "npx",
+      "args": [
+        "-y", "mcp-remote",
+        "https://your-keepou.example.org/mcp",
+        "--header", "Authorization: Bearer kpat_xxxxxxxx…"
+      ]
+    }
+  }
+}
+```
+
+The agent gets tools to `list_notes`, `search_notes`, `get_note`, `create_note`,
+`update_note`, `organize_note` (pin/archive) and `delete_note`. Bodies are
+Markdown with GFM checklists (`- [ ]` / `- [x]`). An operator can turn the whole
+surface off with `MCP_ENABLED=false` (see `api/.env.example`).
+
+> Treat the key like a password — it grants full access to your notes. Revoke it
+> from the same dialog if it might have leaked.
+
 ## Tech stack
 
 | Layer | Tech |
@@ -156,8 +204,6 @@ Quality checks (the same ones CI runs):
 - [`design/HANDOFF.md`](./design/HANDOFF.md) — design system and the French UI copy.
 - [`docs/HOWTO-import-google-keep.md`](./docs/HOWTO-import-google-keep.md) — the
   Google Keep import.
-- [`docs/HOWTO-mcp-agent.md`](./docs/HOWTO-mcp-agent.md) — connect an AI agent to
-  your notes over MCP.
 
 The [`docs/internal/`](./docs/internal/) folder keeps the original planning notes
 (epics and stories); it's history, not something you need to run Keepou.

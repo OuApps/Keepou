@@ -39,7 +39,7 @@ identical to the REST API.
 - [x] **E13-S5** — Front: « Accès agent (MCP) » token manager (mint / copy-once /
       list / revoke) + account-menu entry + MCP endpoint display
 - [x] **E13-S6** — Tests (PAT lifecycle + resolution, agent operations, MCP
-      transport smoke) + a user how-to (`docs/HOWTO-mcp-agent.md`)
+      transport smoke) + README « Agent access (MCP) » setup (key creation + auth)
 
 ---
 
@@ -134,16 +134,20 @@ identical to the REST API.
 
 ---
 
-## E13-S6 — Tests & how-to · S
+## E13-S6 — Tests & README setup · S
 
 **Tasks**
 - Back tests: `test_tokens.py`, `test_agent.py`, `test_mcp.py`,
   `test_auth.py` (unchanged endpoints still green).
-- `docs/HOWTO-mcp-agent.md`: generate a token, the endpoint, a Claude-Desktop
-  config example, the tools list, and the WhatsApp/Telegram outlook.
+- README **« Agent access (MCP) »** section: the setup is **UI-driven** (create
+  an API key + copy the endpoint from the account-menu dialog); the README
+  documents the **key creation** and the **expected bearer auth**
+  (`Authorization: Bearer kpat_…`), plus a Claude-Desktop `mcp-remote` example,
+  the tools list, and the WhatsApp/Telegram outlook.
 
 **Acceptance**
-- [x] CI green; the how-to lets a member connect an agent end to end.
+- [x] CI green; a member creates a key in the UI and connects an agent with the
+      documented bearer auth.
 
 ---
 
