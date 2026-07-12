@@ -1,4 +1,4 @@
-import { BOARD_COPY } from '../lib/copy'
+import { useI18n } from '../i18n'
 
 /**
  * Board sort selector (E11-S1): last modification (default), creation date, or
@@ -15,6 +15,7 @@ export function SortSelect({
   value: SortKey
   onChange: (value: SortKey) => void
 }) {
+  const { BOARD_COPY } = useI18n()
   return (
     <label className="kp-sort">
       <svg className="kp-sort__icon" width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">

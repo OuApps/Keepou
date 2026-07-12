@@ -1,5 +1,5 @@
 import type { NoteVersionOut } from '../../api/versions'
-import { COMMON_COPY, HISTORY_COPY } from '../../lib/copy'
+import { useI18n } from '../../i18n'
 import { formatVersionAt, formatVersionDay } from '../../lib/time'
 
 /**
@@ -20,6 +20,7 @@ export function RestoreConfirm({
   onCancel: () => void
   onConfirm: () => void
 }) {
+  const { COMMON_COPY, HISTORY_COPY } = useI18n()
   return (
     <div className="kp-confirm" role="alertdialog" aria-label={HISTORY_COPY.restoreConfirmLabel}>
       <div className="kp-confirm__card kp-restore">

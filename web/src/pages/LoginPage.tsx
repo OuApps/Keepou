@@ -4,7 +4,7 @@ import { login } from '../api/auth'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import { AuthMessage } from '../components/AuthMessage'
-import { AUTH_COPY, COMMON_COPY } from '../lib/copy'
+import { useI18n } from '../i18n'
 import { ThemeToggle } from '../components/ThemeToggle'
 
 /**
@@ -13,6 +13,7 @@ import { ThemeToggle } from '../components/ThemeToggle'
  * disabled account (gold, 403). Copy is frozen French (HANDOFF §7 "Auth").
  */
 export default function LoginPage() {
+  const { AUTH_COPY, COMMON_COPY } = useI18n()
   const { signIn } = useAuth()
   const navigate = useNavigate()
   const location = useLocation() as { state?: { from?: { pathname?: string } } }

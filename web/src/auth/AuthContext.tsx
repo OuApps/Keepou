@@ -9,6 +9,7 @@ import {
 } from 'react'
 import { fetchMe, updateMe, type TokenPair, type UserOut } from '../api/auth'
 import { ApiError, SESSION_EXPIRED_EVENT } from '../api/client'
+import { localeToServer, serverToLocale, useLocale, type Locale } from '../i18n'
 import { clearBoardCache } from '../lib/boardCache'
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from './storage'
 
@@ -29,11 +30,14 @@ interface AuthContextValue {
   signOut: () => void
   /** Change the current user's display name (E11), reflected immediately in the UI. */
   changeDisplayName: (displayName: string) => Promise<void>
+  /** Switch the UI language (E12): applies at once, then persists to the server. */
+  changeLanguage: (locale: Locale) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { setLocale } = useLocale()
   const [user, setUser] = useState<UserOut | null>(null)
   const [status, setStatus] = useState<AuthStatus>(() =>
     getAccessToken() || getRefreshToken() ? 'loading' : 'anonymous',
@@ -50,6 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .then((me) => {
           if (cancelled) return
           setUser(me)
+          // Adopt the member's saved language (server is authoritative once logged in).
+          setLocale(serverToLocale(me.language))
           setStatus('authenticated')
         })
         .catch((err) => {
@@ -73,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelled = true
       if (timer !== undefined) window.clearTimeout(timer)
     }
-  }, [status])
+  }, [status, setLocale])
 
   // A 401 that survived the refresh retry anywhere in the app ends the session.
   useEffect(() => {
@@ -86,19 +92,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired)
   }, [])
 
-  const signIn = useCallback(async (tokens: TokenPair) => {
-    setTokens(tokens.access, tokens.refresh)
-    try {
-      const me = await fetchMe()
-      setUser(me)
-      setStatus('authenticated')
-    } catch (err) {
-      clearTokens()
-      setUser(null)
-      setStatus('anonymous')
-      throw err
-    }
-  }, [])
+  const signIn = useCallback(
+    async (tokens: TokenPair) => {
+      setTokens(tokens.access, tokens.refresh)
+      try {
+        const me = await fetchMe()
+        setUser(me)
+        setLocale(serverToLocale(me.language))
+        setStatus('authenticated')
+      } catch (err) {
+        clearTokens()
+        setUser(null)
+        setStatus('anonymous')
+        throw err
+      }
+    },
+    [setLocale],
+  )
 
   const signOut = useCallback(() => {
     clearTokens()
@@ -108,13 +118,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const changeDisplayName = useCallback(async (displayName: string) => {
-    const updated = await updateMe(displayName)
+    const updated = await updateMe({ display_name: displayName })
     setUser(updated)
   }, [])
 
+  const changeLanguage = useCallback(
+    async (locale: Locale) => {
+      // Apply immediately (works even offline / logged out), then persist so it
+      // follows the member across devices. A failed sync keeps the local switch.
+      setLocale(locale)
+      if (getAccessToken()) {
+        try {
+          const updated = await updateMe({ language: localeToServer(locale) })
+          setUser(updated)
+        } catch {
+          /* local switch already applied; server sync retries on the next change */
+        }
+      }
+    },
+    [setLocale],
+  )
+
   const value = useMemo<AuthContextValue>(
-    () => ({ status, user, signIn, signOut, changeDisplayName }),
-    [status, user, signIn, signOut, changeDisplayName],
+    () => ({ status, user, signIn, signOut, changeDisplayName, changeLanguage }),
+    [status, user, signIn, signOut, changeDisplayName, changeLanguage],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

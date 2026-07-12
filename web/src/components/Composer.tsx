@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { createNote, type NoteColor, type NoteOut } from '../api/notes'
+import { useI18n } from '../i18n'
 import { SWATCHES } from '../lib/colors'
-import { BOARD_COPY } from '../lib/copy'
 
 /**
  * Quick composer (E3-S5) — the fastest path in the app: an input, the 5 card
@@ -21,6 +21,7 @@ export function Composer({
   onCreated: (note: NoteOut) => void
   defaultPublic?: boolean
 }) {
+  const { BOARD_COPY, COLOR_LABELS } = useI18n()
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState('')
   const [color, setColor] = useState<NoteColor>('GOLD')
@@ -106,7 +107,7 @@ export function Composer({
                   type="button"
                   role="radio"
                   aria-checked={color === s.color}
-                  aria-label={s.label}
+                  aria-label={COLOR_LABELS[s.color]}
                   className={`kp-composer__swatch${color === s.color ? ' kp-composer__swatch--active' : ''}`}
                   style={{ background: s.bg, borderColor: s.bd }}
                   onClick={() => setColor(s.color)}

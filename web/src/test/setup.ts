@@ -31,6 +31,15 @@ Object.defineProperty(globalThis, 'localStorage', {
   configurable: true,
 })
 
+// i18n (E12): the frozen tests assert the reference locale (French). jsdom
+// reports navigator.language as 'en-US', which would make the UI default to
+// English — pin it to French so the default locale matches the assertions.
+Object.defineProperty(navigator, 'language', {
+  value: 'fr-FR',
+  writable: true,
+  configurable: true,
+})
+
 // jsdom doesn't implement matchMedia — required by useTheme (prefers-color-scheme).
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

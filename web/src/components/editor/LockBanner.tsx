@@ -1,4 +1,4 @@
-import { LOCK_COPY } from '../../lib/copy'
+import { useI18n } from '../../i18n'
 import type { LockStatus } from '../../hooks/useNoteLock'
 
 /**
@@ -11,6 +11,7 @@ import type { LockStatus } from '../../hooks/useNoteLock'
  */
 
 export function LockBanner({ status, holder }: { status: LockStatus; holder: string | null }) {
+  const { LOCK_COPY } = useI18n()
   if (status === 'none' || status === 'pending') return null
   return (
     <span className={`kp-lock kp-lock--${status}`} role="status">
@@ -27,6 +28,7 @@ export function LockBanner({ status, holder }: { status: LockStatus; holder: str
 
 /** Right-side « en direct » indicator while another member is editing. */
 export function LockLiveDot() {
+  const { LOCK_COPY } = useI18n()
   return (
     <span className="kp-lock__live" aria-hidden="true">
       <span className="kp-lock__live-dot" />
@@ -37,11 +39,13 @@ export function LockLiveDot() {
 
 /** Read-only subtext under the content (locked state). */
 export function LockReadOnlyNote({ holder }: { holder: string | null }) {
+  const { LOCK_COPY } = useI18n()
   return <p className="kp-lock__note">{LOCK_COPY.readOnlyNote(holder)}</p>
 }
 
 /** Takeover action once the lock is released or expired (state 3). */
 export function LockTakeoverBar({ onTakeover }: { onTakeover: () => void }) {
+  const { LOCK_COPY } = useI18n()
   return (
     <div className="kp-lock__takeover">
       <button type="button" className="kp-lock__takeover-btn" onClick={onTakeover}>
@@ -59,6 +63,7 @@ export function LockConflictPanel({
   holder: string | null
   onGoReadOnly: () => void
 }) {
+  const { LOCK_COPY } = useI18n()
   return (
     <div className="kp-lock__conflict">
       <p className="kp-lock__conflict-text">{LOCK_COPY.conflictText(holder)}</p>

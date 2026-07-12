@@ -4,7 +4,7 @@ import { register } from '../api/auth'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import { AuthMessage } from '../components/AuthMessage'
-import { AUTH_COPY } from '../lib/copy'
+import { useI18n } from '../i18n'
 import { ThemeToggle } from '../components/ThemeToggle'
 
 /**
@@ -14,6 +14,7 @@ import { ThemeToggle } from '../components/ThemeToggle'
  * access" — claude.md §4). Copy is frozen French (HANDOFF §7 "Auth").
  */
 export default function RegisterPage() {
+  const { AUTH_COPY } = useI18n()
   const { signIn } = useAuth()
   const navigate = useNavigate()
 

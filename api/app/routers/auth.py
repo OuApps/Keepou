@@ -130,9 +130,13 @@ def me(user: CurrentUser) -> User:
 
 @router.patch("/me", response_model=UserOut)
 def update_me(data: ProfilePatch, user: CurrentUser, session: SessionDep) -> User:
-    """Self-service: change your own display name (E11). Only the display name is
-    editable here — email is the identity, role/status stay admin-only."""
-    user.display_name = data.display_name.strip()
+    """Self-service: change your own display name (E11) and/or UI language (E12).
+    Only these are editable here — email is the identity, role/status stay
+    admin-only. Fields left unset are untouched (the two callers patch one each)."""
+    if data.display_name is not None:
+        user.display_name = data.display_name.strip()
+    if data.language is not None:
+        user.language = data.language
     session.add(user)
     session.commit()
     session.refresh(user)

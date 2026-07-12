@@ -1,6 +1,6 @@
 import type { ImportCounts, ImportPreviewItem } from '../../api/importKeep'
 import { SHADE_CLASS } from '../../lib/colors'
-import { IMPORT_COPY as COPY } from '../../lib/copy'
+import { useI18n } from '../../i18n'
 import { parsePreview } from '../../lib/preview'
 import { formatImportDate } from '../../lib/time'
 
@@ -36,6 +36,7 @@ function ReviewCard({
   checked: boolean
   onToggle: (index: number, checked: boolean) => void
 }) {
+  const { IMPORT_COPY: COPY } = useI18n()
   const blocks = parsePreview(item.body)
 
   return (
@@ -98,6 +99,7 @@ export function ImportReview({
   onImport: () => void
   onCancel: () => void
 }) {
+  const { IMPORT_COPY: COPY } = useI18n()
   const count = selected.size
 
   return (

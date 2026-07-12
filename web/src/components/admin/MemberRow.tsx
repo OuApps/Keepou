@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { MemberOut, UserAdminPatch } from '../../api/admin'
-import { ADMIN_COPY } from '../../lib/copy'
+import { useI18n } from '../../i18n'
 import { formatDayMonth } from '../../lib/time'
 
 /**
@@ -40,6 +40,7 @@ export function MemberRow({
   onPatch: (patch: UserAdminPatch) => void
   busy: boolean
 }) {
+  const { ADMIN_COPY } = useI18n()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 

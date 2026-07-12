@@ -11,7 +11,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, BeforeValidator, EmailStr, Field
 
-from app.models import NoteColor, Role, UserStatus, Visibility
+from app.models import Language, NoteColor, Role, UserStatus, Visibility
 
 
 def _normalize_email(value: object) -> object:
@@ -40,10 +40,13 @@ class RefreshIn(BaseModel):
 
 
 class ProfilePatch(BaseModel):
-    """Self-service profile update (E11): the display name only — email stays the
-    identity, role/status remain admin-only (never self-editable)."""
+    """Self-service profile update (E11 + E12): display name and/or UI language —
+    email stays the identity, role/status remain admin-only (never self-editable).
+    Both fields are optional so the profile dialog and the language switcher patch
+    only what they touch; sending neither is a no-op."""
 
-    display_name: str = Field(min_length=1, max_length=80)
+    display_name: str | None = Field(default=None, min_length=1, max_length=80)
+    language: Language | None = None
 
 
 class TokenPair(BaseModel):
@@ -61,7 +64,31 @@ class UserOut(BaseModel):
     display_name: str
     role: Role
     status: UserStatus
+    # Preferred UI language (E12) — the front adopts it on load.
+    language: Language
     created_at: datetime
+
+
+class TokenCreateIn(BaseModel):
+    """Mint a Personal Access Token for an agent (E13) — a human-readable label."""
+
+    name: str = Field(min_length=1, max_length=80)
+
+
+class PatOut(BaseModel):
+    """Personal Access Token metadata (E13) — never carries the secret."""
+
+    id: str
+    name: str
+    prefix: str  # « kpat_abcd… », for recognition only
+    created_at: datetime
+    last_used_at: datetime | None = None
+
+
+class PatCreatedOut(PatOut):
+    """The create response — the ONLY time the full secret is returned (shown once)."""
+
+    token: str
 
 
 class MemberOut(BaseModel):

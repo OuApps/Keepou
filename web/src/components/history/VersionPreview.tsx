@@ -1,6 +1,6 @@
 import type { NoteVersionOut } from '../../api/versions'
 import { parse } from '../../lib/markdown'
-import { EDITOR_COPY, HISTORY_COPY } from '../../lib/copy'
+import { useI18n } from '../../i18n'
 import { formatVersionMoment } from '../../lib/time'
 import { RichBlockText } from '../RichText'
 
@@ -16,6 +16,7 @@ export function VersionPreview({
   version: NoteVersionOut
   isCurrent: boolean
 }) {
+  const { EDITOR_COPY, HISTORY_COPY } = useI18n()
   const blocks = parse(version.body)
   return (
     <div className="kp-vpreview">

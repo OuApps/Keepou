@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
+import { I18nProvider } from '../../i18n'
 import { highlightMarkdown } from '../../lib/highlight'
 import { MarkdownArea } from './MarkdownArea'
 
@@ -58,7 +59,11 @@ function caretToEnd(area: Element) {
 
 function Harness({ initial }: { initial: string }) {
   const [value, setValue] = useState(initial)
-  return <MarkdownArea value={value} onChange={setValue} onFlush={() => {}} blockKey="blk-test" />
+  return (
+    <I18nProvider>
+      <MarkdownArea value={value} onChange={setValue} onFlush={() => {}} blockKey="blk-test" />
+    </I18nProvider>
+  )
 }
 
 describe('MarkdownArea', () => {

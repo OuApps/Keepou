@@ -1,4 +1,4 @@
-import { THEME_COPY } from '../lib/copy'
+import { useI18n } from '../i18n'
 import { useThemeContext } from '../theme/ThemeProvider'
 
 /**
@@ -6,6 +6,7 @@ import { useThemeContext } from '../theme/ThemeProvider'
  * light mode shows the moon (switch to dark), dark mode shows the sun.
  */
 export function ThemeToggle() {
+  const { THEME_COPY } = useI18n()
   const { theme, toggle } = useThemeContext()
   const isLight = theme === 'light'
 

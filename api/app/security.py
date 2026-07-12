@@ -13,6 +13,8 @@ Security: password hash, JWT bearer tokens, authz dependencies.
 - `require_admin` (403 if not admin) — real guard for /admin (claude.md §6).
 """
 
+import hashlib
+import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
@@ -20,15 +22,55 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from app.config import settings
 from app.db import SessionDep
-from app.models import Role, User, UserStatus
+from app.models import PersonalAccessToken, Role, User, UserStatus, _utcnow
 
 pwd_context = CryptContext(schemes=["bcrypt_sha256"], deprecated="auto")
 
 JWT_ALGORITHM = "HS256"
+
+# Personal Access Tokens (E13): high-entropy random secrets used as MCP bearer
+# tokens. Being random (not user-chosen), a plain SHA-256 is safe to store and
+# lets resolution be one indexed lookup — no per-candidate bcrypt pass.
+PAT_PREFIX = "kpat_"
+PAT_SECRET_BYTES = 32  # 256 bits of entropy
+
+
+def generate_pat() -> tuple[str, str, str]:
+    """Mint a new token: returns (secret, token_hash, display_prefix).
+
+    Only the hash is persisted; the secret is shown to the member exactly once.
+    """
+    secret = PAT_PREFIX + secrets.token_urlsafe(PAT_SECRET_BYTES)
+    return secret, hash_token(secret), secret[: len(PAT_PREFIX) + 6]
+
+
+def hash_token(secret: str) -> str:
+    return hashlib.sha256(secret.encode()).hexdigest()
+
+
+def resolve_pat_user(token: str, session: Session) -> User | None:
+    """Resolve a Personal Access Token to its ACTIVE owner, or None.
+
+    Rejects unknown, revoked, and disabled-owner tokens; stamps `last_used_at`
+    on a successful resolution (best-effort usage tracking).
+    """
+    pat = session.exec(
+        select(PersonalAccessToken).where(PersonalAccessToken.token_hash == hash_token(token))
+    ).first()
+    if pat is None or pat.revoked_at is not None:
+        return None
+    user = session.get(User, pat.user_id)
+    if user is None or user.status != UserStatus.ACTIVE:
+        return None
+    pat.last_used_at = _utcnow()
+    session.add(pat)
+    session.commit()
+    return user
+
 
 DETAIL_NOT_AUTHENTICATED = "Non authentifié."
 DETAIL_INVALID_SESSION = "Session invalide ou expirée."

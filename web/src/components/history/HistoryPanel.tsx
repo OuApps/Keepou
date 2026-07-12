@@ -1,6 +1,6 @@
 import type { NoteOut } from '../../api/notes'
 import type { NoteVersionOut } from '../../api/versions'
-import { EDITOR_COPY, HISTORY_COPY } from '../../lib/copy'
+import { useI18n } from '../../i18n'
 import { formatDayMonth } from '../../lib/time'
 import { VersionRow } from './VersionRow'
 
@@ -24,6 +24,7 @@ export function HistoryPanel({
   onRestore: (version: NoteVersionOut) => void
   onClose: () => void
 }) {
+  const { EDITOR_COPY, HISTORY_COPY } = useI18n()
   const oldest = versions[versions.length - 1]
   return (
     <aside className="kp-history__panel" aria-label={HISTORY_COPY.dialogLabel}>

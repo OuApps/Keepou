@@ -1,5 +1,5 @@
 import type { MemberOut } from '../../api/admin'
-import { ADMIN_COPY } from '../../lib/copy'
+import { useI18n } from '../../i18n'
 import { formatDayMonth } from '../../lib/time'
 
 /**
@@ -16,6 +16,7 @@ export function PendingRow({
   onRemove: () => void
   busy: boolean
 }) {
+  const { ADMIN_COPY } = useI18n()
   return (
     <li className="kp-admin__row">
       <div className="kp-admin__avatar kp-admin__avatar--pending" aria-hidden="true">

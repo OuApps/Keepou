@@ -26,7 +26,7 @@ import {
   LockReadOnlyNote,
   LockTakeoverBar,
 } from './LockBanner'
-import { BOARD_COPY, COMMON_COPY, EDITOR_COPY } from '../../lib/copy'
+import { useI18n } from '../../i18n'
 import { SaveStatus } from './SaveStatus'
 import { VisibilityToggle } from './VisibilityToggle'
 
@@ -96,6 +96,7 @@ function draftOf(note: NoteOut): Draft {
 }
 
 export function NoteEditor({ noteId }: { noteId: string }) {
+  const { BOARD_COPY, COMMON_COPY, EDITOR_COPY } = useI18n()
   const navigate = useNavigate()
   const location = useLocation()
   const navState = location.state as { from?: string; note?: NoteOut } | null

@@ -1,4 +1,4 @@
-import { BOARD_COPY } from '../lib/copy'
+import { useI18n } from '../i18n'
 
 /**
  * Board display-density selector (E11 follow-up): « Notes entières » shows each
@@ -16,6 +16,7 @@ export function DensitySelect({
   value: Density
   onChange: (value: Density) => void
 }) {
+  const { BOARD_COPY } = useI18n()
   return (
     <label className="kp-density">
       <svg

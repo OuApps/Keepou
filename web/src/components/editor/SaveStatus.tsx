@@ -1,5 +1,5 @@
 import type { SaveState } from '../../hooks/useAutosave'
-import { SAVE_COPY } from '../../lib/copy'
+import { useI18n } from '../../i18n'
 import { formatRelative } from '../../lib/time'
 
 /**
@@ -9,6 +9,7 @@ import { formatRelative } from '../../lib/time'
  * "last saved version" subtitle, which only moves on a successful persist.
  */
 export function SaveStatus({ state, savedAt }: { state: SaveState; savedAt: string }) {
+  const { SAVE_COPY } = useI18n()
   return (
     <span className={`kp-save kp-save--${state}`} role="status">
       {state === 'saved' ? (

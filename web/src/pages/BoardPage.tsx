@@ -25,7 +25,7 @@ import {
   subscribeBoards,
   updateCachedBoard,
 } from '../lib/boardCache'
-import { BOARD_COPY, COMMON_COPY } from '../lib/copy'
+import { useI18n } from '../i18n'
 
 /**
  * Main board (E3): Topbar (search + tabs), quick composer, masonry of cards.
@@ -80,6 +80,7 @@ function parseDensity(value: string | null): Density {
 }
 
 export default function BoardPage() {
+  const { BOARD_COPY, COMMON_COPY } = useI18n()
   const navigate = useNavigate()
   const { user } = useAuth()
   const [params, setParams] = useSearchParams()

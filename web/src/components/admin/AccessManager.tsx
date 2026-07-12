@@ -8,7 +8,7 @@ import {
   type UserAdminPatch,
 } from '../../api/admin'
 import { ApiError } from '../../api/client'
-import { ADMIN_COPY, COMMON_COPY } from '../../lib/copy'
+import { useI18n } from '../../i18n'
 import { AuthMessage } from '../AuthMessage'
 import { MemberRow } from './MemberRow'
 import { PendingRow } from './PendingRow'
@@ -22,6 +22,7 @@ import { PendingRow } from './PendingRow'
  * and surfaces its 409s inline.
  */
 export function AccessManager() {
+  const { ADMIN_COPY, COMMON_COPY } = useI18n()
   const [rows, setRows] = useState<MemberOut[] | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -38,7 +39,7 @@ export function AccessManager() {
       .catch((err) => {
         setLoadError(err instanceof ApiError ? err.message : COMMON_COPY.networkError)
       })
-  }, [])
+  }, [COMMON_COPY.networkError])
 
   useEffect(() => {
     void load()
