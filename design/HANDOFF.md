@@ -391,7 +391,8 @@ Key front hooks: `useAutosave(noteId)` (debounce 1.5 s + flush on blur), `useNot
   un jeton » · created-once panel « Copie ton jeton maintenant » + warning + « Copier
   le jeton » / « J'ai copié le jeton » · list « Jetons actifs » · « Révoquer »
   (confirmation « Révoquer ce jeton ? »). MCP **tool** text (the agent-facing API,
-  not product UI) is in **English** — see `docs/HOWTO-mcp-agent.md`.
+  not product UI) is in **English**. Key creation + expected auth are documented
+  in the [README](../README.md#agent-access-mcp).
 
 ---
 
