@@ -149,6 +149,9 @@ export const EDITOR_COPY = {
   insertCheckbox: 'Insérer une case à cocher',
   // Appears only when ≥ 1 box is checked (E11-S6); clears every ticked item.
   clearChecked: 'Supprimer les cases cochées',
+  // One-click whole-note copy (E11-S7) — selection can't cross the per-block fields.
+  copyNote: 'Copier la note',
+  copyNoteDone: 'Note copiée',
   colorLabel: 'Couleur de la note',
   visibilityPublic: 'Public',
   confirmPrivateLabel: 'Confirmer le passage en privé',
