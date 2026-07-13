@@ -221,6 +221,30 @@ updated to reflect JWT signing + the Postgres URL normalization.
 
 ---
 
+## Claude Code cloud sessions — Railway access & bootstrap
+
+Agent sessions run on a fresh Anthropic-managed VM (repo cloned, no local state).
+Two things are wired so a session is Railway-capable and ready to build:
+
+- **Bootstrap** — `scripts/cloud_session_setup.sh`, run by the repo's `SessionStart`
+  hook (`.claude/settings.json`), installs what the base image lacks: the **Railway
+  CLI** (`npm i -g @railway/cli`), the **API deps** (`uv sync`, using the image's
+  Python 3.11 — `uv python install` is skipped, its GitHub-release download is
+  proxy-blocked), and the **web deps** (`npm ci`). Cloud-only (`CLAUDE_CODE_REMOTE`),
+  idempotent, best-effort (a flaky install warns, never blocks startup).
+- **Railway token** — set as an environment variable in the Claude Code environment
+  (no repo secret; there is no secrets store — the value is visible to env editors):
+  - **Account token** (`RAILWAY_API_TOKEN`) — one token for the whole workspace, set
+    **once** in a single shared environment reused by every repo. Not project-scoped,
+    so the bootstrap runs `railway link --project … --environment production --service
+    keepou-api` to scope the CLI to this repo's project.
+  - **Project token** (`RAILWAY_TOKEN`) — scoped to Keepou only; the CLI self-scopes
+    and the `link` step is skipped. Least privilege, but one token per project.
+  - Fallback for any command: explicit flags, e.g.
+    `railway logs -p <projectId> -e production -s keepou-api`.
+
+---
+
 ## Definition of "E1 done"
 
 - [x] API + frontend accessible via their Railway URLs (HTTPS).
