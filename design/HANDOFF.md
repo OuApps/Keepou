@@ -386,13 +386,18 @@ Key front hooks: `useAutosave(noteId)` (debounce 1.5 s + flush on blur), `useNot
   `web/src/i18n/en.ts`.
 
 **Agent access / MCP (E13):**
-- Avatar-menu entry « Accès agent (MCP) » · dialog title « Accès agent (MCP) » ·
-  « Adresse du serveur MCP » (+ « Copier l'adresse ») · « Nom du jeton » · « Générer
-  un jeton » · created-once panel « Copie ton jeton maintenant » + warning + « Copier
-  le jeton » / « J'ai copié le jeton » · list « Jetons actifs » · « Révoquer »
-  (confirmation « Révoquer ce jeton ? »). MCP **tool** text (the agent-facing API,
-  not product UI) is in **English**. Key creation + expected auth are documented
-  in the [README](../README.md#agent-access-mcp).
+- **Admin-only, under /admin** (not the avatar menu): section title « Accès agent
+  (MCP) » with intro (« … L'agent agit sous l'identité "Botou" et n'accède qu'aux
+  notes publiques… ») and a « Gérer les jetons » button opening the dialog.
+- Dialog title « Accès agent (MCP) » · « Adresse du serveur MCP » (+ « Copier
+  l'adresse ») · « Nom du jeton » · « Générer un jeton » · created-once panel
+  « Copie ton jeton maintenant » + warning + « Copier le jeton » / « J'ai copié le
+  jeton » · list « Jetons actifs » · « Révoquer » (confirmation « Révoquer ce
+  jeton ? »).
+- The agent has its **own identity, « Botou »**, and is **public-only**: notes it
+  creates are public and authored « par Botou ». MCP **tool** text (the
+  agent-facing API, not product UI) is in **English**. Key creation + expected
+  auth are documented in the [README](../README.md#agent-access-mcp).
 
 ---
 

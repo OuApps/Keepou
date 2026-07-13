@@ -22,11 +22,11 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 from app.config import settings
 from app.db import SessionDep
-from app.models import PersonalAccessToken, Role, User, UserStatus, _utcnow
+from app.models import Role, User, UserStatus
 
 pwd_context = CryptContext(schemes=["bcrypt_sha256"], deprecated="auto")
 
@@ -52,25 +52,9 @@ def hash_token(secret: str) -> str:
     return hashlib.sha256(secret.encode()).hexdigest()
 
 
-def resolve_pat_user(token: str, session: Session) -> User | None:
-    """Resolve a Personal Access Token to its ACTIVE owner, or None.
-
-    Rejects unknown, revoked, and disabled-owner tokens; stamps `last_used_at`
-    on a successful resolution (best-effort usage tracking).
-    """
-    pat = session.exec(
-        select(PersonalAccessToken).where(PersonalAccessToken.token_hash == hash_token(token))
-    ).first()
-    if pat is None or pat.revoked_at is not None:
-        return None
-    user = session.get(User, pat.user_id)
-    if user is None or user.status != UserStatus.ACTIVE:
-        return None
-    pat.last_used_at = _utcnow()
-    session.add(pat)
-    session.commit()
-    return user
-
+# Agent-token resolution lives in services/bot.py: tokens now belong exclusively
+# to the Botou identity (E13 rework), so resolving one is bot-scoped, not a plain
+# owner lookup.
 
 DETAIL_NOT_AUTHENTICATED = "Non authentifié."
 DETAIL_INVALID_SESSION = "Session invalide ou expirée."

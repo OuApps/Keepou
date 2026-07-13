@@ -1,28 +1,41 @@
 # E13 — Agent access over MCP — Detailed stories
 
 > Epic goal: **expose Keepou's notes to an agent over the Model Context Protocol
-> (MCP)**, so a member can read and manage their notes from an assistant — and,
-> later, from a **WhatsApp / Telegram bot** that speaks MCP. The agent acts **as
-> the member**, under the exact same server-side rules as the web app.
+> (MCP)**, so the instance can be driven from an assistant — and, later, from a
+> **WhatsApp / Telegram bot** that speaks MCP.
 >
 > Estimation convention: **S** (≤ ½ day), **M** (1–2 days), **L** (3+ days).
+
+> **Rework (post-MVP).** The agent no longer acts *as the member* over private +
+> public notes. It now has its **own identity, « Botou »** (`services/bot.py`) — a
+> non-login, admin-hidden `User` that owns every note it creates (« Créée par
+> Botou ») — and is **public-only**: it reads and writes public notes, never sees
+> or creates a private note. Tokens are **admin-managed** (`/api/admin/tokens`,
+> owned by Botou) and moved out of the member account menu into **/admin**.
+> `resolve_bot_token` accepts only Botou-owned tokens, retiring any legacy
+> member-scoped token. See ARCHITECTURE §14.
 
 **Reference docs.** `docs/ARCHITECTURE.md` §4 (permissions / visibility), §5
 (single-editor lock), §6 (versioning), §8 (auth). **Depends on** E3 (notes),
 E5 (lock), E6 (versioning) — the agent operations reuse them so behavior stays
 identical to the REST API.
 
-**Key decisions (validated).**
+**Key decisions (validated, as reworked).**
+- **Identity: « Botou ».** The agent has its own dedicated, public-only identity —
+  it does not impersonate a member. Notes it creates are public and owned by
+  Botou. (`services/bot.py`; ARCHITECTURE §14.)
 - **Transport: streamable HTTP**, the MCP server **mounted inside the FastAPI
   app** at `/mcp` (stateless) — future-proof for a remote bot that connects to
   it directly.
-- **Auth: Personal Access Tokens (PATs).** JWT access tokens live ~15 min, too
-  short for an always-on agent, so the member mints a long-lived `kpat_…` token
-  in Keepou (shown once, stored **hashed**). FastMCP's `token_verifier` resolves
-  it to its ACTIVE owner; tools then run as that member.
-- **Scope: read + write.** list / search / read / create / update / pin ·
-  archive / delete — each enforcing the same visibility, lock and versioning
-  rules as the web app (public content edits borrow the single-editor lock).
+- **Auth: admin-managed Personal Access Tokens (PATs).** JWT access tokens live
+  ~15 min, too short for an always-on agent, so an **admin** mints a long-lived
+  `kpat_…` token (shown once, stored **hashed**, owned by Botou). FastMCP's
+  `token_verifier` resolves it via `resolve_bot_token` to the ACTIVE Botou; tools
+  then run as Botou.
+- **Scope: public read + write.** list / search / read / create / update / pin ·
+  archive / delete — each enforcing the same lock and versioning rules as the web
+  app, restricted to public content (create/update always public, delete only
+  Botou's own; a member's private notes stay invisible).
 
 ---
 
@@ -30,14 +43,14 @@ identical to the REST API.
 
 - [x] **E13-S1** — Back: `PersonalAccessToken` model (hashed secret, prefix,
       `last_used_at`, `revoked_at`) + migration; `security.py` PAT mint/hash/resolve
-- [x] **E13-S2** — Back: token management API — `GET/POST /api/tokens`,
-      `DELETE /api/tokens/{id}` (owner-scoped, secret returned once)
+- [x] **E13-S2** — Back: token management API — reworked to admin-only,
+      Botou-owned `GET/POST /api/admin/tokens`, `DELETE /api/admin/tokens/{id}`
 - [x] **E13-S3** — Back: agent operations service (`services/agent.py`) — CRUD +
-      search + organize, mirroring the REST rules (visibility, lock, versioning)
+      search + organize, reworked to the public-only Botou rules (lock, versioning)
 - [x] **E13-S4** — Back: MCP server (`mcp_server.py`) — FastMCP streamable-HTTP,
-      PAT `TokenVerifier`, 7 tools; mounted at `/mcp` with a rebuild-safe lifespan
+      Botou `TokenVerifier`, 7 tools; mounted at `/mcp` with a rebuild-safe lifespan
 - [x] **E13-S5** — Front: « Accès agent (MCP) » token manager (mint / copy-once /
-      list / revoke) + account-menu entry + MCP endpoint display
+      list / revoke) reworked into **/admin** + MCP endpoint display
 - [x] **E13-S6** — Tests (PAT lifecycle + resolution, agent operations, MCP
       transport smoke) + README « Agent access (MCP) » setup (key creation + auth)
 
@@ -153,10 +166,42 @@ identical to the REST API.
 
 ## Definition of done (epic)
 
-- [x] A member generates a token in Keepou and points an MCP-speaking agent at
-      `<api>/mcp`; the agent reads and manages **their** notes as them.
-- [x] All actions enforce the same server-side rules as the web app (visibility,
-      single-editor lock, versioning, owner/admin permissions).
+- [x] An **admin** generates a token in Keepou (/admin) and points an MCP-speaking
+      agent at `<api>/mcp`; the agent reads and manages **public** notes under its
+      own **Botou** identity (never sees a member's private note).
+- [x] All actions enforce the same server-side rules as the web app (single-editor
+      lock, versioning, owner/admin permissions), restricted to public content.
 - [x] Secrets are stored hashed and shown once; tokens are revocable; agent
       access can be disabled instance-wide (`MCP_ENABLED=false`).
 - [x] Back tests green in CI; ARCHITECTURE / EPICS / how-to synced.
+
+---
+
+## E13-R — Rework: own identity « Botou », public-only, admin-managed
+
+**Goal.** Give the agent its own identity and tighten its reach, per product
+decision: (1) the MCP has its own identity, **Botou**; (2) it reads and writes
+**public notes only**; (3) **only an admin** can configure / add an agent.
+
+**Changes**
+- `services/bot.py` (new): the **Botou** identity — `ensure_bot` (lazy,
+  non-login, hidden), `get_bot`, `resolve_bot_token` (Botou-owned tokens only,
+  retiring legacy member-scoped ones). `models.py`: `BOT_EMAIL` / `BOT_DISPLAY_NAME`.
+- `services/agent.py`: `create_note` always **PUBLIC**; `update_note` drops the
+  visibility change (public-only). Notes it creates are « Créée par Botou ».
+- `mcp_server.py`: token verifier resolves to Botou; `create_note` / `update_note`
+  tools drop the `visibility` arg; instructions describe the public Botou agent.
+- `routers/tokens.py`: moved to **admin-guarded** `GET/POST/DELETE
+  /api/admin/tokens`, every token owned by Botou. `routers/admin.py`: Botou hidden
+  from the members list.
+- Front: token management moved out of the account menu into **/admin**
+  (`pages/AdminPage.tsx` + `TokenManager` dialog); `api/tokens.ts` → `/api/admin/tokens`;
+  `TOKEN_COPY` intro reworded (FR + EN) to name Botou and the public-only scope.
+- Tests: `test_agent.py`, `test_tokens.py`, `test_mcp.py` reworked to the Botou
+  model (public-only, admin-minted, legacy token retired).
+
+**Acceptance**
+- [x] The agent writes under « Botou »; notes it creates are public and authored
+      « par Botou »; it cannot read or create a private note.
+- [x] Only admins can create / list / revoke agent tokens; members get `403`.
+- [x] Back + front tests green (`api` pytest, `web` vitest/tsc/eslint).

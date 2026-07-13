@@ -22,7 +22,7 @@
 - [x] **E10** — Import from Google Keep · ✅ detailed → [`stories/E10-import-keep.md`](./stories/E10-import-keep.md) — *shipped (Takeout parser, preview/confirm endpoints, validated mockup `Keepou - Import Keep.dc.html`, `/import` flow — upload → review « mode tunnel » → summary —, tests back & front, user how-to)*
 - [x] **E11** — Field-feedback follow-up · ✅ detailed → [`stories/E11-retours-terrain.md`](./stories/E11-retours-terrain.md) — *shipped (board sort + density selectors + search reset + year-in-old-dates + return-state; hard delete from the card, the editor and archive multi-select/select-all; owner pin/archive/delete + `Maj+Entrée` in the editor; self-service display-name change `PATCH /api/auth/me`; windowed board rendering; instant open/close via a board cache with optimistic upserts; editor « Supprimer les cases cochées » to clear all ticked boxes (S6); editor « Copier la note » one-click whole-note copy (S7); tests back & front)*
 - [x] **E12** — Internationalization (FR + EN) · ✅ detailed → [`stories/E12-i18n.md`](./stories/E12-i18n.md) — *shipped (`User.language` server-stored preference + migration; `web/src/i18n/` FR/EN dictionaries typed by a shared `Copy`, `I18nProvider` / `useI18n` / `useLocale`; every screen migrated off `lib/copy`; full English translation; account-menu language switcher under « Modifier mon nom », adopted on login & persisted via `PATCH /me`; localized timestamps; tests back & front)*
-- [x] **E13** — Agent access over MCP · ✅ detailed → [`stories/E13-mcp-agent.md`](./stories/E13-mcp-agent.md) — *shipped (`PersonalAccessToken` model + migration + `GET/POST/DELETE /api/tokens`; streamable-HTTP MCP server mounted at `/mcp`, PAT-authenticated, 7 note tools over a transport-free `services/agent.py`; « Accès agent (MCP) » token manager UI; README « Agent access (MCP) » setup guide; tests back & front)*
+- [x] **E13** — Agent access over MCP · ✅ detailed → [`stories/E13-mcp-agent.md`](./stories/E13-mcp-agent.md) — *shipped, then reworked to its own public-only identity **« Botou »**: admin-managed `GET/POST/DELETE /api/admin/tokens` (Botou-owned); streamable-HTTP MCP server at `/mcp` resolving tokens to Botou, 7 note tools over a transport-free `services/agent.py` (public-only); token manager moved into **/admin**; README + ARCHITECTURE §14 synced; tests back & front)*
 
 ---
 
@@ -43,7 +43,7 @@
 | **E10** | Import from Google Keep | Takeout ZIP upload, server-side parse/mapping, bulk-create private notes | E3 |
 | **E11** | Field-feedback follow-up | Board filter/sort/search-reset/year + return-state, hard delete (card/editor/archive bulk), editor owner actions + Maj+Entrée, display-name change, windowed rendering | E3, E4, E8, E10 |
 | **E12** | Internationalization (FR + EN) | Server-stored `User.language`, `i18n/` FR/EN dictionaries + provider, full English translation, account-menu language switcher, localized timestamps | E2, E8 |
-| **E13** | Agent access over MCP | Personal Access Tokens, streamable-HTTP MCP server at `/mcp`, note tools (create/read/update/organize/delete) as the member, token manager UI | E3, E5, E6 |
+| **E13** | Agent access over MCP | Admin-managed Personal Access Tokens, streamable-HTTP MCP server at `/mcp`, note tools (create/read/update/organize/delete) under the public-only **Botou** identity, token manager in /admin | E3, E5, E6 |
 
 **Recommended critical path:** `E0 → E1 → E2 → E3 → E4 → E5 → E6`. **E1 (Railway)** is placed
 early on purpose: as soon as the scaffold runs, we wire up continuous deployment so **each

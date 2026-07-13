@@ -12,10 +12,11 @@ import { useI18n, useLocale } from '../i18n'
 import { ConfirmDialog } from './ConfirmDialog'
 
 /**
- * « Accès agent (MCP) » (E13): mint, list and revoke the Personal Access Tokens
- * an agent uses to reach Keepou over MCP. The freshly created secret is shown
- * exactly once (the server only ever stores its hash); the list carries metadata
- * only. Reuses the app-wide `.kp-dialog` shell (portal, Escape/backdrop close).
+ * « Accès agent (MCP) » (E13): mint, list and revoke the agent-access tokens the
+ * MCP agent (« Botou ») uses to reach Keepou. Admin-only, opened from /admin. The
+ * freshly created secret is shown exactly once (the server only ever stores its
+ * hash); the list carries metadata only. Reuses the app-wide `.kp-dialog` shell
+ * (portal, Escape/backdrop close).
  */
 export function TokenManager({ onClose }: { onClose: () => void }) {
   const { TOKEN_COPY, COMMON_COPY } = useI18n()
