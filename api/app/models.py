@@ -32,6 +32,15 @@ def _utcnow() -> datetime:
     return datetime.now(UTC).replace(tzinfo=None)
 
 
+# The MCP agent (E13) does not act as the member who minted the token: it acts
+# under a single dedicated identity, **Botou** — a real User row (so notes and
+# versions keep a valid owner / author) that never signs in and is hidden from
+# the admin member list. Botou only ever touches PUBLIC content (enforced in
+# services/agent.py) and holds the admin-managed agent tokens.
+BOT_EMAIL = "botou@bot.keepou"
+BOT_DISPLAY_NAME = "Botou"
+
+
 class Role(StrEnum):
     MEMBER = "MEMBER"
     ADMIN = "ADMIN"

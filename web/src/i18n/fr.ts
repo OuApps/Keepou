@@ -332,11 +332,16 @@ export const fr = {
   // MCP agent access (E13) — Personal Access Token manager, reached from the
   // account menu (« Accès agent »).
   TOKEN_COPY: {
-    menuEntry: 'Accès agent (MCP)',
     title: 'Accès agent (MCP)',
+    adminIntro:
+      'Connecte un assistant (agent IA) à Keepou via MCP — par exemple un bot ' +
+      'WhatsApp ou Telegram. L’agent agit sous l’identité « Botou » et n’accède ' +
+      'qu’aux notes publiques (lecture et écriture). Seuls les administrateurs ' +
+      'peuvent créer ou révoquer ces jetons.',
+    manage: 'Gérer les jetons',
     intro:
-      'Génère un jeton pour connecter un assistant (agent IA) à tes notes Keepou ' +
-      'via MCP — par exemple depuis un bot WhatsApp ou Telegram.',
+      'Génère un jeton pour connecter un assistant (agent IA) à Keepou via MCP. ' +
+      'L’agent écrit sous le nom de « Botou » et ne touche qu’aux notes publiques.',
     endpointLabel: 'Adresse du serveur MCP',
     copyEndpoint: 'Copier l’adresse',
     nameLabel: 'Nom du jeton',

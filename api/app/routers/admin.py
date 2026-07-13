@@ -20,7 +20,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, col, select
 
 from app.db import SessionDep
-from app.models import AllowlistEntry, Role, User, UserStatus
+from app.models import BOT_EMAIL, AllowlistEntry, Role, User, UserStatus
 from app.schemas import AllowlistIn, MemberOut, UserAdminPatch, UserOut
 from app.security import AdminUser
 
@@ -59,7 +59,11 @@ def list_members(_: AdminUser, session: SessionDep) -> list[MemberOut]:
     """Registered members first (oldest first — the bootstrap admin leads),
     then pending invitees. Same semantics as the HANDOFF §4 LEFT JOIN: an
     allowlist entry whose email has a User is shown as that registered user."""
-    users = session.exec(select(User).order_by(col(User.created_at))).all()
+    # Botou (the MCP agent identity) is a system account, not a human member —
+    # keep it out of the access list.
+    users = session.exec(
+        select(User).where(User.email != BOT_EMAIL).order_by(col(User.created_at))
+    ).all()
     entries = session.exec(select(AllowlistEntry).order_by(col(AllowlistEntry.added_at))).all()
     registered_emails = {user.email for user in users}
     return [_registered(user) for user in users] + [

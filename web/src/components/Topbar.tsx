@@ -4,22 +4,21 @@ import { useAuth } from '../auth/AuthContext'
 import { useI18n, useLocale } from '../i18n'
 import { ProfileDialog } from './ProfileDialog'
 import { ThemeToggle } from './ThemeToggle'
-import { TokenManager } from './TokenManager'
 
 /**
  * App topbar — sticky, blurred, faithful to `Keepou - Board.dc.html`: logo +
  * brand, a central slot (the Board's search), a `tabs` slot (segmented pill),
  * theme toggle, avatar + menu (display name + « Administration » for admins
- * only — the real /admin guard is the API, E7 — + « Se déconnecter »).
+ * only — the real /admin guard is the API, E7 — + « Se déconnecter »). Agent
+ * (MCP) access lives in /admin, not here — it is an admin-only concern (E13).
  */
 export function Topbar({ center, tabs }: { center?: ReactNode; tabs?: ReactNode }) {
   const { user, signOut, changeLanguage } = useAuth()
-  const { BOARD_COPY, COMMON_COPY, IMPORT_COPY, PROFILE_COPY, LANG_COPY, TOKEN_COPY } = useI18n()
+  const { BOARD_COPY, COMMON_COPY, IMPORT_COPY, PROFILE_COPY, LANG_COPY } = useI18n()
   const { locale } = useLocale()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
-  const [tokensOpen, setTokensOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const initial = user?.display_name?.trim().charAt(0).toUpperCase() || '?'
 
@@ -136,17 +135,6 @@ export function Topbar({ center, tabs }: { center?: ReactNode; tabs?: ReactNode 
             >
               {IMPORT_COPY.menuEntry}
             </button>
-            <button
-              type="button"
-              className="kp-menu__item"
-              role="menuitem"
-              onClick={() => {
-                setMenuOpen(false)
-                setTokensOpen(true)
-              }}
-            >
-              {TOKEN_COPY.menuEntry}
-            </button>
             <button type="button" className="kp-menu__item" role="menuitem" onClick={signOut}>
               {BOARD_COPY.signOut}
             </button>
@@ -155,7 +143,6 @@ export function Topbar({ center, tabs }: { center?: ReactNode; tabs?: ReactNode 
       </div>
 
       {profileOpen && <ProfileDialog onClose={() => setProfileOpen(false)} />}
-      {tokensOpen && <TokenManager onClose={() => setTokensOpen(false)} />}
     </header>
   )
 }

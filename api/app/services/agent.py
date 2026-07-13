@@ -1,19 +1,22 @@
 """
 Agent-facing note operations (E13) — the business logic behind the MCP tools.
 
-This module is the single home of the note actions an agent can perform, kept
-**separate from the transport** (app/mcp_server.py) so the rules can be unit
-tested by calling the functions directly with a session + user. Every operation
-mirrors the REST router's server-side rules (ARCHITECTURE §4.2):
+This module is the single home of the note actions the agent (**Botou**, the
+dedicated MCP identity — see services/bot.py) can perform, kept **separate from
+the transport** (app/mcp_server.py) so the rules can be unit tested by calling
+the functions directly with a session + the bot user. Botou is a **public-only**
+identity, and every operation mirrors the REST router's server-side rules
+(ARCHITECTURE §4.2):
 
-- visibility gating: a private note is invisible to non-owners (NoteNotFound,
-  never leaked);
-- the single-editor lock still governs PUBLIC content edits — the agent briefly
+- public-only: notes are created PUBLIC and visibility is never changed over MCP,
+  so the agent can neither see nor create a private note (a private note is
+  invisible to it — NoteNotFound, never leaked);
+- the single-editor lock governs PUBLIC content edits — the agent briefly
   borrows the lock around an edit (like a restore) and yields to a live editor;
-- versioning stays consistent: create writes the « Créée par X » root, and each
-  agent content edit records the session's version (1 edit = 1 version, FR-H1
-  no-op guard included);
-- pin / archive / visibility stay owner-only, lock-free metadata.
+- versioning stays consistent: create writes the « Créée par Botou » root, and
+  each agent content edit records the session's version (1 edit = 1 version,
+  FR-H1 no-op guard included);
+- pin / archive stay owner-only, lock-free metadata; delete stays owner/admin.
 
 Messages raised here are read by the agent (English, technical), not shown as
 product UI copy.
@@ -114,14 +117,15 @@ def create_note(
     title: str = "",
     body: str = "",
     color: str = "GOLD",
-    visibility: str = "PRIVATE",
 ) -> dict:
-    """Create a note owned by the caller, with its « Créée par X » history root."""
+    """Create a PUBLIC note owned by the caller (Botou), with its « Créée par X »
+    history root. The agent is a public-only identity, so a note it creates is
+    always PUBLIC — there is no private-note path over MCP."""
     note = Note(
         title=title,
         body=body,
         color=NoteColor(color),
-        visibility=Visibility(visibility),
+        visibility=Visibility.PUBLIC,
         owner_id=user.id,
     )
     session.add(note)
@@ -138,11 +142,11 @@ def update_note(
     title: str | None = None,
     body: str | None = None,
     color: str | None = None,
-    visibility: str | None = None,
 ) -> dict:
-    """Edit a note's content (title / body / color) and, owner-only, its
-    visibility. On a PUBLIC note the agent borrows the single-editor lock around
-    the edit and yields to a live editor; each edit records one version."""
+    """Edit a PUBLIC note's content (title / body / color). The agent borrows the
+    single-editor lock around the edit and yields to a live editor; each edit
+    records one version. Visibility is never changed over MCP — the agent is a
+    public-only identity, so it can neither reveal a note nor hide one."""
     note = _readable(session, user, note_id)
     changes: dict = {}
     if title is not None:
@@ -151,10 +155,6 @@ def update_note(
         changes["body"] = body
     if color is not None:
         changes["color"] = NoteColor(color)
-    if visibility is not None:
-        if note.owner_id != user.id:
-            raise PermissionDenied("Only the note's author can change its visibility.")
-        changes["visibility"] = Visibility(visibility)
     if not changes:
         return note_payload(session, note)
 

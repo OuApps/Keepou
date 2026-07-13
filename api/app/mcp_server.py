@@ -3,14 +3,18 @@ MCP server (E13) — exposes Keepou's notes to an agent over the Model Context
 Protocol, so a member can drive their notes from an assistant (and, later, a
 WhatsApp / Telegram bot that speaks MCP).
 
-Transport & auth:
+Identity, transport & auth:
+- The agent has its **own identity**, **Botou** (services/bot.py): a public-only
+  bot account that owns every note created over MCP. It does *not* act as the
+  member who minted the token.
 - **Streamable HTTP**, mounted at ``<api>/mcp`` (app/main.py), **stateless** so
   each request stands alone — a good fit for an agent that fires one-off calls.
 - **Bearer auth via Personal Access Tokens**: FastMCP's ``token_verifier`` runs
   our :class:`KeepouTokenVerifier`, which resolves the presented ``kpat_…`` token
-  to its ACTIVE owner (app/security.py). Inside a tool, ``get_access_token()``
-  carries that user's id in ``subject``, so every action runs as that member with
-  the same server-side rules as the REST API.
+  to Botou (services/bot.py) — only tokens owned by the ACTIVE bot resolve.
+  Inside a tool, ``get_access_token()`` carries Botou's id in ``subject``, so
+  every action runs as Botou under the same server-side rules as the REST API.
+  Admins mint / revoke these tokens (routers/tokens.py).
 
 The note logic lives in app/services/agent.py (transport-free, unit tested); the
 tools here are thin adapters. Tool text is English (an agent-facing API, not
@@ -32,8 +36,8 @@ from sqlmodel import Session
 from app.config import settings
 from app.db import engine
 from app.models import User, UserStatus
-from app.security import resolve_pat_user
 from app.services import agent
+from app.services.bot import resolve_bot_token
 
 # Scope granted to every Personal Access Token — a single coarse scope is enough
 # for a personal tool; kept for forward compatibility (finer scopes later).
@@ -48,14 +52,15 @@ def open_session() -> Session:
 
 
 class KeepouTokenVerifier(TokenVerifier):
-    """Resolve a Personal Access Token to its owner for FastMCP's bearer auth."""
+    """Resolve a Personal Access Token to the Botou identity for FastMCP's bearer
+    auth. Only tokens owned by the ACTIVE bot resolve (services/bot.py)."""
 
     async def verify_token(self, token: str) -> AccessToken | None:
         with open_session() as session:
-            user = resolve_pat_user(token, session)
-            if user is None:
+            bot = resolve_bot_token(token, session)
+            if bot is None:
                 return None
-            return AccessToken(token=token, client_id=user.id, scopes=[MCP_SCOPE], subject=user.id)
+            return AccessToken(token=token, client_id=bot.id, scopes=[MCP_SCOPE], subject=bot.id)
 
 
 def _issuer_url() -> AnyHttpUrl:
@@ -67,11 +72,11 @@ def _issuer_url() -> AnyHttpUrl:
 
 
 def _current_user(session: Session) -> User:
-    """The authenticated member for the running tool call."""
+    """The Botou identity for the running tool call."""
     access = get_access_token()
     user = session.get(User, access.subject) if access is not None else None
     if user is None or user.status != UserStatus.ACTIVE:
-        raise ToolError("Your access is no longer valid. Generate a new token in Keepou.")
+        raise ToolError("Your access is no longer valid. Ask an admin to issue a new token.")
     return user
 
 
@@ -93,12 +98,13 @@ def _guard(fn):
 mcp = FastMCP(
     "Keepou",
     instructions=(
-        "Keepou is a self-hosted notes app (like Google Keep). Use these tools to "
-        "read and manage the authenticated member's notes: text + Markdown checklists "
-        "(GFM task lists, `- [ ]` / `- [x]`), private or public, with 5 colors "
-        "(GOLD, AVOCAT, SALSA, CLAY, TEAL). Prefer `search_notes` to find a note, then "
-        "act on it by id. Editing a shared PUBLIC note may fail if another person is "
-        "editing it live."
+        "Keepou is a self-hosted notes app (like Google Keep). You act as Botou, the "
+        "app's shared PUBLIC agent: every note you create or edit is PUBLIC and visible "
+        "to all members (authored « par Botou »). You cannot see or create private "
+        "notes. Notes are text + Markdown checklists (GFM task lists, `- [ ]` / `- [x]`) "
+        "with 5 colors (GOLD, AVOCAT, SALSA, CLAY, TEAL). Prefer `search_notes` to find "
+        "a note, then act on it by id. Editing a note may fail if a member is editing "
+        "it live."
     ),
     stateless_http=True,
     json_response=True,
@@ -150,20 +156,17 @@ def get_note(note_id: str) -> dict:
 
 
 @mcp.tool()
-def create_note(
-    title: str = "", body: str = "", color: str = "GOLD", visibility: str = "PRIVATE"
-) -> dict:
-    """Create a note owned by the member.
+def create_note(title: str = "", body: str = "", color: str = "GOLD") -> dict:
+    """Create a PUBLIC note (owned by Botou, visible to all members).
 
     Args:
         title: the note title (optional).
         body: Markdown body — use `- [ ]` / `- [x]` for checklist items.
         color: one of GOLD, AVOCAT, SALSA, CLAY, TEAL.
-        visibility: PRIVATE (default) or PUBLIC.
     """
     with open_session() as session:
         user = _current_user(session)
-        return _guard(agent.create_note)(session, user, title, body, color, visibility)
+        return _guard(agent.create_note)(session, user, title, body, color)
 
 
 @mcp.tool()
@@ -172,17 +175,17 @@ def update_note(
     title: str | None = None,
     body: str | None = None,
     color: str | None = None,
-    visibility: str | None = None,
 ) -> dict:
-    """Edit a note's content; only the provided fields change.
+    """Edit a PUBLIC note's content (title / body / color); only the provided
+    fields change.
 
-    Changing `visibility` is allowed only on the member's own notes. Editing a
-    PUBLIC note fails if someone else is editing it live. Each edit is saved as a
-    new version (history is preserved).
+    Visibility cannot be changed over MCP (the agent is public-only). Editing
+    fails if a member is editing the note live. Each edit is saved as a new
+    version (history is preserved).
     """
     with open_session() as session:
         user = _current_user(session)
-        return _guard(agent.update_note)(session, user, note_id, title, body, color, visibility)
+        return _guard(agent.update_note)(session, user, note_id, title, body, color)
 
 
 @mcp.tool()

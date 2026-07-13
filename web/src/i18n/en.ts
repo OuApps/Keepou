@@ -317,11 +317,15 @@ export const en: Copy = {
   },
 
   TOKEN_COPY: {
-    menuEntry: 'Agent access (MCP)',
     title: 'Agent access (MCP)',
+    adminIntro:
+      'Connect an assistant (AI agent) to Keepou over MCP — for example a WhatsApp ' +
+      'or Telegram bot. The agent acts under the “Botou” identity and only accesses ' +
+      'public notes (read and write). Only admins can create or revoke these tokens.',
+    manage: 'Manage tokens',
     intro:
-      'Generate a token to connect an assistant (AI agent) to your Keepou notes over MCP — ' +
-      'for example from a WhatsApp or Telegram bot.',
+      'Generate a token to connect an assistant (AI agent) to Keepou over MCP. The ' +
+      'agent writes under the name “Botou” and only touches public notes.',
     endpointLabel: 'MCP server address',
     copyEndpoint: 'Copy the address',
     nameLabel: 'Token name',

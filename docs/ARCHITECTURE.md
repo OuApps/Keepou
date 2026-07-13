@@ -64,7 +64,7 @@ erDiagram
     User ||--o{ Note : owns
     User ||--o{ NoteVersion : authored
     User ||--o{ AllowlistEntry : invited
-    User ||--o{ PersonalAccessToken : "owns (agent access)"
+    User ||--o{ PersonalAccessToken : "Botou owns (agent access)"
     Note ||--o{ NoteVersion : "has history"
     User ||--o| Note : "locks (0..1 active)"
 
@@ -135,12 +135,13 @@ erDiagram
   on session load; the member changes it from the account menu
   (`PATCH /api/auth/me {language}`). French stays the reference locale — the
   frozen UI copy (HANDOFF §7) is the FR source, `en.ts` its faithful mirror.
-- **PersonalAccessToken** — a long-lived bearer secret an agent uses to reach
-  Keepou over **MCP** (E13, §13). JWT access tokens are short-lived (~15 min), so
-  a member mints a `kpat_…` token instead. Only its **SHA-256 hash** is stored
-  (never the secret, shown once at creation); `prefix` is a non-secret display
-  label; `revoked_at` disables it without deleting the row. Resolving a presented
-  token is one indexed lookup that also re-checks the owner is `ACTIVE`.
+- **PersonalAccessToken** — a long-lived bearer secret the agent (**Botou**) uses
+  to reach Keepou over **MCP** (E13, §14). JWT access tokens are short-lived
+  (~15 min), so an **admin** mints a `kpat_…` token instead; every token is owned
+  by the Botou identity. Only its **SHA-256 hash** is stored (never the secret,
+  shown once at creation); `prefix` is a non-secret display label; `revoked_at`
+  disables it without deleting the row. Resolving a presented token is one indexed
+  lookup that also re-checks the owner is the `ACTIVE` Botou.
 - **AllowlistEntry** — the allowlist. An email here may sign up; once they do, a
   `User` row exists. A `LEFT JOIN User ON User.email = AllowlistEntry.email` lets
   the admin UI show "allowed (pending)" vs "registered" (FR-U2).
@@ -319,10 +320,10 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
 | PATCH | `/api/admin/users/:id` | Set `role` or `status` | Admin; last-admin guard; never deletes |
 | POST | `/api/import/keep/preview` | Parse a Takeout export | Bearer; ZIP upload → parsed notes with a stable index, **no writes** — feeds the review/selection view (E10) |
 | POST | `/api/import/keep` | Import selected notes | Bearer; same ZIP + selected indices → create only the checked notes (private, dates preserved); returns a summary (E10) |
-| GET | `/api/tokens` | List own agent tokens | Bearer; metadata only, never the secret (E13) |
-| POST | `/api/tokens` | Mint an agent token | Bearer; `{name}` → the `kpat_…` secret **once** (`201`); only its hash is stored |
-| DELETE | `/api/tokens/:id` | Revoke an agent token | Bearer; owner-scoped (`404` otherwise); sets `revoked_at`, never deletes |
-| POST | `/mcp` | MCP endpoint (streamable HTTP) | Bearer **Personal Access Token**; the agent surface (§13) — not part of the REST/JSON app, mounted separately |
+| GET | `/api/admin/tokens` | List the agent (Botou) tokens | **Admin**; metadata only, never the secret (E13) |
+| POST | `/api/admin/tokens` | Mint an agent token | **Admin**; `{name}` → the `kpat_…` secret **once** (`201`); owned by Botou, only its hash is stored |
+| DELETE | `/api/admin/tokens/:id` | Revoke an agent token | **Admin**; `404` if not a Botou token; sets `revoked_at`, never deletes |
+| POST | `/mcp` | MCP endpoint (streamable HTTP) | Bearer **Personal Access Token**; the agent (Botou) surface (§14) — not part of the REST/JSON app, mounted separately |
 
 > **Search** is a **client-side filter** over the loaded board in the MVP (FR-S1);
 > a dedicated server endpoint can be added later if the note count grows.
@@ -375,11 +376,12 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
   subdomains — deferred until a custom domain is available. The data model is
   unchanged, so the migration stays localized to auth.
 - **Personal Access Tokens (agent access, E13).** Separately from the JWT flow,
-  a member can mint long-lived **`kpat_…`** tokens for an agent (the JWT access
-  token's ~15-min TTL is too short for an always-on agent). They are the bearer
-  credential for the **MCP** endpoint (§13): only the SHA-256 **hash** is stored,
-  the secret is shown once, and each use re-checks the owner is `ACTIVE` — so
-  revoking a token or disabling the owner cuts agent access immediately.
+  an **admin** can mint long-lived **`kpat_…`** tokens for the agent (the JWT
+  access token's ~15-min TTL is too short for an always-on agent). Every token is
+  owned by the **Botou** identity (§14) and is the bearer credential for the
+  **MCP** endpoint: only the SHA-256 **hash** is stored, the secret is shown once,
+  and each use re-checks the token belongs to the `ACTIVE` Botou — so revoking a
+  token or disabling Botou cuts agent access immediately.
 
 ## 9. PWA & responsiveness
 
@@ -560,34 +562,45 @@ faithful mirror.
 
 ## 14. Agent access over MCP (E13)
 
-Keepou exposes its notes to an **agent** over the **Model Context Protocol**, so a
-member can read and manage their notes from an assistant — and, later, from a
-**WhatsApp / Telegram bot** that speaks MCP. The agent acts **as the member**,
-under the exact same server-side rules as the web app.
+Keepou exposes its notes to an **agent** over the **Model Context Protocol**, so
+the instance can be driven from an assistant — and, later, from a **WhatsApp /
+Telegram bot** that speaks MCP. The agent has its **own identity, Botou** (it does
+*not* act as the member who minted the token) and is a **public-only** actor.
 
+- **Identity — Botou.** The agent acts as a single dedicated account, **Botou**
+  (`services/bot.py`): a real `User` row (so notes and versions keep a valid
+  owner / author) that never signs in (a random password hash) and is **hidden
+  from the admin member list**. Every note created over MCP is **owned by Botou**
+  and shown « Créée par Botou ». Botou is created lazily on the first token mint.
+- **Public-only.** Botou reads and writes **PUBLIC** notes only: `create_note`
+  always creates a PUBLIC note, `update_note` never changes visibility, and a
+  member's private note is invisible to it (`NoteNotFound`). It can edit any
+  member's public note (borrowing the lock) but can only delete its own.
 - **Transport.** A **streamable-HTTP** MCP server (`app/mcp_server.py`, built on
   the `mcp` SDK's `FastMCP`, **stateless**) **mounted inside the FastAPI app** at
   **`/mcp`** — future-proof for a remote bot that connects to it directly. The
   session manager runs in the app lifespan (rebuilt per lifespan behind a stable
   ASGI wrapper, so the test harness can open many clients). `MCP_ENABLED=false`
   turns the whole surface off.
-- **Auth.** Bearer **Personal Access Token** (§8). FastMCP's `token_verifier`
-  resolves the presented `kpat_…` to its `ACTIVE` owner; inside a tool,
-  `get_access_token().subject` is that user's id, so every action runs as them.
-  A missing/invalid/revoked token is `401`.
+- **Auth.** Bearer **Personal Access Token** (§8), now **admin-managed** and
+  owned by Botou. FastMCP's `token_verifier` resolves the presented `kpat_…` via
+  `resolve_bot_token` — **only** a token owned by the `ACTIVE` Botou resolves, so
+  any legacy member-scoped token is retired. Inside a tool,
+  `get_access_token().subject` is Botou's id, so every action runs as Botou. A
+  missing/invalid/revoked token is `401`.
 - **Tools** (7, thin adapters over `app/services/agent.py`, which mirrors the REST
   rules — visibility gating, single-editor lock, versioning, owner/admin
   permissions): `list_notes`, `search_notes`, `get_note`, `create_note`,
-  `update_note`, `organize_note` (pin/archive), `delete_note`. Editing a **public**
+  `update_note`, `organize_note` (pin/archive), `delete_note`. Editing a public
   note **borrows the single-editor lock** around the change and yields to a live
   editor (`409` → a clean tool error); each content edit records the session's
   version, exactly like the web editor.
 - **Separation of concerns.** The note logic lives in `services/agent.py`
   (transport-free, unit-tested); the MCP tools are adapters that open a session,
-  resolve the current user and delegate. Tool text is **English** (an agent-facing
-  API, not product UI copy).
+  resolve Botou and delegate. Tool text is **English** (an agent-facing API, not
+  product UI copy).
 
-Connecting an agent is entirely UI-driven: a member creates an API key and copies
-the endpoint from the **« Accès agent (MCP) »** dialog (account menu). The
+Connecting an agent is an **admin** act: from **/admin → « Accès agent (MCP) »**,
+an admin creates an API key and copies the endpoint. The
 [README](../README.md#agent-access-mcp) documents the key creation and the
 expected bearer auth.
