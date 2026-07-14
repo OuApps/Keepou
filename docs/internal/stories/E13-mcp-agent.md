@@ -197,6 +197,9 @@ decision: (1) the MCP has its own identity, **Botou**; (2) it reads and writes
 - Front: token management moved out of the account menu into **/admin**
   (`pages/AdminPage.tsx` + `TokenManager` dialog); `api/tokens.ts` → `/api/admin/tokens`;
   `TOKEN_COPY` intro reworded (FR + EN) to name Botou and the public-only scope.
+- Migration `e7a1c3f95b48` (data-only): retires legacy member-scoped tokens by
+  stamping `revoked_at` on every still-active token not owned by Botou (no schema
+  change — the rework only added constants). Botou-owned tokens are left untouched.
 - Tests: `test_agent.py`, `test_tokens.py`, `test_mcp.py` reworked to the Botou
   model (public-only, admin-minted, legacy token retired).
 
