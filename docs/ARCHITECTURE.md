@@ -412,15 +412,20 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
 
 ## 10. Deployment (Railway)
 
-One Railway project, **two public services** + the managed Postgres plugin — **no
-custom domain required**: auth is a bearer token (not a cookie), so the front and
-API can live on the default `*.up.railway.app` domains and talk cross-origin. Each
-service points at a **Root Directory** and listens on `$PORT`.
+One Railway project, **two public services** + the managed Postgres plugin. A
+custom domain is **not required** (auth is a bearer token, not a cookie, so the two
+services can live on the default `*.up.railway.app` domains and talk cross-origin),
+but the deployment now fronts each service with a **custom Cloudflare sub-domain** —
+the web app and the API on paired hostnames (e.g. `<web-domain>` / `api-<web-domain>`).
+Whatever the hostnames, the two variables that wire the front to the back must stay a
+matched pair: **`VITE_API_URL`** (web, build-time) points at the API's public origin,
+and **`CORS_ORIGINS`** (api) lists the web's public origin. Each service points at a
+**Root Directory** and listens on `$PORT`.
 
 | Service | Root | Build / Start | Public URL |
 | --- | --- | --- | --- |
-| **keepou-api** | `api/` | Nixpacks; `sh -c 'uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}'` | `https://<api>.up.railway.app` · `/api/health` |
-| **keepou-web** | `web/` | `npm ci && npm run build` → serve `dist/` on `$PORT` (SPA fallback) | `https://<web>.up.railway.app` |
+| **keepou-api** | `api/` | Nixpacks; `sh -c 'uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}'` | custom API sub-domain (Cloudflare) · `/api/health` |
+| **keepou-web** | `web/` | `npm ci && npm run build` → serve `dist/` on `$PORT` (SPA fallback) | custom web sub-domain (Cloudflare) |
 | **Postgres** | — | managed plugin | injects `DATABASE_URL` |
 
 - **`$PORT` must be shell-expanded**: the API `startCommand` is wrapped in
@@ -463,7 +468,15 @@ service points at a **Root Directory** and listens on `$PORT`.
   | `VITE_API_URL` | web | Public API base URL, inlined **at build time** |
 
 > `VITE_API_URL` is baked into the static build, so changing it requires a
-> rebuild of `keepou-web`.
+> rebuild of `keepou-web`. The committed default lives in `web/.env.production`; a
+> Railway service variable of the same name overrides it. A build without it makes
+> the front call its own origin (`serve` returns `index.html`), so every API call —
+> login included — silently gets HTML instead of JSON.
+>
+> When the web origin changes (e.g. a new custom domain), update **both** sides:
+> `VITE_API_URL` on `keepou-web` **and** `CORS_ORIGINS` on `keepou-api`. A missing
+> web origin in `CORS_ORIGINS` fails the browser preflight (`400`, no
+> `access-control-allow-origin`) and the front cannot reach the API.
 
 ## 11. Security considerations
 

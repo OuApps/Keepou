@@ -18,8 +18,11 @@ Railway project "Keepou"
 
 > Monorepo: each Railway service points to a **Root Directory** (`api/` or `web/`).
 > Railway injects `$PORT` — both services **must listen on `$PORT`**.
-> Auth is a **JWT bearer token** (not a cookie), so the two can stay on the default
-> Railway domains and talk cross-origin — **no custom domain needed** (S6).
+> Auth is a **JWT bearer token** (not a cookie), so a custom domain is **not
+> required** (S6) — but the deployment now fronts each service with a **custom
+> Cloudflare sub-domain** (web + `api-` paired hostnames). When the web origin
+> changes, `VITE_API_URL` (web, build-time — see `web/.env.production`) and
+> `CORS_ORIGINS` (api) must be updated **together**.
 
 ---
 
@@ -41,8 +44,10 @@ and auto-deploy on `main` (S7) are in place. Verified end-to-end: `GET /api/heal
 the web SPA is served over HTTPS, and CORS only accepts the web origin. What remains:
 the **bearer-token auth flow** (login / `/api/auth/me`) lands in **E2**, and **PR preview
 environments** depend on the Railway plan. Variables are documented in the
-`api/.env.example` / `web/.env.example` files and the topology above; the live domains
-are kept out of the repo. `[~]` = partially done.
+`api/.env.example` / `web/.env.example` files and the topology above. The web app and
+API are fronted by **custom Cloudflare sub-domains**; the front's build-time
+`VITE_API_URL` lives in `web/.env.production`, and the API's `CORS_ORIGINS` must list
+the web origin (set as a Railway service variable). `[~]` = partially done.
 
 ---
 
