@@ -585,7 +585,9 @@ Telegram bot** that speaks MCP. The agent has its **own identity, Botou** (it do
 - **Auth.** Bearer **Personal Access Token** (§8), now **admin-managed** and
   owned by Botou. FastMCP's `token_verifier` resolves the presented `kpat_…` via
   `resolve_bot_token` — **only** a token owned by the `ACTIVE` Botou resolves, so
-  any legacy member-scoped token is retired. Inside a tool,
+  any legacy member-scoped token is retired (and migration `e7a1c3f95b48` stamps
+  `revoked_at` on those pre-existing tokens, so the table reflects it). Inside a
+  tool,
   `get_access_token().subject` is Botou's id, so every action runs as Botou. A
   missing/invalid/revoked token is `401`.
 - **Tools** (7, thin adapters over `app/services/agent.py`, which mirrors the REST
