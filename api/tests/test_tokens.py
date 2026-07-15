@@ -110,6 +110,7 @@ def test_resolve_rejects_disabled_bot(client, session) -> None:
     headers = admin_headers(client)
     secret = client.post("/api/admin/tokens", json={"name": "x"}, headers=headers).json()["token"]
     bot = get_bot(session)
+    assert bot is not None
     bot.status = UserStatus.DISABLED
     session.add(bot)
     session.commit()
