@@ -31,9 +31,7 @@ def make_user(session, name="Marie", role=Role.MEMBER) -> User:
 def make_note(session, owner, title="", body="", visibility=Visibility.PUBLIC, archived=False):
     """A note created directly (not via the agent) — used to set up members'
     notes, including PRIVATE ones the agent must never see."""
-    note = Note(
-        title=title, body=body, owner_id=owner.id, visibility=visibility, archived=archived
-    )
+    note = Note(title=title, body=body, owner_id=owner.id, visibility=visibility, archived=archived)
     session.add(note)
     session.commit()
     session.refresh(note)
