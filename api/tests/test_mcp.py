@@ -59,9 +59,7 @@ def pat_token(client) -> str:
     # belong to the Botou identity.
     access = client.post("/api/auth/register", json=ADMIN).json()["access"]
     headers = {"Authorization": f"Bearer {access}"}
-    return client.post("/api/admin/tokens", json={"name": "Agent"}, headers=headers).json()[
-        "token"
-    ]
+    return client.post("/api/admin/tokens", json={"name": "Agent"}, headers=headers).json()["token"]
 
 
 def test_mcp_requires_a_valid_token(client, mcp_session) -> None:
