@@ -468,10 +468,20 @@ and **`CORS_ORIGINS`** (api) lists the web's public origin. Each service points 
   | --- | --- | --- |
   | `DATABASE_URL` | api | Postgres connection (from the Railway plugin) |
   | `SESSION_SECRET` | api | Signs the access/refresh JWTs (strong value in prod) |
-  | `CORS_ORIGINS` | api | Allowed web origin(s) |
+  | `FRONTEND_URL` | api | Public web origin (e.g. `https://keepou.galaxou.com`); default source for `CORS_ORIGINS` |
+  | `API_BASE_URL` | api | Public API origin (e.g. `https://api-keepou.galaxou.com`); default source for `MCP_PUBLIC_URL` |
+  | `CORS_ORIGINS` | api | *(optional)* allowed web origin(s); defaults to `FRONTEND_URL`, set to list several |
   | `ACCESS_TOKEN_TTL_MINUTES` | api | *(optional)* access-token TTL — default 15 min |
   | `REFRESH_TOKEN_TTL_DAYS` | api | *(optional)* refresh-token TTL — default 30 days |
+  | `MCP_PUBLIC_URL` | api | *(optional)* public MCP endpoint; defaults to `API_BASE_URL` + `/mcp` |
   | `VITE_API_URL` | web | Public API base URL, inlined **at build time** |
+
+  `FRONTEND_URL` and `API_BASE_URL` are the two public origins the backend treats
+  as its single source of truth: `CORS_ORIGINS` falls back to `FRONTEND_URL` and
+  `MCP_PUBLIC_URL` falls back to `API_BASE_URL` + `/mcp`, so a prod deploy only has
+  to name the two hostnames. Both must be the **custom** (Cloudflare) sub-domains —
+  **never** a `*.up.railway.app` domain, and no Railway URL is hard-coded anywhere
+  in the repo.
 
 > `VITE_API_URL` is baked into the static build, so changing it requires a
 > rebuild of `keepou-web`. The committed default lives in `web/.env.production`; a

@@ -12,17 +12,18 @@
 ```
 Railway project "Keepou"
 ├── Postgres     (managed plugin)     → DATABASE_URL
-├── keepou-api   (root: api/)         → https://<api>.up.railway.app · /api/health
-└── keepou-web   (root: web/)         → https://<web>.up.railway.app
+├── keepou-api   (root: api/)         → https://api-keepou.galaxou.com · /api/health
+└── keepou-web   (root: web/)         → https://keepou.galaxou.com
 ```
 
 > Monorepo: each Railway service points to a **Root Directory** (`api/` or `web/`).
 > Railway injects `$PORT` — both services **must listen on `$PORT`**.
 > Auth is a **JWT bearer token** (not a cookie), so a custom domain is **not
-> required** (S6) — but the deployment now fronts each service with a **custom
-> Cloudflare sub-domain** (web + `api-` paired hostnames). When the web origin
-> changes, `VITE_API_URL` (web, build-time — see `web/.env.production`) and
-> `CORS_ORIGINS` (api) must be updated **together**.
+> required** (S6) — but the deployment fronts each service with a **custom
+> Cloudflare sub-domain** (web + `api-` paired hostnames), and **no**
+> `*.up.railway.app` domain is used or hard-coded. When the web origin changes,
+> `FRONTEND_URL` / `VITE_API_URL` (web, build-time — see `web/.env.production`) and
+> `API_BASE_URL` / `CORS_ORIGINS` (api) must be updated **together**.
 
 ---
 
@@ -100,7 +101,7 @@ exercised on the first Railway deploy.
   `--port $PORT` reaches uvicorn as the literal `$PORT`; the `sh -c` wrapper forces
   expansion (`${PORT:-8000}` fallback for local runs).
 - `api/railway.json` (or `railway.toml`) file: builder, `startCommand`, `healthcheckPath = /api/health`, restart policy.
-- Variables: `DATABASE_URL` (Postgres reference), `SESSION_SECRET` (generated), `CORS_ORIGINS` (frontend URL, see S6).
+- Variables: `DATABASE_URL` (Postgres reference), `SESSION_SECRET` (generated), `FRONTEND_URL` (web origin → default `CORS_ORIGINS`, see S6), `API_BASE_URL` (this service's own public origin → default `MCP_PUBLIC_URL`).
 - Generate a **public domain** for the API service.
 
 **Acceptance criteria**
@@ -211,7 +212,7 @@ header, with CORS allowing the web origin (S6).
 **Goal.** An ops/dev can (re)deploy and troubleshoot without guessing.
 
 **Tasks**
-- Document all variables: backend (`DATABASE_URL`, `SESSION_SECRET`, `CORS_ORIGINS`, and the optional `ACCESS_TOKEN_TTL_MINUTES` / `REFRESH_TOKEN_TTL_DAYS` from E2) and frontend (`VITE_API_URL`).
+- Document all variables: backend (`DATABASE_URL`, `SESSION_SECRET`, `FRONTEND_URL`, `API_BASE_URL`, the optional `CORS_ORIGINS` / `MCP_PUBLIC_URL` that default to those two origins, and the optional `ACCESS_TOKEN_TTL_MINUTES` / `REFRESH_TOKEN_TTL_DAYS` from E2) and frontend (`VITE_API_URL`).
 - Keep `api/.env.example` / `web/.env.example` in sync when variables appear.
 - Ops steps (deploy, re-run a migration, rollback, regenerate `SESSION_SECRET`, check logs)
   are folded into these stories (see S4 notes) and the Railway dashboard.

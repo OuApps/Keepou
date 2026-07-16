@@ -1,4 +1,5 @@
-"""Config: Postgres URL normalization (E1-S2) + prod secret guard (E2)."""
+"""Config: Postgres URL normalization (E1-S2) + prod secret guard (E2) +
+public-URL derivation (FRONTEND_URL / API_BASE_URL → CORS + MCP)."""
 
 import pytest
 from pydantic import ValidationError
@@ -47,3 +48,30 @@ def test_default_secret_allowed_on_sqlite(monkeypatch) -> None:
     monkeypatch.setenv("DATABASE_URL", "sqlite:///./keepou.db")
     monkeypatch.setenv("SESSION_SECRET", "dev-change-me")
     assert Settings().session_secret == "dev-change-me"
+
+
+def test_cors_defaults_to_frontend_url(monkeypatch) -> None:
+    """FRONTEND_URL is the single source for the web origin; CORS falls back to it."""
+    monkeypatch.delenv("CORS_ORIGINS", raising=False)
+    monkeypatch.setenv("FRONTEND_URL", "https://keepou.galaxou.com")
+    assert Settings().cors_origins_list == ["https://keepou.galaxou.com"]
+
+
+def test_cors_origins_override_frontend_url(monkeypatch) -> None:
+    """An explicit CORS_ORIGINS wins and may list several origins."""
+    monkeypatch.setenv("FRONTEND_URL", "https://keepou.galaxou.com")
+    monkeypatch.setenv("CORS_ORIGINS", "https://a.example, https://b.example")
+    assert Settings().cors_origins_list == ["https://a.example", "https://b.example"]
+
+
+def test_mcp_public_url_derives_from_api_base_url(monkeypatch) -> None:
+    """API_BASE_URL feeds the public MCP endpoint (trailing slash tolerated)."""
+    monkeypatch.delenv("MCP_PUBLIC_URL", raising=False)
+    monkeypatch.setenv("API_BASE_URL", "https://api-keepou.galaxou.com/")
+    assert Settings().mcp_public_url == "https://api-keepou.galaxou.com/mcp"
+
+
+def test_mcp_public_url_explicit_override_wins(monkeypatch) -> None:
+    monkeypatch.setenv("API_BASE_URL", "https://api-keepou.galaxou.com")
+    monkeypatch.setenv("MCP_PUBLIC_URL", "https://mcp.example/mcp")
+    assert Settings().mcp_public_url == "https://mcp.example/mcp"
