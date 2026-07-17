@@ -24,13 +24,23 @@ the DB is live**, ideally before real user data accumulates.
 
 ## Stories at a glance
 
-- [ ] **E9-S1** — Backup script: `pg_dump` → compress → upload to Scaleway
-- [ ] **E9-S2** — Railway scheduled (cron) service running the backup
-- [ ] **E9-S3** — Retention & integrity checks
-- [ ] **E9-S4** — Tested restore + runbook
+- [x] **E9-S1** — Backup script: `pg_dump` → compress → upload to Scaleway — *shipped*
+- [~] **E9-S2** — Railway scheduled (cron) service running the backup — *runner image + docs in repo; dashboard provisioning pending*
+- [x] **E9-S3** — Retention & integrity checks — *shipped*
+- [~] **E9-S4** — Tested restore + runbook — *runbook written + pipeline validated locally; live end-to-end restore pending*
 
-**Status.** All `to do`. The **script** (S1) lives in the repo; the **scheduled
-service** (S2) is dashboard provisioning that references it.
+**Status.** **Code-complete** — the versioned scripts and the cron runner image
+live in the repo and the whole pipeline is validated locally on **PostgreSQL 16**
+(dump → `pg_restore --list` integrity check → S3 upload + weekly copy → 7-daily/
+4-weekly prune → download → `pg_restore` into a fresh DB → per-table row-count
+verify, with a mock S3 endpoint). Files: [`scripts/backup.sh`](../../../scripts/backup.sh),
+[`scripts/restore.sh`](../../../scripts/restore.sh),
+[`ops/backup/Dockerfile`](../../../ops/backup/Dockerfile) (+ `README.md` /
+`.env.example`), and the runbook
+[`docs/RUNBOOK-backups-restore.md`](../../RUNBOOK-backups-restore.md). What
+**remains is dashboard-only** (like E1-S1/S3/S5): provision the Railway cron
+service + the Scaleway bucket/API key, then perform the **first live end-to-end
+restore** and record the RTO in the runbook. `[~]` = partially done.
 
 ---
 
@@ -48,10 +58,14 @@ service** (S2) is dashboard provisioning that references it.
 - Exit non-zero on any failure (so the scheduler surfaces it).
 
 **Acceptance criteria**
-- [ ] Running the script locally against a test DB produces a compressed dump and
-  uploads it to the bucket.
-- [ ] All connection/credential inputs come from env (nothing hardcoded).
-- [ ] The script fails loudly (non-zero exit) if the dump or upload fails.
+- [x] Running the script locally against a test DB produces a compressed dump and
+  uploads it to the bucket. *(validated on PG 16: `-Fc` custom-format dump uploaded
+  to a mock S3 bucket under `daily/`.)*
+- [x] All connection/credential inputs come from env (nothing hardcoded). *(`DATABASE_URL`,
+  `SCW_*`, `BACKUP_BUCKET`; a SQLAlchemy `+psycopg`/`+asyncpg` driver suffix is
+  stripped for libpq.)*
+- [x] The script fails loudly (non-zero exit) if the dump or upload fails. *(`set -euo
+  pipefail` + `die` on every step; empty-dump guard.)*
 
 **Notes.** Keep the S3-compatible client generic so another endpoint (R2/B2/MinIO)
 could be swapped by env only, but the **default target is Scaleway**.
@@ -93,10 +107,13 @@ exposure.
   succeeds; ideally a periodic **restore-verify** into a scratch DB (ties into S4).
 
 **Acceptance criteria**
-- [ ] Old dumps beyond the retention window are pruned automatically; the count of
-  kept dumps matches the policy.
-- [ ] Each dump passes an integrity check (listing/CRC), logged.
-- [ ] Retention + integrity policy documented in the runbook.
+- [x] Old dumps beyond the retention window are pruned automatically; the count of
+  kept dumps matches the policy. *(validated: `daily/` 6→3, `weekly/` 4→2; oldest
+  pruned, each deletion logged.)*
+- [x] Each dump passes an integrity check (listing/CRC), logged. *(`pg_restore --list`
+  before upload — and again in `restore.sh` before touching the target DB.)*
+- [x] Retention + integrity policy documented in the runbook. *(§4 of
+  `docs/RUNBOOK-backups-restore.md`.)*
 
 **Notes.** Snapshots are small (Markdown text), so retention is cheap; the value is
 in the *tested* recoverability, not volume.
@@ -116,9 +133,16 @@ once.
   window** (= the backup interval).
 
 **Acceptance criteria**
-- [ ] The restore runbook is written and reproducible by another dev.
-- [ ] A **full restore has been done end-to-end at least once** and verified.
-- [ ] Restore time + data-loss window recorded in the runbook.
+- [x] The restore runbook is written and reproducible by another dev. *(`docs/RUNBOOK-backups-restore.md`
+  §3, with `scripts/restore.sh`: download → integrity check → `pg_restore` into a
+  fresh DB → row-count verify, plus a guard against clobbering the live DB.)*
+- [~] A **full restore has been done end-to-end at least once** and verified. *(the
+  full pipeline was run end-to-end locally on PG 16 — restore into a fresh DB then
+  verify — but the run against the **live** Scaleway bucket + Railway DB is still
+  to be performed.)*
+- [~] Restore time + data-loss window recorded in the runbook. *(data-loss window
+  ≤ 24 h documented; the observed restore **time (RTO)** is recorded after the first
+  live restore — see the runbook's "First real restore" section.)*
 
 **Notes.** "Disable, never delete" + append-only history mean the DB is the single
 source of truth — a *tested* restore is what makes the durability promise real
@@ -128,8 +152,15 @@ source of truth — a *tested* restore is what makes the durability promise real
 
 ## Definition of "E9 done"
 
+> Code-complete and validated locally; the unchecked boxes below are the
+> **dashboard-provisioning + first live run** that close the epic (see **Status**).
+
 - [ ] Automated backups run on schedule (Railway cron) and land **off-site** on
-  Scaleway Object Storage.
-- [ ] Retention enforced; each dump passes an integrity check.
+  Scaleway Object Storage. *(script + cron runner image ready; needs the live
+  Railway service + Scaleway bucket.)*
+- [x] Retention enforced; each dump passes an integrity check. *(implemented in
+  `scripts/backup.sh` and validated locally.)*
 - [ ] A full restore has been performed end-to-end at least once (runbook written).
-- [ ] Restore time + data-loss window documented.
+  *(runbook written + pipeline validated locally; the **live** restore is pending.)*
+- [~] Restore time + data-loss window documented. *(data-loss window ≤ 24 h
+  documented; RTO recorded after the first live restore.)*
