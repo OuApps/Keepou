@@ -440,6 +440,19 @@ and **`CORS_ORIGINS`** (api) lists the web's public origin. Each service points 
   internal `http` hop — e.g. the MCP mount's trailing-slash redirect (`/mcp` →
   `/mcp/`) would send clients to an `http://` URL. Same flags in
   `api/docker-entrypoint.sh` for the self-host image.
+- **Public `Host` behind Cloudflare (`ForwardedHostMiddleware`)**: the Cloudflare
+  edge rewrites the outgoing `Host` to the default `*.up.railway.app` origin and
+  Railway rewrites `X-Forwarded-Host` too, so neither is a reliable source for the
+  public hostname. The edge forwards the real public host in **`X-Edge-Host`**;
+  `app/main.py`'s `ForwardedHostMiddleware` (added last, so it wraps CORS and runs
+  first) restores `Host` from `X-Edge-Host` — falling back to `X-Forwarded-Host` —
+  before any request/URL logic reads it, so absolute URLs and redirect `Location`
+  targets carry the public sub-domain, not the internal Railway one.
+- **Front canonical-origin guard**: if the web app is ever reached on a
+  `*.up.railway.app` host, `web/src/main.tsx` bounces to the canonical public
+  origin **before any API call** — an API call from the Railway origin would miss
+  the strict `CORS_ORIGINS` allowlist, and no bookmark should land on the internal
+  domain.
 - **Railway builds with Nixpacks, not the self-host Dockerfiles**: the web
   container's `Dockerfile` is named **`web/Dockerfile.selfhost`** (nginx,
   single-origin, `/api` proxied — see *Self-hosting* below) precisely so Railway

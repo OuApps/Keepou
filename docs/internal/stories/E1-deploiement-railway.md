@@ -176,7 +176,8 @@ header, with CORS allowing the web origin (S6).
 
 **Tasks**
 - **Decision — JWT bearer token (like our sibling project), no cookie.** The front stores an access + refresh token in `localStorage` and sends `Authorization: Bearer <token>`; the API validates it and re-checks the user `status` on every request. This needs **no custom domain and no reverse proxy** — the two default Railway domains just talk cross-origin.
-- Backend **CORS**: `CORS_ORIGINS` = the exact web origin(s); `allow_credentials=False` (the token is a header, not a cookie — so **no** `*`-with-credentials issue).
+- Backend **CORS**: `CORS_ORIGINS` = the exact web origin(s); `allow_credentials=False` (the token is a header, not a cookie — so **no** `*`-with-credentials issue). One **canonical** origin — no `www`, no `*.up.railway.app`.
+- **Behind the Cloudflare edge** (custom sub-domains): the edge/Railway rewrite `Host` and `X-Forwarded-Host` to the internal `*.up.railway.app` origin but forward the real public host in **`X-Edge-Host`**. `app/main.py`'s `ForwardedHostMiddleware` restores `Host` from it (fallback `X-Forwarded-Host`) so absolute/redirect URLs carry the public domain — covered by `tests/test_forwarded_host.py`. The front (`web/src/main.tsx`) also bounces any `*.up.railway.app` hit to the canonical origin before the first API call.
 - Secrets: `SESSION_SECRET` signs the JWTs (strong value in prod, not the `.env.example` one). Short access-token TTL + longer refresh TTL.
 - HTTPS enforced (default on Railway).
 

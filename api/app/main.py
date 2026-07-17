@@ -3,9 +3,36 @@ from collections.abc import AsyncIterator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from app.config import settings
 from app.routers import admin, auth, import_keep, notes, tokens
+
+
+class ForwardedHostMiddleware:
+    """Rewrite the ASGI `Host` header from the public host the edge advertises.
+
+    Behind the Cloudflare → Railway chain the proxy rewrites the outgoing `Host`
+    (and `X-Forwarded-Host`) to the default `*.up.railway.app` origin, so anything
+    the app derives from the request host — absolute URLs, redirect `Location`
+    targets — would point at the internal Railway domain. The edge forwards the
+    real public host in `X-Edge-Host` (reliable; `X-Forwarded-Host` is not), so we
+    trust that first and fall back to `X-Forwarded-Host`, then overwrite `Host`
+    before routing sees it. `--proxy-headers` still handles the scheme/client IP.
+    """
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] == "http":
+            hdrs = dict(scope["headers"])
+            public_host = hdrs.get(b"x-edge-host") or hdrs.get(b"x-forwarded-host")
+            if public_host:
+                headers = [(k, v) for (k, v) in scope["headers"] if k != b"host"]
+                headers.append((b"host", public_host))
+                scope = {**scope, "headers": headers}
+        await self.app(scope, receive, send)
 
 
 @contextlib.asynccontextmanager
@@ -34,6 +61,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Added last so it wraps the CORS layer (Starlette runs the most-recently-added
+# middleware first): the public `Host` is restored from `X-Edge-Host` before any
+# request/URL logic — including redirects — reads it.
+app.add_middleware(ForwardedHostMiddleware)
 
 app.include_router(auth.router)
 app.include_router(notes.router)
