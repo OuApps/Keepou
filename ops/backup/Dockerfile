@@ -12,8 +12,8 @@
 #
 # PG_MAJOR must be >= the managed Postgres server's major version (pg_dump refuses
 # to dump a server newer than itself). Bump this build arg when Railway upgrades
-# the database.
-ARG PG_MAJOR=17
+# the database — the Railway managed Postgres is on 18 as of 2026-07.
+ARG PG_MAJOR=18
 FROM postgres:${PG_MAJOR}-bookworm
 
 # postgres:*-bookworm already ships pg_dump/pg_restore/psql + bash + coreutils.
