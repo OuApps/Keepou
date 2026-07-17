@@ -456,9 +456,18 @@ and **`CORS_ORIGINS`** (api) lists the web's public origin. Each service points 
   E2).
 - **Continuous deployment**: pushes to the production branch redeploy both
   services; PR preview environments if the Railway plan allows.
-- **Backups**: the Postgres data is dumped **off-site** on a schedule with a
-  tested restore — see epic **E9** (data durability; the managed plugin alone is
-  not a backup).
+- **Backups (E9)**: the managed plugin alone is **not** a backup, so a Railway
+  **scheduled (cron) service** runs [`scripts/backup.sh`](../scripts/backup.sh)
+  daily (`0 3 * * *`): `pg_dump -Fc` over the **internal** `DATABASE_URL` (the DB
+  is never exposed publicly) → `pg_restore --list` integrity check → upload
+  **off-site** to **Scaleway Object Storage** (S3-compatible, EU-hosted) under
+  `daily/`, plus a weekly copy under `weekly/`. Retention is **7 daily + 4
+  weekly**, pruned each run and logged. The runner image is
+  [`ops/backup/Dockerfile`](../ops/backup/Dockerfile); restore is
+  [`scripts/restore.sh`](../scripts/restore.sh) (download → `pg_restore` into a
+  **fresh** DB → per-table row-count verify). Data-loss window ≤ 24 h. Full
+  procedure + tested runbook: [`docs/RUNBOOK-backups-restore.md`](./RUNBOOK-backups-restore.md).
+  The S3 client is provider-generic (`SCW_ENDPOINT`), so R2/B2/MinIO swap by env.
 - **CORS**: the API allows the exact web origin(s) via `CORS_ORIGINS`; credentials
   are **not** used (the token rides in the header), so there is no
   wildcard-with-credentials pitfall.
