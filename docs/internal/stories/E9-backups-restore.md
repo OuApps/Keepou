@@ -14,9 +14,13 @@ the DB is live**, ideally before real user data accumulates.
 - **Off-site target = Scaleway Object Storage** (S3-compatible, hosted in the EU —
   GDPR-friendly for a francophone community). "Off-site" = **not** on Railway, so a
   Railway incident can't take the backups with it.
-- **Scheduler = a Railway scheduled (cron) service**: it runs `pg_dump` via the
-  **internal** `DATABASE_URL` (the DB is never exposed publicly) and pushes the dump
-  to Scaleway. Credentials stay in Railway secrets.
+- **Scheduler = a Railway scheduled (cron) service**, running **hourly**
+  (`0 * * * *`, set as code in the repo-root `railway.json`): it runs `pg_dump` via
+  the **internal** `DATABASE_URL` (the DB is never exposed publicly) and pushes the
+  dump to Scaleway. Credentials stay in Railway secrets.
+- **Retention = 3-tier** (grandfather-father-son): every run → `hourly/`, first run
+  of the day → `daily/`, first run of the week → `weekly/`; kept **48 hourly +
+  7 daily + 4 weekly**. Decouples the ≤ 1 h data-loss window from history depth.
 - **Cold** = a consistent point-in-time logical dump — **not** continuous
   replication (hot standby / PITR are out of MVP scope).
 
@@ -24,23 +28,25 @@ the DB is live**, ideally before real user data accumulates.
 
 ## Stories at a glance
 
-- [x] **E9-S1** — Backup script: `pg_dump` → compress → upload to Scaleway — *shipped*
-- [~] **E9-S2** — Railway scheduled (cron) service running the backup — *runner image + docs in repo; dashboard provisioning pending*
-- [x] **E9-S3** — Retention & integrity checks — *shipped*
+- [x] **E9-S1** — Backup script: `pg_dump` → compress → upload to Scaleway — *shipped & running in prod*
+- [x] **E9-S2** — Railway scheduled (cron) service running the backup — *live: `keepou-backups` service provisioned, hourly cron in `railway.json`, first real backup landed on Scaleway*
+- [x] **E9-S3** — Retention & integrity checks — *shipped (48 hourly + 7 daily + 4 weekly, tiered)*
 - [~] **E9-S4** — Tested restore + runbook — *runbook written + pipeline validated locally; live end-to-end restore pending*
 
-**Status.** **Code-complete** — the versioned scripts and the cron runner image
-live in the repo and the whole pipeline is validated locally on **PostgreSQL 16**
-(dump → `pg_restore --list` integrity check → S3 upload + weekly copy → 7-daily/
-4-weekly prune → download → `pg_restore` into a fresh DB → per-table row-count
-verify, with a mock S3 endpoint). Files: [`scripts/backup.sh`](../../../scripts/backup.sh),
+**Status.** **Live.** The `keepou-backups` Railway cron service is provisioned and
+its **first real backup landed on Scaleway** (`hourly/keepou-…​.dump`, ~180 KB,
+integrity-checked). The schedule is **hourly** (`0 * * * *`) via the repo-root
+`railway.json`; uploads are **tiered** (`hourly/` every run, promoted to `daily/`
+once a day and `weekly/` once a week) kept **48 + 7 + 4**. The pipeline is also
+validated locally on **PostgreSQL 16** with a mock S3 (dump → integrity check →
+tiered upload → prune → download → `pg_restore` into a fresh DB → row-count
+verify). Files: [`scripts/backup.sh`](../../../scripts/backup.sh),
 [`scripts/restore.sh`](../../../scripts/restore.sh),
-[`ops/backup/Dockerfile`](../../../ops/backup/Dockerfile) (+ `README.md` /
-`.env.example`), and the runbook
-[`docs/RUNBOOK-backups-restore.md`](../../RUNBOOK-backups-restore.md). What
-**remains is dashboard-only** (like E1-S1/S3/S5): provision the Railway cron
-service + the Scaleway bucket/API key, then perform the **first live end-to-end
-restore** and record the RTO in the runbook. `[~]` = partially done.
+[`ops/backup/Dockerfile`](../../../ops/backup/Dockerfile),
+[`railway.json`](../../../railway.json) (+ `ops/backup/README.md` / `.env.example`),
+and the runbook [`docs/RUNBOOK-backups-restore.md`](../../RUNBOOK-backups-restore.md).
+What **remains**: perform the **first live end-to-end restore** from Scaleway and
+record the RTO in the runbook (S4). `[~]` = partially done.
 
 ---
 
@@ -78,20 +84,25 @@ could be swapped by env only, but the **default target is Scaleway**.
 exposure.
 
 **Tasks**
-- Provision a **Railway scheduled/cron service** (dashboard) that runs the E9-S1
-  script — e.g. **daily**. It uses the project's **internal** `DATABASE_URL`
-  reference (DB stays private) + the Scaleway secrets as service variables.
+- Provision a **Railway scheduled/cron service** that runs the E9-S1 script,
+  **hourly**. It uses the project's **internal** `DATABASE_URL` reference (DB stays
+  private) + the Scaleway secrets as service variables.
 - Document the schedule + the exact command in a deployment/ops doc.
 - (Nice-to-have) a **failure alert** (Railway notification / webhook) if a run fails.
 
 **Acceptance criteria**
-- [ ] A scheduled run executes the backup automatically (daily) and lands a dump in
-  Scaleway.
-- [ ] The DB is reached over the **internal** URL — not exposed publicly.
-- [ ] Secrets live in Railway (not in the repo); the schedule is documented.
+- [x] A scheduled run executes the backup automatically and lands a dump in
+  Scaleway. *(live: `keepou-backups` service; first real run landed
+  `hourly/keepou-…​.dump` on Scaleway, integrity-checked. Cron `0 * * * *`.)*
+- [x] The DB is reached over the **internal** URL — not exposed publicly. *(`DATABASE_URL`
+  = `${{ Postgres.DATABASE_URL }}`, verified to resolve to a `…railway.internal` host.)*
+- [x] Secrets live in Railway (not in the repo); the schedule is documented. *(`SCW_*`
+  are Railway service variables; the cron is config-as-code in `railway.json`.)*
 
-**Notes.** Pairs with the "Railway cron" decision. Provisioning is dashboard-only
-(like E1-S1/S3/S5); the script it runs is versioned (E9-S1).
+**Notes.** The service is provisioned in the dashboard; its **build + cron
+schedule** are declared in the repo-root `railway.json` (`build.dockerfilePath`,
+`deploy.cronSchedule`, `restartPolicyType: NEVER`), read only by this service
+(root dir = repo root). The script it runs is versioned (E9-S1).
 
 ---
 
@@ -100,16 +111,16 @@ exposure.
 **Goal.** Keep a sane history of dumps and prove each one is usable.
 
 **Tasks**
-- **Retention** (e.g. **7 daily + 4 weekly**): enforce via a Scaleway bucket
-  **lifecycle rule** or a prune step in the script. Log what is deleted (no silent
-  truncation).
+- **Retention** (**48 hourly + 7 daily + 4 weekly**, tiered): enforced by a prune
+  step in the script, per tier. Log what is deleted (no silent truncation).
 - **Integrity check** of each dump: at minimum `gzip -t` / `pg_restore --list`
   succeeds; ideally a periodic **restore-verify** into a scratch DB (ties into S4).
 
 **Acceptance criteria**
 - [x] Old dumps beyond the retention window are pruned automatically; the count of
-  kept dumps matches the policy. *(validated: `daily/` 6→3, `weekly/` 4→2; oldest
-  pruned, each deletion logged.)*
+  kept dumps matches the policy. *(validated per tier: `hourly/` 5→3, `daily/` 6→3,
+  `weekly/` 4→2; oldest pruned, each deletion logged. Tier promotion — first run of
+  the day/week — validated too.)*
 - [x] Each dump passes an integrity check (listing/CRC), logged. *(`pg_restore --list`
   before upload — and again in `restore.sh` before touching the target DB.)*
 - [x] Retention + integrity policy documented in the runbook. *(§4 of

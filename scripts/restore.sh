@@ -19,7 +19,8 @@
 #                         `+psycopg`/`+asyncpg` driver suffix is stripped.
 #   --key KEY | --file PATH   Source dump. With --key (or none), Scaleway creds
 #                             (SCW_ACCESS_KEY/SCW_SECRET_KEY/BACKUP_BUCKET) are
-#                             required to download.
+#                             required to download. With no --key, the newest
+#                             object under hourly/ (the most recent point) is used.
 #
 # Optional env (same defaults as backup.sh):
 #   SCW_REGION [fr-par], SCW_ENDPOINT [https://s3.$SCW_REGION.scw.cloud],
@@ -28,7 +29,7 @@
 # Usage:
 #   TARGET_DATABASE_URL=postgresql://…/keepou_restore \
 #   SCW_ACCESS_KEY=… SCW_SECRET_KEY=… BACKUP_BUCKET=keepou-backups \
-#   scripts/restore.sh --key daily/keepou-20260717T030000Z.dump
+#   scripts/restore.sh --key hourly/keepou-20260717T030000Z.dump
 #
 #   # or from a local file already downloaded:
 #   TARGET_DATABASE_URL=postgresql://…/keepou_restore scripts/restore.sh --file ./dump
@@ -91,9 +92,9 @@ else
   s3() { aws --endpoint-url "$SCW_ENDPOINT" "$@"; }
 
   if [ -z "$KEY" ]; then
-    log "no --key given → picking the newest object under daily/"
-    KEY="daily/$(s3 s3 ls "s3://${BACKUP_BUCKET}/daily/" | awk '{print $4}' | grep -v '^$' | sort | tail -n 1)"
-    [ "$KEY" != "daily/" ] || die "no dumps found under s3://${BACKUP_BUCKET}/daily/"
+    log "no --key given → picking the newest object under hourly/ (most recent point)"
+    KEY="hourly/$(s3 s3 ls "s3://${BACKUP_BUCKET}/hourly/" | awk '{print $4}' | grep -v '^$' | sort | tail -n 1)"
+    [ "$KEY" != "hourly/" ] || die "no dumps found under s3://${BACKUP_BUCKET}/hourly/"
   fi
   workdir="$(mktemp -d)"
   dump_path="${workdir}/$(basename "$KEY")"

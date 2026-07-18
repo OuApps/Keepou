@@ -6,9 +6,13 @@
 #   1. pg_dump the DB (custom format `-Fc`, self-compressing) from DATABASE_URL.
 #   2. Integrity check: `pg_restore --list` must read the dump back (catches a
 #      truncated/corrupt dump before it ever leaves the box).
-#   3. Upload to Scaleway Object Storage (S3-compatible) under `daily/`, and — on
-#      the weekly boundary — also under `weekly/`.
-#   4. Retention: keep the N newest dumps in each prefix, prune the rest (logged).
+#   3. Upload to Scaleway Object Storage (S3-compatible) in a 3-tier scheme:
+#      every run → `hourly/`; the first run of each UTC day → also `daily/`; the
+#      first run of `WEEKLY_DOW` → also `weekly/`. The "first run of the period"
+#      is detected from the objects already in the bucket, so the tiers stay
+#      correct at ANY cron cadence (hourly, every 6 h, daily…).
+#   4. Retention: keep the N newest dumps in each tier, prune the rest (logged).
+#      Defaults 48 hourly + 7 daily + 4 weekly decouple granularity from depth.
 #
 # "Cold" = a consistent point-in-time logical dump, NOT continuous replication.
 # "Off-site" = Scaleway, not Railway, so a Railway incident can't take the
@@ -30,7 +34,9 @@
 #   SCW_REGION           Scaleway region [fr-par].
 #   SCW_ENDPOINT         S3 endpoint URL [https://s3.$SCW_REGION.scw.cloud].
 #                        Point it at R2/B2/MinIO to swap providers by env alone.
-#   BACKUP_PREFIX        Key prefix inside the bucket [keepou].
+#   BACKUP_PREFIX        Dump-name prefix inside the bucket [keepou].
+#   HOURLY_PREFIX        Fine-grained tier: every run lands here [hourly].
+#   HOURLY_RETENTION     Fine-grained dumps to keep [48] (= 2 days at hourly cadence).
 #   DAILY_RETENTION      Daily dumps to keep [7].
 #   WEEKLY_RETENTION     Weekly dumps to keep [4].
 #   WEEKLY_DOW           ISO day-of-week (1=Mon … 7=Sun) that also lands a weekly [7].
@@ -57,6 +63,8 @@ fi
 SCW_REGION="${SCW_REGION:-fr-par}"
 SCW_ENDPOINT="${SCW_ENDPOINT:-https://s3.${SCW_REGION}.scw.cloud}"
 BACKUP_PREFIX="${BACKUP_PREFIX:-keepou}"
+HOURLY_PREFIX="${HOURLY_PREFIX:-hourly}"
+HOURLY_RETENTION="${HOURLY_RETENTION:-48}"
 DAILY_RETENTION="${DAILY_RETENTION:-7}"
 WEEKLY_RETENTION="${WEEKLY_RETENTION:-4}"
 WEEKLY_DOW="${WEEKLY_DOW:-7}"
@@ -130,18 +138,37 @@ export AWS_DEFAULT_REGION="$SCW_REGION"
 
 s3() { aws --endpoint-url "$SCW_ENDPOINT" "$@"; }
 
-# --- 3. Upload --------------------------------------------------------------
-daily_key="daily/${dump_name}"
-log "uploading → s3://${BACKUP_BUCKET}/${daily_key}"
-s3 s3 cp "$dump_path" "s3://${BACKUP_BUCKET}/${daily_key}" \
-  || die "upload to daily/ failed"
+# --- 3. Upload (tiered) -----------------------------------------------------
+# Every run lands in the fine-grained tier; the dump is *promoted* to daily/ the
+# first time we back up on a given UTC day, and to weekly/ the first time on
+# WEEKLY_DOW. "First run of the period" is inferred from what is already in the
+# bucket, so the tiers are correct whatever the cron cadence.
+upload_to() {  # $1 = prefix
+  log "uploading → s3://${BACKUP_BUCKET}/$1/${dump_name}"
+  s3 s3 cp "$dump_path" "s3://${BACKUP_BUCKET}/$1/${dump_name}" || die "upload to $1/ failed"
+}
 
-dow="$(date -u +%u)"  # 1=Mon … 7=Sun
-if [ "$dow" = "$WEEKLY_DOW" ]; then
-  weekly_key="weekly/${dump_name}"
-  log "weekly boundary (ISO dow=${dow}) → also uploading s3://${BACKUP_BUCKET}/${weekly_key}"
-  s3 s3 cp "$dump_path" "s3://${BACKUP_BUCKET}/${weekly_key}" \
-    || die "upload to weekly/ failed"
+# 0 (true) if a dump for day $2 (YYYYMMDD) already exists under prefix $1.
+# Uses a here-string (not a pipe) into grep -q so pipefail can't misread a
+# SIGPIPE from an upstream command as "not found".
+prefix_has_date() {  # $1 = prefix, $2 = YYYYMMDD
+  local listing
+  listing="$(s3 s3 ls "s3://${BACKUP_BUCKET}/$1/" 2>/dev/null | awk '{print $4}' || true)"
+  grep -q "^${BACKUP_PREFIX}-$2T" <<< "$listing"
+}
+
+upload_to "$HOURLY_PREFIX"
+
+today="$(date -u +%Y%m%d)"
+if prefix_has_date "daily" "$today"; then
+  log "daily/: a dump for ${today} already exists — not promoting"
+else
+  upload_to "daily"
+  dow="$(date -u +%u)"  # 1=Mon … 7=Sun
+  if [ "$dow" = "$WEEKLY_DOW" ]; then
+    log "weekly boundary (first run of ${today}, ISO dow=${dow})"
+    upload_to "weekly"
+  fi
 fi
 
 # --- 4. Retention -----------------------------------------------------------
@@ -164,7 +191,8 @@ prune_prefix() {
   done
 }
 
-prune_prefix "daily"  "$DAILY_RETENTION"
-prune_prefix "weekly" "$WEEKLY_RETENTION"
+prune_prefix "$HOURLY_PREFIX" "$HOURLY_RETENTION"
+prune_prefix "daily"          "$DAILY_RETENTION"
+prune_prefix "weekly"         "$WEEKLY_RETENTION"
 
-log "backup complete: ${daily_key} (${dump_bytes} bytes)"
+log "backup complete: ${HOURLY_PREFIX}/${dump_name} (${dump_bytes} bytes)"

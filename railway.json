@@ -1,0 +1,12 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "//": "Config-as-code for the E9 off-site backup service (keepou-backups). This service's Root Directory is the repo root, so Railway reads THIS file; keepou-api and keepou-web have their own root dirs (api/, web/) and read api/railway.json / web/railway.json, so they are unaffected. See docs/RUNBOOK-backups-restore.md and ops/backup/.",
+  "build": {
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "ops/backup/Dockerfile"
+  },
+  "deploy": {
+    "cronSchedule": "0 * * * *",
+    "restartPolicyType": "NEVER"
+  }
+}

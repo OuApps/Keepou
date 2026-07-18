@@ -471,14 +471,15 @@ and **`CORS_ORIGINS`** (api) lists the web's public origin. Each service points 
   services; PR preview environments if the Railway plan allows.
 - **Backups (E9)**: the managed plugin alone is **not** a backup, so a Railway
   **scheduled (cron) service** runs [`scripts/backup.sh`](../scripts/backup.sh)
-  daily (`0 3 * * *`): `pg_dump -Fc` over the **internal** `DATABASE_URL` (the DB
-  is never exposed publicly) → `pg_restore --list` integrity check → upload
-  **off-site** to **Scaleway Object Storage** (S3-compatible, EU-hosted) under
-  `daily/`, plus a weekly copy under `weekly/`. Retention is **7 daily + 4
-  weekly**, pruned each run and logged. The runner image is
-  [`ops/backup/Dockerfile`](../ops/backup/Dockerfile); restore is
-  [`scripts/restore.sh`](../scripts/restore.sh) (download → `pg_restore` into a
-  **fresh** DB → per-table row-count verify). Data-loss window ≤ 24 h. Full
+  hourly (`0 * * * *`, set as code in the repo-root [`railway.json`](../railway.json)):
+  `pg_dump -Fc` over the **internal** `DATABASE_URL` (the DB is never exposed
+  publicly) → `pg_restore --list` integrity check → upload **off-site** to
+  **Scaleway Object Storage** (S3-compatible, EU-hosted). Uploads are **tiered** —
+  every run → `hourly/`, first run of the day → `daily/`, first run of the week →
+  `weekly/` — kept **48 hourly + 7 daily + 4 weekly**, pruned each run and logged.
+  The runner image is [`ops/backup/Dockerfile`](../ops/backup/Dockerfile); restore
+  is [`scripts/restore.sh`](../scripts/restore.sh) (download → `pg_restore` into a
+  **fresh** DB → per-table row-count verify). Data-loss window ≤ 1 h. Full
   procedure + tested runbook: [`docs/RUNBOOK-backups-restore.md`](./RUNBOOK-backups-restore.md).
   The S3 client is provider-generic (`SCW_ENDPOINT`), so R2/B2/MinIO swap by env.
 - **CORS**: the API allows the exact web origin(s) via `CORS_ORIGINS`; credentials
