@@ -369,3 +369,33 @@ Tests: `web/src/lib/markdown.test.ts` (blank-line round-trip),
 `web/src/pages/editor.test.tsx` (shorthand conversion, insert-at-caret,
 edge deletions, drag-release, clear-button stability),
 `web/src/pages/board.test.tsx` (default density).
+
+---
+
+## Follow-up — edit mode, feedback round 3
+
+Round 2 landed, the household test surfaced three more editing gaps — all
+frontend-only again:
+
+- [x] **↑ / ↓ (and ← / → at the edges) walk between blocks.** Each checkbox
+  line is its own `<input>`, so vertical arrows used to do nothing. The block
+  flow now moves the caret across paragraphs and box labels, column-preserving
+  (`BlockList.navigateFrom`, `MarkdownArea.onNavigate` at the first/last line).
+- [x] **Blank lines are preserved VERBATIM — including between two boxes.**
+  The serializer normalized blank lines away (« no more than one consecutive
+  blank line », HANDOFF §3.3), so an empty line between two checkboxes was
+  unrepresentable and « mes sauts de ligne » kept disappearing. The rule is
+  relaxed: `- [ ] a\n\n- [ ] b` now round-trips to a blank-only text block
+  between the boxes, and multiple blank lines in a paragraph survive as typed.
+  The single structural separator at a paragraph ⇄ box-group boundary is kept,
+  so every previously stored body reads unchanged. HANDOFF §3.3 amended.
+- [x] **Enter mid-label splits the item (Keep-like).** The text after the
+  caret moves into a fresh unchecked box below; Enter at the end still
+  appends an empty box, and Enter on an empty box still exits into a
+  paragraph — which, combined with the point above, is how an empty line
+  between two boxes is created (double Enter) *and now persists*.
+
+Tests: `web/src/lib/markdown.test.ts` (verbatim blank lines, blank line
+between boxes, separator round-trips), `web/src/pages/editor.test.tsx`
+(arrow navigation both ways, double-Enter blank line saved and reopened,
+mid-label split).

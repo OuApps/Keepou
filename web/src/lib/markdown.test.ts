@@ -116,8 +116,44 @@ describe('parse', () => {
     ])
   })
 
-  it('normalizes 3+ consecutive blank lines from imported bodies to one', () => {
-    expect(parse('a\n\n\n\nb')).toEqual([{ type: 'text', text: 'a\n\nb' }])
+  it('keeps multiple consecutive blank lines in a paragraph verbatim (round 3)', () => {
+    const blocks: Block[] = [{ type: 'text', text: 'a\n\n\n\nb' }]
+    expect(serialize(blocks)).toBe('a\n\n\n\nb')
+    expect(parse(serialize(blocks))).toEqual(blocks)
+  })
+
+  it('round-trips an empty line between two boxes as a blank-only text block (round 3)', () => {
+    const blocks: Block[] = [
+      { type: 'check', checked: false, text: 'a' },
+      { type: 'text', text: '' },
+      { type: 'check', checked: true, text: 'b' },
+    ]
+    expect(serialize(blocks)).toBe('- [ ] a\n\n- [x] b')
+    expect(parse('- [ ] a\n\n- [x] b')).toEqual(blocks)
+  })
+
+  it('round-trips several empty lines between two boxes (round 3)', () => {
+    const blocks: Block[] = [
+      { type: 'check', checked: false, text: 'a' },
+      { type: 'text', text: '\n' },
+      { type: 'check', checked: false, text: 'b' },
+    ]
+    expect(serialize(blocks)).toBe('- [ ] a\n\n\n- [ ] b')
+    expect(parse(serialize(blocks))).toEqual(blocks)
+  })
+
+  it('keeps a user blank line at the end of a paragraph before a box group (round 3)', () => {
+    const blocks: Block[] = [
+      { type: 'text', text: 'Toto\n' },
+      { type: 'check', checked: false, text: 'a' },
+    ]
+    // One trailing user empty line + the structural separator = two blank lines.
+    expect(serialize(blocks)).toBe('Toto\n\n\n- [ ] a')
+    expect(parse(serialize(blocks))).toEqual(blocks)
+  })
+
+  it('drops blank-only runs at the body edges (never stored anyway)', () => {
+    expect(parse('\n\n- [ ] a\n\n')).toEqual([{ type: 'check', checked: false, text: 'a' }])
   })
 
   it('parses an empty body to an empty flow', () => {

@@ -125,7 +125,7 @@ Deliberately simple model (no CRDT/OT). A note has at most one active lock.
   - paragraph → text;
   - box → `- [ ] label` (unchecked) / `- [x] label` (checked).
   - The **title** is stored separately (dedicated field), not in the Markdown.
-- Reference serialization (see `Keepou - Éditeur canonique.dc.html`, `buildMd` method): a blank line between a paragraph and a group of boxes; no more than one consecutive blank line.
+- Reference serialization (see `Keepou - Éditeur canonique.dc.html`, `buildMd` method): a blank line between a paragraph and a group of boxes. *(Amended by field feedback round 3: the original « no more than one consecutive blank line » rule is relaxed — user-typed blank lines are preserved verbatim, including empty lines between two boxes; only the single structural separator at a paragraph ⇄ box-group boundary remains implicit.)*
 - **Inline formatting subset (E8-S9)** — recognized **as you type** (no toolbar, no selection step), bounded to exactly:
   - **bold** `**texte**` · *italic* `*italique*` · headings `# ` / `## ` / `### ` (levels 1–3, space required);
   - everything else (links, code, `_underscore_`, tables, quotes…) stays **literal text** — not full GFM;

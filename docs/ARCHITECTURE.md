@@ -156,12 +156,16 @@ erDiagram
   as `<strong>`/`<em>`/`<h1>`–`<h3>` on the read-only surfaces. This is pure
   recognition/rendering: the stored body stays plain GFM (no API change, no
   migration), and everything outside the subset remains literal text.
-  Since the round-2 editor feedback the frontend parser also keeps **blank
-  lines inside a single text block** (a user's visible empty lines survive an
-  editing session instead of degrading into a smaller inter-block gap; two or
-  more consecutive blank lines still collapse to one per the HANDOFF rule),
-  and the editor converts a typed `[]` / `[x]` / `- [ ]` line into a real
-  checkbox **in place** — again pure frontend behavior over the same stored GFM.
+  Since the round-2/round-3 editor feedback the frontend parser/serializer
+  also preserve the user's **blank lines verbatim** — inside a paragraph, and
+  as blank-only text blocks **between two checkbox groups** (`- [ ] a\n\n- [ ] b`
+  round-trips to an empty line between the boxes). This relaxes HANDOFF §3.3's
+  « never more than one consecutive blank line »; the only convention kept is
+  the single separator blank line at a paragraph ⇄ box-group boundary, which
+  `serialize` emits and `parse` strips — so previously stored bodies read
+  unchanged. The editor converts a typed `[]` / `[x]` / `- [ ]` line into a
+  real checkbox **in place**, and arrow keys walk the caret across blocks —
+  again pure frontend behavior over the same stored GFM.
 - **Note.color** — an identifier from a fixed palette (`GOLD | AVOCAT | SALSA |
   CLAY | TEAL`), not a hex value (FR-N4).
 - **Note.visibility** — `PRIVATE` (owner only) or `PUBLIC` (all members),
