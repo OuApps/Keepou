@@ -183,6 +183,24 @@ export function BlockList({ blocks, onChange, onFlush, readOnly = false }: Block
     splice(index, 1, ...pieces)
   }
 
+  /**
+   * Enter inside a box label (Keep-like): the text after the caret moves into
+   * a fresh box below (a selection is dropped); the ticked state stays with
+   * the top half.
+   */
+  const splitCheckAt = (index: number, start: number, end: number) => {
+    const block = blocks[index]
+    if (block.type !== 'check') return
+    const id = blockId()
+    pendingFocus.current = { id, caret: 0 }
+    splice(
+      index,
+      1,
+      { ...block, text: block.text.slice(0, start) },
+      { id, type: 'check', checked: false, text: block.text.slice(end) },
+    )
+  }
+
   const removeAt = (index: number) => {
     const prev = blocks[index - 1]
     pendingFocus.current = prev !== undefined ? { id: prev.id, caret: 'end' } : null
@@ -195,6 +213,45 @@ export function BlockList({ blocks, onChange, onFlush, readOnly = false }: Block
     const id = blockId()
     pendingFocus.current = { id }
     onChange(blocks.map((block, i) => (i === index ? { id, type: 'text', text: '' } : block)))
+  }
+
+  /**
+   * Move the caret into the block above/below (arrow keys at a block's edge).
+   * `column` keeps the horizontal position on up/down, Keep-like; left/right
+   * land at the end/start of the neighbor. Returns false when there is no
+   * neighbor — the caller then keeps the native key behavior.
+   */
+  const navigateFrom = (
+    index: number,
+    dir: 'up' | 'down' | 'left' | 'right',
+    column: number,
+  ): boolean => {
+    const target = blocks[index + (dir === 'up' || dir === 'left' ? -1 : 1)]
+    if (target === undefined) return false
+    const el = rootRef.current?.querySelector<HTMLElement>(`[data-block="${target.id}"]`)
+    if (el === undefined || el === null) return false
+    el.focus()
+    if (el instanceof HTMLInputElement) {
+      const at =
+        dir === 'left' ? el.value.length : dir === 'right' ? 0 : Math.min(column, el.value.length)
+      el.setSelectionRange(at, at)
+      return true
+    }
+    const text = target.type === 'text' ? target.text : ''
+    let at: number
+    if (dir === 'left') at = text.length
+    else if (dir === 'right') at = 0
+    else if (dir === 'up') {
+      // Entering from below: land on the LAST line, same column.
+      const base = text.lastIndexOf('\n') + 1
+      at = Math.min(base + column, text.length)
+    } else {
+      // Entering from above: land on the FIRST line, same column.
+      const firstBreak = text.indexOf('\n')
+      at = Math.min(column, firstBreak === -1 ? text.length : firstBreak)
+    }
+    setCaret(el, at)
+    return true
   }
 
   /** Backspace at the very start of paragraph `index`: merge into the previous block. */
@@ -324,6 +381,7 @@ export function BlockList({ blocks, onChange, onFlush, readOnly = false }: Block
               onFlush={onFlush}
               onMergeBack={() => mergeTextBack(i)}
               onMergeForward={() => mergeTextForward(i)}
+              onNavigate={(dir, column) => navigateFrom(i, dir, column)}
             />
           )
         ) : (
@@ -353,22 +411,31 @@ export function BlockList({ blocks, onChange, onFlush, readOnly = false }: Block
                 // new checkbox — leave it for the editor's capture handler.
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault()
+                  const at = input.selectionStart ?? block.text.length
+                  const end = input.selectionEnd ?? at
                   if (block.text === '') exitChecklistAt(i)
-                  else insertCheckAt(i + 1)
-                } else if (
-                  e.key === 'Backspace' &&
-                  input.selectionStart === 0 &&
-                  input.selectionEnd === 0
-                ) {
+                  else if (at === block.text.length && end === at) insertCheckAt(i + 1)
+                  else splitCheckAt(i, at, end)
+                  return
+                }
+                if (e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) return
+                const caret = input.selectionStart ?? 0
+                const collapsed = input.selectionEnd === input.selectionStart
+                if (e.key === 'Backspace' && collapsed && caret === 0) {
                   e.preventDefault()
                   mergeLabelBack(i)
-                } else if (
-                  e.key === 'Delete' &&
-                  input.selectionStart === block.text.length &&
-                  input.selectionEnd === block.text.length
-                ) {
+                } else if (e.key === 'Delete' && collapsed && caret === block.text.length) {
                   e.preventDefault()
                   mergeLabelForward(i)
+                } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                  // Single-line inputs ignore ↑/↓ — walk the block flow instead
+                  // (the reported dead arrow navigation between two boxes).
+                  if (navigateFrom(i, e.key === 'ArrowUp' ? 'up' : 'down', caret))
+                    e.preventDefault()
+                } else if (e.key === 'ArrowLeft' && collapsed && caret === 0) {
+                  if (navigateFrom(i, 'left', 0)) e.preventDefault()
+                } else if (e.key === 'ArrowRight' && collapsed && caret === block.text.length) {
+                  if (navigateFrom(i, 'right', 0)) e.preventDefault()
                 }
               }}
             />

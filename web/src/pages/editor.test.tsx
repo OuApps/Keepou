@@ -294,8 +294,10 @@ describe('NoteEditor', () => {
     renderEditor()
     await editorLoaded()
 
-    // First Enter on a non-empty box: the list continues with an empty box.
-    const lastLabel = screen.getByDisplayValue('Tables & chaises')
+    // First Enter at the END of a non-empty box: the list continues with an
+    // empty box (Enter mid-label would split the item instead).
+    const lastLabel = screen.getByDisplayValue('Tables & chaises') as HTMLInputElement
+    lastLabel.setSelectionRange(lastLabel.value.length, lastLabel.value.length)
     fireEvent.keyDown(lastLabel, { key: 'Enter' })
     const labels = screen.getAllByPlaceholderText('Nouvel élément')
     const emptyLabel = labels[labels.length - 1]
@@ -616,6 +618,102 @@ describe('NoteEditor', () => {
       'Pour le repas de quartier on se répartit les tâches.Réserver la salle',
     )
     expect(screen.getAllByRole('checkbox')).toHaveLength(1)
+  })
+
+  // --- Edit-mode feedback round 3: arrows, blank lines between boxes, split ---
+
+  it('ArrowUp/ArrowDown walk between checkbox items and into the paragraph', async () => {
+    stubEditor(note())
+    renderEditor()
+    await editorLoaded()
+
+    const first = screen.getByDisplayValue('Réserver la salle') as HTMLInputElement
+    const second = screen.getByDisplayValue('Tables & chaises') as HTMLInputElement
+
+    first.focus()
+    first.setSelectionRange(3, 3)
+    fireEvent.keyDown(first, { key: 'ArrowDown' })
+    expect(second).toHaveFocus()
+    expect(second.selectionStart).toBe(3) // column preserved
+
+    fireEvent.keyDown(second, { key: 'ArrowUp' })
+    expect(first).toHaveFocus()
+
+    // Up from the first box lands in the paragraph above.
+    fireEvent.keyDown(first, { key: 'ArrowUp' })
+    expect(screen.getByLabelText('Paragraphe')).toHaveFocus()
+  })
+
+  it('ArrowDown from the paragraph lands in the first checkbox item', async () => {
+    stubEditor(note())
+    renderEditor()
+    await editorLoaded()
+
+    const area = screen.getByLabelText('Paragraphe')
+    area.focus()
+    caretAt(area, 4)
+    fireEvent.keyDown(area, { key: 'ArrowDown' })
+    const first = screen.getByDisplayValue('Réserver la salle') as HTMLInputElement
+    expect(first).toHaveFocus()
+    expect(first.selectionStart).toBe(4)
+  })
+
+  it('a double Enter between two boxes leaves an empty line that is saved', async () => {
+    const patches = stubEditor(note({ body: '- [ ] Pain\n- [ ] Lait', visibility: 'PRIVATE' }))
+    renderEditor()
+    await editorLoaded()
+
+    // Enter at the end of « Pain »: an empty box appears between the two…
+    const pain = screen.getByDisplayValue('Pain') as HTMLInputElement
+    pain.focus()
+    pain.setSelectionRange(4, 4)
+    fireEvent.keyDown(pain, { key: 'Enter' })
+    const empty = screen
+      .getAllByPlaceholderText('Nouvel élément')
+      .find((el) => (el as HTMLInputElement).value === '') as HTMLInputElement
+    // …then Enter on the empty box turns it into an empty line (paragraph).
+    fireEvent.keyDown(empty, { key: 'Enter' })
+    const paragraph = screen.getByLabelText('Paragraphe')
+    expect(paragraph).toHaveFocus()
+
+    // Let the intermediate flush (triggered by the focus move) settle, then
+    // blur — the final flush now runs immediately instead of being debounced.
+    await act(async () => {})
+    fireEvent.blur(paragraph)
+    // The blank line is STORED between the two task lines (round 3).
+    await waitFor(() =>
+      expect(patches.some((p) => p.body === '- [ ] Pain\n\n- [ ] Lait')).toBe(true),
+    )
+  })
+
+  it('reopens a body with a blank line between boxes as a visible empty paragraph', async () => {
+    stubEditor(note({ body: '- [ ] Pain\n\n- [ ] Lait', visibility: 'PRIVATE' }))
+    renderEditor()
+    await editorLoaded()
+
+    // Two boxes with an (empty) paragraph block between them.
+    expect(screen.getAllByRole('checkbox')).toHaveLength(2)
+    expect(screen.getByLabelText('Paragraphe').textContent).toBe('')
+  })
+
+  it('Enter in the middle of a label splits the item like Keep', async () => {
+    stubEditor(note({ body: '- [x] Pain et Lait', visibility: 'PRIVATE' }))
+    renderEditor()
+    await editorLoaded()
+
+    const label = screen.getByDisplayValue('Pain et Lait') as HTMLInputElement
+    label.focus()
+    label.setSelectionRange(5, 5) // after « Pain »
+    fireEvent.keyDown(label, { key: 'Enter' })
+
+    const labels = [...document.querySelectorAll<HTMLInputElement>('.kp-blocks__label')]
+    expect(labels.map((l) => l.value)).toEqual(['Pain ', 'et Lait'])
+    // The ticked state stays with the top half; the new box is unchecked.
+    const boxes = screen.getAllByRole('checkbox') as HTMLInputElement[]
+    expect(boxes[0]).toBeChecked()
+    expect(boxes[1]).not.toBeChecked()
+    expect(labels[1]).toHaveFocus()
+    expect(labels[1].selectionStart).toBe(0)
   })
 
   it('does not close when a drag-selection releases on the backdrop', async () => {

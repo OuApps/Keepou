@@ -28,7 +28,21 @@ interface MarkdownAreaProps {
   onMergeBack?: () => void
   /** Delete (Suppr) with a collapsed caret at the end — merge the next block in. */
   onMergeForward?: () => void
+  /**
+   * Arrow key at the block's edge (up on the first line, down on the last,
+   * left at offset 0, right at the end): move the caret into the neighboring
+   * block. `column` is the caret's column on the current line (for up/down).
+   * Return true when the move was handled — the default is then prevented.
+   */
+  onNavigate?: (dir: 'up' | 'down' | 'left' | 'right', column: number) => boolean
 }
+
+const ARROW_DIRS = {
+  ArrowUp: 'up',
+  ArrowDown: 'down',
+  ArrowLeft: 'left',
+  ArrowRight: 'right',
+} as const
 
 export function MarkdownArea({
   value,
@@ -38,6 +52,7 @@ export function MarkdownArea({
   blockKey,
   onMergeBack,
   onMergeForward,
+  onNavigate,
 }: MarkdownAreaProps) {
   const { EDITOR_COPY } = useI18n()
   const ref = useRef<HTMLDivElement>(null)
@@ -95,24 +110,48 @@ export function MarkdownArea({
           insertText('\n')
           return
         }
-        // At the block's edges the browser has nothing to delete — hand the
-        // key to BlockList so it merges with the neighboring block instead of
-        // silently doing nothing (the reported dead Backspace/Suppr).
-        if (e.key !== 'Backspace' && e.key !== 'Delete') return
+        // The remaining handlers act on a collapsed caret at the block's
+        // edges only; a real selection or a modifier keeps native behavior.
+        if (e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) return
         const el = ref.current
         if (el === null) return
         const range = selectionOffsets(el)
         if (range === null || range.start !== range.end) return
-        if (e.key === 'Backspace' && range.start === 0 && onMergeBack !== undefined) {
+        const offset = range.start
+
+        // At the edges the browser has nothing to delete — hand the key to
+        // BlockList so it merges with the neighboring block instead of
+        // silently doing nothing (the reported dead Backspace/Suppr).
+        if (e.key === 'Backspace' && offset === 0 && onMergeBack !== undefined) {
           e.preventDefault()
           onMergeBack()
-        } else if (
-          e.key === 'Delete' &&
-          range.start === value.length &&
-          onMergeForward !== undefined
-        ) {
+          return
+        }
+        if (e.key === 'Delete' && offset === value.length && onMergeForward !== undefined) {
           e.preventDefault()
           onMergeForward()
+          return
+        }
+
+        // Arrow keys at the edges walk into the neighboring block (they used
+        // to do nothing — the reported dead ↑/↓ between two boxes).
+        const dir = ARROW_DIRS[e.key as keyof typeof ARROW_DIRS]
+        if (dir === undefined || onNavigate === undefined) return
+        if (dir === 'up') {
+          const firstBreak = value.indexOf('\n')
+          if ((firstBreak === -1 || offset <= firstBreak) && onNavigate('up', offset))
+            e.preventDefault()
+        } else if (dir === 'down') {
+          const lastBreak = value.lastIndexOf('\n')
+          if (
+            (lastBreak === -1 || offset > lastBreak) &&
+            onNavigate('down', offset - lastBreak - 1)
+          )
+            e.preventDefault()
+        } else if (dir === 'left') {
+          if (offset === 0 && onNavigate('left', 0)) e.preventDefault()
+        } else if (offset === value.length && onNavigate('right', 0)) {
+          e.preventDefault()
         }
       }}
       onPaste={(e) => {

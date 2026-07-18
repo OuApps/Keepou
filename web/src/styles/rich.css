@@ -32,10 +32,12 @@
   display: contents;
 }
 
-/* Static paragraph block in the locked read-only editor. */
+/* Static paragraph block in the locked read-only editor. min-height keeps a
+ * blank-only block (a user's empty line between two boxes) visible. */
 .kp-blocks__text--static {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  min-height: 1.6em;
 }
 
 .kp-blocks__text--static p {
