@@ -13,13 +13,13 @@
 
 | | |
 |---|---|
-| **What runs** | [`scripts/backup.sh`](../scripts/backup.sh) — `pg_dump -Fc` → integrity check → upload → prune |
+| **What runs** | [`scripts/backup.sh`](../scripts/backup.sh) — `pg_dump -Fc` → integrity check → tiered upload → prune |
 | **Where** | A Railway **scheduled (cron) service** built from [`ops/backup/Dockerfile`](../ops/backup/Dockerfile) |
-| **Schedule** | Daily, `0 3 * * *` (03:00 UTC) |
-| **Target** | `s3://$BACKUP_BUCKET/daily/…` and, on Sundays, `…/weekly/…` on Scaleway |
-| **Retention** | 7 daily + 4 weekly (pruned every run, logged) |
+| **Schedule** | Hourly, `0 * * * *` — set as code in [`railway.json`](../railway.json) (`deploy.cronSchedule`) |
+| **Target** | `s3://$BACKUP_BUCKET/hourly/…`, promoted to `…/daily/…` once a day and `…/weekly/…` once a week, on Scaleway |
+| **Retention** | 48 hourly + 7 daily + 4 weekly (pruned every run, logged) |
 | **Restore** | [`scripts/restore.sh`](../scripts/restore.sh) — download → `pg_restore` → verify |
-| **Data-loss window** | ≤ 24 h (= the backup interval) — see [Data-loss window](#data-loss-window) |
+| **Data-loss window** | ≤ 1 h (= the backup interval) — see [Data-loss window](#data-loss-window) |
 
 ---
 
@@ -36,13 +36,15 @@ Each run of `scripts/backup.sh` (one run = one dump):
 2. **Integrity check** — `pg_restore --list` reads the archive's table of
    contents back. A truncated or corrupt dump fails here, **before** it is
    uploaded.
-3. **Upload** — to `s3://$BACKUP_BUCKET/daily/keepou-<UTC-timestamp>.dump`. On the
-   weekly boundary (ISO day-of-week `WEEKLY_DOW`, default **7 = Sunday**) the same
-   dump is also uploaded under `weekly/`.
-4. **Prune** — keep the newest `DAILY_RETENTION` (7) under `daily/` and the newest
-   `WEEKLY_RETENTION` (4) under `weekly/`; delete the rest. Dumps are named with a
-   lexicographically-sortable UTC timestamp, so alphabetical order == age. Every
-   deletion is logged (no silent truncation).
+3. **Upload (tiered)** — every run lands in `s3://$BACKUP_BUCKET/hourly/keepou-<UTC-timestamp>.dump`.
+   The **first run of each UTC day** is also promoted to `daily/`, and the **first
+   run of `WEEKLY_DOW`** (default **7 = Sunday**) to `weekly/`. "First run of the
+   period" is inferred from the objects already in the bucket, so the tiers stay
+   correct whatever the cron cadence (hourly, every 6 h, daily…).
+4. **Prune** — keep the newest `HOURLY_RETENTION` (48) under `hourly/`, `DAILY_RETENTION`
+   (7) under `daily/`, and `WEEKLY_RETENTION` (4) under `weekly/`; delete the rest.
+   Dumps are named with a lexicographically-sortable UTC timestamp, so alphabetical
+   order == age. Every deletion is logged (no silent truncation).
 
 The script **exits non-zero on any failure** so the Railway cron surfaces it.
 
@@ -57,6 +59,8 @@ The script **exits non-zero on any failure** so the Railway cron surfaces it.
 | `SCW_REGION` | | `fr-par` | Scaleway region |
 | `SCW_ENDPOINT` | | `https://s3.$SCW_REGION.scw.cloud` | S3 endpoint (swap for R2/B2/MinIO) |
 | `BACKUP_PREFIX` | | `keepou` | Dump-name prefix inside the bucket |
+| `HOURLY_PREFIX` | | `hourly` | Fine-grained tier prefix (every run) |
+| `HOURLY_RETENTION` | | `48` | Fine-grained dumps to keep (2 days at hourly) |
 | `DAILY_RETENTION` | | `7` | Daily dumps to keep |
 | `WEEKLY_RETENTION` | | `4` | Weekly dumps to keep |
 | `WEEKLY_DOW` | | `7` | ISO day-of-week that also lands a weekly |
@@ -67,20 +71,25 @@ The script **exits non-zero on any failure** so the Railway cron surfaces it.
 
 ---
 
-## 2. Provision the Railway cron service (dashboard)
+## 2. Provision the Railway cron service
 
-Provisioning is **dashboard-only** (like the other Railway services); the repo
-only holds the versioned script + its image.
+The service itself is created in the **dashboard**; its **build + cron schedule**
+are **config-as-code** in the repo-root [`railway.json`](../railway.json).
 
 1. **New service** in the Keepou project → deploy from **this GitHub repo**. Set
-   **Root Directory** = repo root and **Dockerfile Path** = `ops/backup/Dockerfile`.
+   **Root Directory** = repo root. Railway then reads the repo-root `railway.json`,
+   which pins the Dockerfile (`ops/backup/Dockerfile`), the **cron schedule**
+   (`0 * * * *`, hourly), and `restartPolicyType: NEVER` (a failed run waits for
+   the next tick instead of crash-looping). keepou-api / keepou-web are unaffected
+   — they have their own root dirs (`api/`, `web/`) and their own `railway.json`.
 2. **Service variables**:
    - `DATABASE_URL` = `${{ Postgres.DATABASE_URL }}` — the plugin's **internal**
      URL, so the database is **never exposed publicly**.
    - `SCW_ACCESS_KEY`, `SCW_SECRET_KEY`, `BACKUP_BUCKET`, `SCW_REGION` — the
      Scaleway credentials + target (kept in Railway secrets, **not** in the repo).
-3. **Cron Schedule** = `0 3 * * *`. Railway starts the container on schedule; it
-   exits when the backup finishes.
+3. To change cadence, edit `deploy.cronSchedule` in `railway.json` (minimum
+   interval on Railway is **5 min**). Adjust `HOURLY_RETENTION` if you want a
+   different fine-grained depth (window = cadence × `HOURLY_RETENTION`).
 4. If Railway upgrades the managed Postgres major version, bump the image's
    `PG_MAJOR` build arg (`pg_dump` must be ≥ the server version).
 
@@ -92,9 +101,10 @@ on this service, or add a webhook, so a non-zero exit pages someone.
 1. Create a **bucket** (e.g. `keepou-backups`) in the `fr-par` region, **private**.
 2. Create an **API key** (access + secret) scoped to Object Storage; put it in the
    Railway service variables above.
-3. **Retention** is enforced by the script (7 daily + 4 weekly). Optionally add a
-   bucket **lifecycle rule** as a backstop (e.g. expire objects older than 60 days)
-   — but note a pure age rule can't express "keep 4 weeklies", so the script stays
+3. **Retention** is enforced by the script (48 hourly + 7 daily + 4 weekly).
+   Optionally add a bucket **lifecycle rule** as a backstop (e.g. expire objects
+   older than 60 days) — but note a pure age rule can't express "keep 4 weeklies",
+   so the script stays
    the source of truth for the policy.
 
 ---
@@ -116,9 +126,10 @@ on this service, or add a webhook, so a non-zero exit pages someone.
    ```bash
    TARGET_DATABASE_URL="postgresql://<user>:<pass>@<host>:5432/keepou_restore" \
    SCW_ACCESS_KEY=… SCW_SECRET_KEY=… BACKUP_BUCKET=keepou-backups SCW_REGION=fr-par \
-   scripts/restore.sh --key daily/keepou-20260717T030000Z.dump
+   scripts/restore.sh --key hourly/keepou-20260717T030000Z.dump
    ```
-   - Omit `--key` to restore the **newest** `daily/` dump automatically.
+   - Omit `--key` to restore the **newest** `hourly/` dump (the most recent point)
+     automatically. Pass a `daily/…` or `weekly/…` key to go further back.
    - Use `--file ./keepou-….dump` to restore a dump you already downloaded (no
      Scaleway creds needed).
    - The dump was taken with `--no-owner --no-privileges`, so it maps to the
@@ -139,9 +150,12 @@ maintenance window), redeploy, and confirm `GET /api/health` + a login.
 
 ## 4. Retention & integrity policy
 
-- **Retention**: 7 daily + 4 weekly. Enforced every run by the prune step; each
-  deletion is logged. Snapshots are small (Markdown text), so retention is cheap —
-  the value is in *tested recoverability*, not volume.
+- **Retention**: **48 hourly + 7 daily + 4 weekly** (a grandfather-father-son
+  scheme). The hourly tier gives fine-grained recent recovery (~2 days at hourly
+  cadence); daily/weekly give depth without keeping many objects. Enforced every
+  run by the prune step; each deletion is logged. Snapshots are small (Markdown
+  text — a full dump is ~180 KB), so retention is cheap — the value is in *tested
+  recoverability*, not volume.
 - **Integrity**: every dump is validated with `pg_restore --list` **before**
   upload; `restore.sh` re-validates **before** touching the target DB. A periodic
   full **restore-verify** into a scratch DB (section 3) is the strongest check —
@@ -151,15 +165,16 @@ maintenance window), redeploy, and confirm `GET /api/health` + a login.
 
 ## 5. Data-loss window
 
-The backup is a **daily** snapshot, so the worst-case data-loss window is the
-**backup interval ≈ 24 h**: a failure just before the 03:00 UTC run loses up to a
-day of edits. Tighten it by running the cron more often (e.g. `0 */6 * * *` →
-≤ 6 h) at the cost of more dumps; loosen `DAILY_RETENTION` accordingly.
+The backup runs **hourly**, so the worst-case data-loss window is the **backup
+interval ≈ 1 h**: a failure just before the top-of-hour run loses up to an hour of
+edits. Change the cadence in `railway.json` (`deploy.cronSchedule`; Railway
+minimum is 5 min) and adjust `HOURLY_RETENTION` for the fine-grained depth you
+want (window = cadence × `HOURLY_RETENTION`).
 
 | Metric | Value |
 |---|---|
-| Backup interval | 24 h (daily `0 3 * * *`) |
-| **Data-loss window (RPO)** | **≤ 24 h** |
+| Backup interval | 1 h (hourly `0 * * * *`) |
+| **Data-loss window (RPO)** | **≤ 1 h** |
 | Restore time (RTO), observed | _record here after the first real restore_ |
 
 ---
