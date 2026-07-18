@@ -551,6 +551,16 @@
   color: var(--brand-salsa);
 }
 
+/* Stays mounted while the note has boxes; muted until one is ticked. */
+.kp-blocks__clear:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.kp-blocks__clear:disabled:hover {
+  color: var(--ink-soft);
+}
+
 .kp-blocks__insert-box {
   width: 18px;
   height: 18px;

@@ -754,4 +754,15 @@
   .kp-tabs__tab {
     padding: 8px 13px;
   }
+
+  /* Less dead space between « Prends une note… » and the density/sort row
+   * (feedback round 2): the desktop margins stacked up to ~44px on a phone. */
+  .kp-composer {
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+
+  .kp-board__toolbar {
+    margin-bottom: 12px;
+  }
 }

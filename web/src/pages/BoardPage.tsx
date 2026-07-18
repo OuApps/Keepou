@@ -75,8 +75,10 @@ function parseSort(value: string | null): SortKey {
   return value === 'created' || value === 'title' ? value : 'modified'
 }
 
+// « Aperçu » is the default (feedback round 2): whole boards of long notes were
+// forcing a long scroll; « Notes entières » is the explicit opt-in.
 function parseDensity(value: string | null): Density {
-  return value === 'compact' ? 'compact' : 'full'
+  return value === 'full' ? 'full' : 'compact'
 }
 
 export default function BoardPage() {
@@ -144,7 +146,7 @@ export default function BoardPage() {
 
   const switchTab = (next: BoardTab) => updateParams({ tab: next === 'mine' ? null : 'public' })
   const setSort = (next: SortKey) => updateParams({ sort: next === 'modified' ? null : next })
-  const setDensity = (next: Density) => updateParams({ density: next === 'full' ? null : next })
+  const setDensity = (next: Density) => updateParams({ density: next === 'compact' ? null : next })
 
   const returnTo = `/${params.toString() === '' ? '' : `?${params.toString()}`}`
   // A freshly created note opens straight in the editor; it carries the board's
