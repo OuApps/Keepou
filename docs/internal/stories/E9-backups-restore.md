@@ -31,9 +31,9 @@ the DB is live**, ideally before real user data accumulates.
 - [x] **E9-S1** — Backup script: `pg_dump` → compress → upload to Scaleway — *shipped & running in prod*
 - [x] **E9-S2** — Railway scheduled (cron) service running the backup — *live: `keepou-backups` service provisioned, hourly cron in `railway.json`, first real backup landed on Scaleway*
 - [x] **E9-S3** — Retention & integrity checks — *shipped (48 hourly + 7 daily + 4 weekly, tiered)*
-- [~] **E9-S4** — Tested restore + runbook — *runbook written + pipeline validated locally; live end-to-end restore pending*
+- [x] **E9-S4** — Tested restore + runbook — *done: live restore drill 2026-07-18 (736 rows verified), RTO ~6 s in the runbook*
 
-**Status.** **Live.** The `keepou-backups` Railway cron service is provisioned and
+**Status.** **Shipped ✅.** The `keepou-backups` Railway cron service is provisioned and
 its **first real backup landed on Scaleway** (`hourly/keepou-…​.dump`, ~180 KB,
 integrity-checked). The schedule is **hourly** (`0 * * * *`) via the repo-root
 `railway.json`; uploads are **tiered** (`hourly/` every run, promoted to `daily/`
@@ -45,8 +45,9 @@ verify). Files: [`scripts/backup.sh`](../../../scripts/backup.sh),
 [`ops/backup/Dockerfile`](../../../ops/backup/Dockerfile),
 [`railway.json`](../../../railway.json) (+ `ops/backup/README.md` / `.env.example`),
 and the runbook [`docs/RUNBOOK-backups-restore.md`](../../RUNBOOK-backups-restore.md).
-What **remains**: perform the **first live end-to-end restore** from Scaleway and
-record the RTO in the runbook (S4). `[~]` = partially done.
+The **first live end-to-end restore** was performed 2026-07-18 (newest `hourly/`
+dump → fresh PG 18 → **736 rows verified**: 313 notes, 414 versions, 3 users),
+**RTO ~6 s**, recorded in the runbook §6. **All four stories done — E9 shipped.**
 
 ---
 
@@ -147,13 +148,12 @@ once.
 - [x] The restore runbook is written and reproducible by another dev. *(`docs/RUNBOOK-backups-restore.md`
   §3, with `scripts/restore.sh`: download → integrity check → `pg_restore` into a
   fresh DB → row-count verify, plus a guard against clobbering the live DB.)*
-- [~] A **full restore has been done end-to-end at least once** and verified. *(the
-  full pipeline was run end-to-end locally on PG 16 — restore into a fresh DB then
-  verify — but the run against the **live** Scaleway bucket + Railway DB is still
-  to be performed.)*
-- [~] Restore time + data-loss window recorded in the runbook. *(data-loss window
-  ≤ 24 h documented; the observed restore **time (RTO)** is recorded after the first
-  live restore — see the runbook's "First real restore" section.)*
+- [x] A **full restore has been done end-to-end at least once** and verified. *(done
+  2026-07-18 against the **live Scaleway bucket**: newest `hourly/` dump restored into
+  a fresh **PG 18** DB, 736 rows verified — 313 notes, 414 versions, 3 users. Creds
+  injected via `railway run` — never printed.)*
+- [x] Restore time + data-loss window recorded in the runbook. *(RTO ~6 s, RPO ≤ 1 h;
+  runbook §5 + §6 "First real restore".)*
 
 **Notes.** "Disable, never delete" + append-only history mean the DB is the single
 source of truth — a *tested* restore is what makes the durability promise real
@@ -161,17 +161,13 @@ source of truth — a *tested* restore is what makes the durability promise real
 
 ---
 
-## Definition of "E9 done"
+## Definition of "E9 done" — ✅ met
 
-> Code-complete and validated locally; the unchecked boxes below are the
-> **dashboard-provisioning + first live run** that close the epic (see **Status**).
-
-- [ ] Automated backups run on schedule (Railway cron) and land **off-site** on
-  Scaleway Object Storage. *(script + cron runner image ready; needs the live
-  Railway service + Scaleway bucket.)*
-- [x] Retention enforced; each dump passes an integrity check. *(implemented in
-  `scripts/backup.sh` and validated locally.)*
-- [ ] A full restore has been performed end-to-end at least once (runbook written).
-  *(runbook written + pipeline validated locally; the **live** restore is pending.)*
-- [~] Restore time + data-loss window documented. *(data-loss window ≤ 24 h
-  documented; RTO recorded after the first live restore.)*
+- [x] Automated backups run on schedule (Railway cron) and land **off-site** on
+  Scaleway Object Storage. *(live: `keepou-backups`, hourly `0 * * * *`, tiered
+  `hourly/`→`daily/`→`weekly/`.)*
+- [x] Retention enforced; each dump passes an integrity check. *(48 hourly + 7 daily
+  + 4 weekly, pruned per tier; `pg_restore --list` before every upload.)*
+- [x] A full restore has been performed end-to-end at least once (runbook written).
+  *(2026-07-18, live Scaleway dump → fresh PG 18 → 736 rows verified.)*
+- [x] Restore time + data-loss window documented. *(RTO ~6 s, RPO ≤ 1 h; runbook §5–§6.)*

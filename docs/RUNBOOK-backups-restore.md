@@ -175,23 +175,25 @@ want (window = cadence × `HOURLY_RETENTION`).
 |---|---|
 | Backup interval | 1 h (hourly `0 * * * *`) |
 | **Data-loss window (RPO)** | **≤ 1 h** |
-| Restore time (RTO), observed | _record here after the first real restore_ |
+| Restore time (RTO), observed | **~6 s** (download → verified, ~180 KB / 736 rows) — plus a few min to provision a fresh DB + repoint the app for a real recovery |
 
 ---
 
 ## 6. First real restore — record
 
-Perform a full restore **once for real** and fill this in (the durability promise
-isn't real until a restore has been done end-to-end):
+The first full restore has been **performed end-to-end against the live Scaleway
+bucket** — the durability promise is real:
 
-- Date performed: `____`
-- Dump restored (key): `____`
-- Restore time (download → verified): `____`
-- Tables / rows verified: `____`
-- Notes / issues: `____`
+- **Date performed:** 2026-07-18
+- **Dump restored (key):** `hourly/keepou-20260718T200001Z.dump` (~180 KB / 183,318 bytes)
+- **Restore time (download → verified):** ~6 s
+- **Tables / rows verified:** 6 tables, 736 rows — `note` 313, `noteversion` 414,
+  `user` 3, `personalaccesstoken` 4, `allowlistentry` 1, `alembic_version` 1
+- **Method:** `scripts/restore.sh` into a **fresh PostgreSQL 18** database;
+  Scaleway credentials injected via `railway run -s keepou-backups` (never printed).
+- **Notes / issues:** none — dump integrity-checked, restored and row-counts
+  verified cleanly. `pg_dump`/`pg_restore` client pinned to **18** to match the
+  Railway server (18.4).
 
-> A dry run of the whole pipeline has been validated on PostgreSQL 16 (dump →
-> integrity check → S3 upload + weekly copy → retention prune → download →
-> `pg_restore` into a fresh DB → per-table row-count verify). The remaining step
-> is to run it against the **live Scaleway bucket + Railway DB** and record the
-> numbers above.
+> Re-run this drill after any major change (schema, Postgres major upgrade, provider
+> swap) and at least quarterly; update the numbers above.

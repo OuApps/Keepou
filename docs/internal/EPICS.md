@@ -18,7 +18,7 @@
 - [x] **E6** — History & versions · ✅ detailed → [`stories/E6-historique-versions.md`](./stories/E6-historique-versions.md) — *shipped (`NoteVersion` migration, creation root « Créée par X », one version per session on lock release / editor close with a no-op guard, newest-first visibility-gated `GET .../versions`, restore = new version — lock-checked, visibility owner-only —, HistoryPanel desktop + mobile 2-screen flow, tests back & front)*
 - [x] **E7** — Access administration · ✅ detailed → [`stories/E7-administration.md`](./stories/E7-administration.md) — *shipped (admin router: members LEFT JOIN, allowlist add / pending-only remove, role/status PATCH + last-admin guard; AccessManager tabs + counters, MemberRow ⋯ menu, PendingRow « Retirer », admins-only « Administration » avatar-menu entry, tests back & front)*
 - [ ] 🔨 **E8** — Polish (PWA, a11y, formatting, **pin + archive**, i18n, quality) · ✅ detailed → [`stories/E8-polish-pwa-a11y-i18n.md`](./stories/E8-polish-pwa-a11y-i18n.md) — *S1–S11 shipped (PWA install surface + minimal SW, a11y pass + ink-contrast policy, FR copy centralized in `lib/copy.ts`, tests + CI green, mobile-keyboard handling, autofill markup, dark tokens WCAG AA, inline bold/italic/headings as-you-type, text under a checkbox, **pin + archive** — `Note.pinned`/`archived` migration, owner-only lock-free PATCH, `?archived=` view, card ⋯ menu + pinned-first ordering, new notebook+pen logo/icon set); remaining: on-device checks only (Android/iOS install & keyboard, Bitwarden)*
-- [ ] 🔨 **E9** — Database cold backups & restore · ✅ detailed → [`stories/E9-backups-restore.md`](./stories/E9-backups-restore.md) — *live: the `keepou-backups` Railway cron service backs the DB up **hourly** off-site to **Scaleway** (first real dump landed); `scripts/backup.sh` (`pg_dump -Fc` → integrity check → **tiered** upload `hourly/`→`daily/`→`weekly/` → 48/7/4 prune), `scripts/restore.sh` (download → `pg_restore` into a fresh DB → row-count verify), `ops/backup/Dockerfile` runner + repo-root `railway.json` (cron as code) + `docs/RUNBOOK-backups-restore.md`; pipeline also validated on PostgreSQL 16 with a mock S3. Remaining: perform the first live end-to-end restore and record the RTO (S4)*
+- [x] **E9** — Database cold backups & restore · ✅ detailed → [`stories/E9-backups-restore.md`](./stories/E9-backups-restore.md) — *shipped: the `keepou-backups` Railway cron service backs the DB up **hourly** off-site to **Scaleway**; `scripts/backup.sh` (`pg_dump -Fc` → integrity check → **tiered** upload `hourly/`→`daily/`→`weekly/` → 48/7/4 prune), `scripts/restore.sh` (download → `pg_restore` into a fresh DB → row-count verify), `ops/backup/Dockerfile` runner + repo-root `railway.json` (cron as code) + `docs/RUNBOOK-backups-restore.md`. **First live restore done 2026-07-18** (736 rows verified, RTO ~6 s); RPO ≤ 1 h, dump ~180 KB*
 - [x] **E10** — Import from Google Keep · ✅ detailed → [`stories/E10-import-keep.md`](./stories/E10-import-keep.md) — *shipped (Takeout parser, preview/confirm endpoints, validated mockup `Keepou - Import Keep.dc.html`, `/import` flow — upload → review « mode tunnel » → summary —, tests back & front, user how-to)*
 - [x] **E11** — Field-feedback follow-up · ✅ detailed → [`stories/E11-retours-terrain.md`](./stories/E11-retours-terrain.md) — *shipped (board sort + density selectors + search reset + year-in-old-dates + return-state; hard delete from the card, the editor and archive multi-select/select-all; owner pin/archive/delete + `Maj+Entrée` in the editor; self-service display-name change `PATCH /api/auth/me`; windowed board rendering; instant open/close via a board cache with optimistic upserts; editor « Supprimer les cases cochées » to clear all ticked boxes (S6); editor « Copier la note » one-click whole-note copy (S7); tests back & front)*
 - [x] **E12** — Internationalization (FR + EN) · ✅ detailed → [`stories/E12-i18n.md`](./stories/E12-i18n.md) — *shipped (`User.language` server-stored preference + migration; `web/src/i18n/` FR/EN dictionaries typed by a shared `Copy`, `I18nProvider` / `useI18n` / `useLocale`; every screen migrated off `lib/copy`; full English translation; account-menu language switcher under « Modifier mon nom », adopted on login & persisted via `PATCH /me`; localized timestamps; tests back & front)*
@@ -450,19 +450,18 @@ members can rename themselves; large boards mount instantly; tests green in CI.
 the Google Keep import, the polish pass (PWA, a11y, dark-mode AA, inline
 formatting, i18n centralization, quality), the field-feedback follow-up (E11),
 **full French/English internationalization (E12)** and **agent access over MCP
-(E13)** are done; **E9 — DB cold backups is live** (🔨 only the first live restore
-drill remains). Next: **perform the first live restore** from Scaleway and record
-the RTO; **E8-S2 (archive)** stays design-gated.
+(E13) and E9 (DB cold backups)** are done. Next: **E8-S2 (archive)** stays
+design-gated — that's the main open thread.
 
 Two points to keep in mind:
 - **E8 archive** is deliberately **design-gated** — its story is just "voir design
   avec designer"; implementation stories come after the archive UI is designed.
-- **E9** (DB cold backups) is **live**: the `keepou-backups` Railway cron service
-  backs the DB up **hourly** off-site to **Scaleway Object Storage** (first real
-  dump landed). `scripts/backup.sh` + `scripts/restore.sh`, the `ops/backup/`
-  runner image, the repo-root `railway.json` (cron as code) and
-  `docs/RUNBOOK-backups-restore.md`; uploads are **tiered** (48 hourly + 7 daily +
-  4 weekly). Only the first **live end-to-end restore** (+ its RTO) remains.
+- **E9** (DB cold backups) is **shipped**: the `keepou-backups` Railway cron service
+  backs the DB up **hourly** off-site to **Scaleway Object Storage**, tiered
+  (48 hourly + 7 daily + 4 weekly). `scripts/backup.sh` + `scripts/restore.sh`, the
+  `ops/backup/` runner image, the repo-root `railway.json` (cron as code) and
+  `docs/RUNBOOK-backups-restore.md`. The **first live restore** was performed
+  2026-07-18 (736 rows verified, RTO ~6 s; RPO ≤ 1 h, dump ~180 KB).
 - **E10** (import from Google Keep) is **shipped end-to-end** — mockup validated
   (`design/Keepou - Import Keep.dc.html`), `/import` flow live, tests back & front,
   user how-to in `docs/HOWTO-import-google-keep.md`.
