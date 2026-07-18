@@ -302,7 +302,8 @@ The « Mes notes / Public » tab and the sort selector are unchanged.
 Two field asks after living with a large imported board:
 
 - **Density selector.** Next to the sort selector, a native `<select>` **Notes
-  entières / Aperçu** (`?density=`, default « Notes entières »). « Aperçu » caps
+  entières / Aperçu** (`?density=`, default « Notes entières » — flipped to
+  default « Aperçu » by the round-2 feedback below). « Aperçu » caps
   each card body (`.kp-note__body--compact`, `max-height` + `overflow: hidden`) so
   long notes stop forcing a long scroll and more cards fit on one screen. It is
   display-only — it never changes which notes show or their order, and so is not
@@ -328,3 +329,43 @@ Two field asks after living with a large imported board:
 
   Tests: `web/src/lib/boardCache.test.ts` (store), a board density test, and an
   editor seed test (a hung `getNote` still paints instantly from the seed).
+
+---
+
+## Follow-up — edit mode, feedback round 2
+
+A second round of field feedback (the household's Keep-acceptance test 🙂)
+found the edit mode wanting. All fixes are frontend-only — the stored GFM body
+and the API are untouched:
+
+- [x] **Drag-select no longer closes the editor (desktop).** A text selection
+  that started inside the note and released on the backdrop made the browser
+  fire the click on their common ancestor — the overlay — and threw the user
+  back to the board. The overlay now closes only when the *press itself*
+  started on the backdrop (`NoteEditor`, pointerdown-armed click).
+- [x] **Blank lines survive an editing session.** `parse` used to split a
+  paragraph on every blank line; on reopen the empty line degraded into a
+  smaller inter-block gap — read as « il enlève mes sauts de ligne ». Blank
+  lines now stay inside a single text block (2+ still collapse to one per
+  HANDOFF §3.3), which also lets a selection span those paragraphs.
+- [x] **Checkboxes can be inserted mid-note.** Typing `[]`, `[x]` or `- [ ]`
+  at the start of a line converts it into a real box **in place**
+  (`BlockList.explodeChecks`), and « Insérer une case à cocher » now inserts
+  at the focused block/caret — splitting the paragraph — instead of always at
+  the bottom (the affordance itself stays at the bottom, HANDOFF §3.3).
+- [x] **Backspace / Suppr work at block edges.** Backspace at the start of a
+  paragraph or a box label merges into the previous block; Suppr at the end
+  pulls the next block in — with the caret placed at the junction. They
+  previously did nothing (the reported « suppression bug sur PC »).
+- [x] **« Supprimer les cases cochées » stays put.** The button used to mount
+  only while ≥ 1 box was ticked (« parfois absent »); it now stays mounted
+  whenever the note has boxes, disabled until one is ticked.
+- [x] **Board defaults to « Aperçu ».** `?density=` now defaults to compact;
+  `?density=full` is the explicit « Notes entières » opt-in.
+- [x] **Mobile: less dead space** between « Prends une note… » and the
+  density/sort row (composer + toolbar margins tightened ≤ 640 px).
+
+Tests: `web/src/lib/markdown.test.ts` (blank-line round-trip),
+`web/src/pages/editor.test.tsx` (shorthand conversion, insert-at-caret,
+edge deletions, drag-release, clear-button stability),
+`web/src/pages/board.test.tsx` (default density).

@@ -96,11 +96,28 @@ describe('parse', () => {
     ])
   })
 
-  it('keeps consecutive lines in one paragraph, blank lines split paragraphs', () => {
+  it('keeps blank lines inside a single text block (visible line breaks survive a reopen)', () => {
     expect(parse('ligne 1\nligne 2\n\nsecond paragraphe')).toEqual([
-      { type: 'text', text: 'ligne 1\nligne 2' },
-      { type: 'text', text: 'second paragraphe' },
+      { type: 'text', text: 'ligne 1\nligne 2\n\nsecond paragraphe' },
     ])
+  })
+
+  it('round-trips a paragraph containing a blank line unchanged', () => {
+    const blocks: Block[] = [{ type: 'text', text: 'ligne 1\n\nligne 2' }]
+    expect(serialize(blocks)).toBe('ligne 1\n\nligne 2')
+    expect(parse(serialize(blocks))).toEqual(blocks)
+  })
+
+  it('treats blank lines around a checkbox group as separators, not content', () => {
+    expect(parse('avant\n\n- [ ] tâche\n\naprès')).toEqual([
+      { type: 'text', text: 'avant' },
+      { type: 'check', checked: false, text: 'tâche' },
+      { type: 'text', text: 'après' },
+    ])
+  })
+
+  it('normalizes 3+ consecutive blank lines from imported bodies to one', () => {
+    expect(parse('a\n\n\n\nb')).toEqual([{ type: 'text', text: 'a\n\nb' }])
   })
 
   it('parses an empty body to an empty flow', () => {

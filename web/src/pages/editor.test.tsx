@@ -96,6 +96,24 @@ function stubEditor(current: NoteOut, extra: Record<string, Handler> = {}) {
   return patches
 }
 
+/** Place a collapsed caret at a textContent offset inside a contenteditable. */
+function caretAt(el: Element, offset: number) {
+  let remaining = offset
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT)
+  let node = walker.nextNode()
+  while (node !== null && remaining > (node as Text).data.length) {
+    remaining -= (node as Text).data.length
+    node = walker.nextNode()
+  }
+  const range = document.createRange()
+  if (node !== null) range.setStart(node, remaining)
+  else range.selectNodeContents(el)
+  range.collapse(true)
+  const selection = window.getSelection()!
+  selection.removeAllRanges()
+  selection.addRange(range)
+}
+
 function renderEditor(id = 'n-repas') {
   return render(
     <MemoryRouter initialEntries={[`/note/${id}`]}>
@@ -453,20 +471,21 @@ describe('NoteEditor', () => {
 
   // --- E11-S6: clear all checked boxes ---
 
-  it('offers the clear action only while at least one box is checked (E11-S6)', async () => {
+  it('keeps the clear action mounted while the note has boxes, enabled only when one is checked (E11-S6)', async () => {
     stubEditor(note())
     renderEditor()
     await editorLoaded()
 
     const name = 'Supprimer les cases cochées'
-    // The note loads with one box already checked → the action is offered.
-    expect(screen.getByRole('button', { name })).toBeInTheDocument()
+    // The note loads with one box already checked → the action is available.
+    expect(screen.getByRole('button', { name })).toBeEnabled()
 
-    // Unchecking the only ticked box hides it again.
+    // Unchecking the only ticked box keeps the button in place (it used to
+    // vanish — « parfois absent ») but disables it.
     await act(async () => {
       fireEvent.click(screen.getByRole('checkbox', { name: 'Réserver la salle' }))
     })
-    expect(screen.queryByRole('button', { name })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name })).toBeDisabled()
   })
 
   it('removes every checked box and saves the trimmed body immediately (E11-S6)', async () => {
@@ -505,6 +524,118 @@ describe('NoteEditor', () => {
     await screen.findByText(/Enregistré · à l'instant/)
     expect(patches).toHaveLength(1)
     expect(patches[0].body).toBe('')
+  })
+
+  // --- Edit-mode feedback round 2: mid-note checkboxes, edge deletions, drag ---
+
+  it('typing [] at the start of a line turns it into a checkbox in place', async () => {
+    const patches = stubEditor(note({ body: 'Toto\nTata', visibility: 'PRIVATE' }))
+    renderEditor()
+    await editorLoaded()
+
+    const area = screen.getByLabelText('Paragraphe')
+    area.textContent = 'Toto\n[]\nTata'
+    fireEvent.input(area)
+
+    // The shorthand line became a real box between the two text lines…
+    expect(screen.getByRole('checkbox', { name: 'Case à cocher' })).not.toBeChecked()
+    const label = screen.getByPlaceholderText('Nouvel élément')
+    expect(label).toHaveValue('')
+    expect(label).toHaveFocus()
+    const paragraphs = screen.getAllByLabelText('Paragraphe')
+    expect(paragraphs.map((p) => p.textContent)).toEqual(['Toto', 'Tata'])
+
+    // …and serializes as a GFM task line at that position.
+    fireEvent.change(label, { target: { value: 'Ranger le salon' } })
+    fireEvent.blur(label)
+    await screen.findByText(/Enregistré · à l'instant/)
+    expect(patches[patches.length - 1].body).toBe('Toto\n\n- [ ] Ranger le salon\n\nTata')
+  })
+
+  it('the insert button splits the focused paragraph at the caret', async () => {
+    stubEditor(note({ body: 'Toto\nTata', visibility: 'PRIVATE' }))
+    renderEditor()
+    await editorLoaded()
+
+    const area = screen.getByLabelText('Paragraphe')
+    area.focus()
+    caretAt(area, 'Toto'.length)
+    const button = screen.getByRole('button', { name: /Insérer une case à cocher/ })
+    fireEvent.pointerDown(button) // captures the origin before the click blurs it
+    fireEvent.click(button)
+
+    // The box landed BETWEEN Toto and Tata (the reported blocker), focused.
+    const paragraphs = screen.getAllByLabelText('Paragraphe')
+    expect(paragraphs.map((p) => p.textContent)).toEqual(['Toto', 'Tata'])
+    const label = screen.getByPlaceholderText('Nouvel élément')
+    expect(label).toHaveFocus()
+  })
+
+  it('the insert button adds the new box right after the focused item', async () => {
+    stubEditor(note())
+    renderEditor()
+    await editorLoaded()
+
+    screen.getByDisplayValue('Réserver la salle').focus()
+    const button = screen.getByRole('button', { name: /Insérer une case à cocher/ })
+    fireEvent.pointerDown(button)
+    fireEvent.click(button)
+
+    const labels = [...document.querySelectorAll<HTMLInputElement>('.kp-blocks__label')]
+    expect(labels.map((l) => l.value)).toEqual(['Réserver la salle', '', 'Tables & chaises'])
+    expect(labels[1]).toHaveFocus()
+  })
+
+  it('Backspace at the start of an item merges it into the previous one', async () => {
+    stubEditor(note())
+    renderEditor()
+    await editorLoaded()
+
+    const label = screen.getByDisplayValue('Tables & chaises') as HTMLInputElement
+    label.focus()
+    label.setSelectionRange(0, 0)
+    fireEvent.keyDown(label, { key: 'Backspace' })
+
+    const merged = screen.getByDisplayValue('Réserver la salleTables & chaises')
+    expect(merged).toHaveFocus()
+    expect((merged as HTMLInputElement).selectionStart).toBe('Réserver la salle'.length)
+    expect(screen.getAllByRole('checkbox')).toHaveLength(1)
+  })
+
+  it('Suppr at the end of a paragraph pulls the next checkbox item up', async () => {
+    stubEditor(note())
+    renderEditor()
+    await editorLoaded()
+
+    const area = screen.getByLabelText('Paragraphe')
+    area.focus()
+    caretAt(area, (area.textContent ?? '').length)
+    fireEvent.keyDown(area, { key: 'Delete' })
+
+    expect(area.textContent).toBe(
+      'Pour le repas de quartier on se répartit les tâches.Réserver la salle',
+    )
+    expect(screen.getAllByRole('checkbox')).toHaveLength(1)
+  })
+
+  it('does not close when a drag-selection releases on the backdrop', async () => {
+    stubEditor(note())
+    renderEditor()
+    await editorLoaded()
+    const overlay = document.querySelector('.kp-editor-overlay')!
+
+    // The press starts INSIDE the editor (a text-selection drag); the release
+    // on the backdrop makes the click target the overlay — must NOT close.
+    fireEvent.pointerDown(screen.getByLabelText('Titre de la note'))
+    fireEvent.click(overlay)
+    expect(screen.getByLabelText('Titre de la note')).toBeInTheDocument()
+
+    // A real backdrop click (press started there too) still closes.
+    fireEvent.pointerDown(overlay)
+    await act(async () => {
+      fireEvent.click(overlay)
+    })
+    expect(await screen.findByLabelText('Prends une note…')).toBeInTheDocument()
   })
 
   it('copies the whole note — title + serialized text — in one click (E11-S7)', async () => {

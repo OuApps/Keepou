@@ -336,6 +336,12 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     }
   }
 
+  // A click closes the editor only if the press STARTED on the backdrop: a
+  // text-selection drag that begins inside the note and releases outside used
+  // to fire the overlay's click (the click target is the common ancestor of
+  // mousedown/mouseup) and threw the user back to the board mid-selection.
+  const pressOnBackdrop = useRef(false)
+
   // Escape closes an open overlay (owner menu / delete confirm) first, and only
   // then the editor. A ref keeps the window listener from re-subscribing.
   const overlayOpen = menuOpen || confirmDelete
@@ -399,7 +405,17 @@ export function NoteEditor({ noteId }: { noteId: string }) {
       : ''
 
   return (
-    <div className="kp-editor-overlay" onClick={() => void close()}>
+    <div
+      className="kp-editor-overlay"
+      onPointerDown={(e) => {
+        pressOnBackdrop.current = e.target === e.currentTarget
+      }}
+      onClick={(e) => {
+        const armed = pressOnBackdrop.current
+        pressOnBackdrop.current = false
+        if (armed && e.target === e.currentTarget) void close()
+      }}
+    >
       <section
         className={`kp-editor ${SHADE_CLASS[draft.color]}`}
         role="dialog"

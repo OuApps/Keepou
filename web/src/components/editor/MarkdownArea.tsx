@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef } from 'react'
 import { useI18n } from '../../i18n'
+import { caretOffset, selectionOffsets, setCaret } from '../../lib/caret'
 import { highlightMarkdown } from '../../lib/highlight'
 
 /**
@@ -15,56 +16,6 @@ import { highlightMarkdown } from '../../lib/highlight'
  * keeps the DOM free of `<br>`/nested nodes the browser would otherwise add.
  */
 
-/** Caret position as an offset into the element's textContent, or null. */
-function caretOffset(root: HTMLElement): number | null {
-  const selection = window.getSelection()
-  if (selection === null || selection.rangeCount === 0) return null
-  const { focusNode, focusOffset } = selection
-  if (focusNode === null || !root.contains(focusNode)) return null
-  const range = document.createRange()
-  range.selectNodeContents(root)
-  range.setEnd(focusNode, focusOffset)
-  return range.toString().length
-}
-
-/** The current selection as [start, end] offsets into textContent. */
-function selectionOffsets(root: HTMLElement): { start: number; end: number } | null {
-  const selection = window.getSelection()
-  if (selection === null || selection.rangeCount === 0) return null
-  const range = selection.getRangeAt(0)
-  if (!root.contains(range.startContainer) || !root.contains(range.endContainer)) return null
-  const pre = document.createRange()
-  pre.selectNodeContents(root)
-  pre.setEnd(range.startContainer, range.startOffset)
-  const start = pre.toString().length
-  pre.setEnd(range.endContainer, range.endOffset)
-  return { start, end: pre.toString().length }
-}
-
-/** Place a collapsed caret at a textContent offset. */
-function setCaret(root: HTMLElement, offset: number) {
-  const selection = window.getSelection()
-  if (selection === null) return
-  const range = document.createRange()
-  let remaining = offset
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
-  for (let node = walker.nextNode(); node !== null; node = walker.nextNode()) {
-    const length = (node as Text).data.length
-    if (remaining <= length) {
-      range.setStart(node, remaining)
-      range.collapse(true)
-      selection.removeAllRanges()
-      selection.addRange(range)
-      return
-    }
-    remaining -= length
-  }
-  range.selectNodeContents(root)
-  range.collapse(false)
-  selection.removeAllRanges()
-  selection.addRange(range)
-}
-
 interface MarkdownAreaProps {
   value: string
   onChange: (next: string) => void
@@ -73,6 +24,10 @@ interface MarkdownAreaProps {
   placeholder?: string
   /** Focus anchor for BlockList (`[data-block]`). */
   blockKey: string
+  /** Backspace with a collapsed caret at offset 0 — merge into the previous block. */
+  onMergeBack?: () => void
+  /** Delete (Suppr) with a collapsed caret at the end — merge the next block in. */
+  onMergeForward?: () => void
 }
 
 export function MarkdownArea({
@@ -81,6 +36,8 @@ export function MarkdownArea({
   onFlush,
   placeholder,
   blockKey,
+  onMergeBack,
+  onMergeForward,
 }: MarkdownAreaProps) {
   const { EDITOR_COPY } = useI18n()
   const ref = useRef<HTMLDivElement>(null)
@@ -136,6 +93,26 @@ export function MarkdownArea({
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault()
           insertText('\n')
+          return
+        }
+        // At the block's edges the browser has nothing to delete — hand the
+        // key to BlockList so it merges with the neighboring block instead of
+        // silently doing nothing (the reported dead Backspace/Suppr).
+        if (e.key !== 'Backspace' && e.key !== 'Delete') return
+        const el = ref.current
+        if (el === null) return
+        const range = selectionOffsets(el)
+        if (range === null || range.start !== range.end) return
+        if (e.key === 'Backspace' && range.start === 0 && onMergeBack !== undefined) {
+          e.preventDefault()
+          onMergeBack()
+        } else if (
+          e.key === 'Delete' &&
+          range.start === value.length &&
+          onMergeForward !== undefined
+        ) {
+          e.preventDefault()
+          onMergeForward()
         }
       }}
       onPaste={(e) => {

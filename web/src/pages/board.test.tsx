@@ -409,21 +409,22 @@ describe('BoardPage', () => {
     expect(titles).toEqual(['Avocat', 'Zèbre'])
   })
 
-  it('caps the card body in compact density (E11 follow-up)', async () => {
+  it('caps the card body in compact density by default, « Notes entières » opt-in (E11 follow-up)', async () => {
     stubBoard()
     renderBoard()
     await screen.findByRole('button', { name: 'Courses du week-end' })
-    // Default « Notes entières »: bodies render in full, no cap.
-    expect(document.querySelector('.kp-note__body')).not.toHaveClass('kp-note__body--compact')
-
-    fireEvent.change(screen.getByLabelText('Densité d’affichage'), { target: { value: 'compact' } })
+    // Default « Aperçu » (feedback round 2): bodies are capped out of the box.
     const bodies = [...document.querySelectorAll('.kp-note__body')]
     expect(bodies).not.toHaveLength(0)
     for (const body of bodies) expect(body).toHaveClass('kp-note__body--compact')
 
-    // Back to full removes the cap.
+    // « Notes entières » removes the cap.
     fireEvent.change(screen.getByLabelText('Densité d’affichage'), { target: { value: 'full' } })
     expect(document.querySelector('.kp-note__body')).not.toHaveClass('kp-note__body--compact')
+
+    // And back to the default cap.
+    fireEvent.change(screen.getByLabelText('Densité d’affichage'), { target: { value: 'compact' } })
+    expect(document.querySelector('.kp-note__body')).toHaveClass('kp-note__body--compact')
   })
 
   // --- E11: hard delete (single + archive multi-select) ---

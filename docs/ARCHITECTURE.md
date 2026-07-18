@@ -156,6 +156,12 @@ erDiagram
   as `<strong>`/`<em>`/`<h1>`–`<h3>` on the read-only surfaces. This is pure
   recognition/rendering: the stored body stays plain GFM (no API change, no
   migration), and everything outside the subset remains literal text.
+  Since the round-2 editor feedback the frontend parser also keeps **blank
+  lines inside a single text block** (a user's visible empty lines survive an
+  editing session instead of degrading into a smaller inter-block gap; two or
+  more consecutive blank lines still collapse to one per the HANDOFF rule),
+  and the editor converts a typed `[]` / `[x]` / `- [ ]` line into a real
+  checkbox **in place** — again pure frontend behavior over the same stored GFM.
 - **Note.color** — an identifier from a fixed palette (`GOLD | AVOCAT | SALSA |
   CLAY | TEAL`), not a hex value (FR-N4).
 - **Note.visibility** — `PRIVATE` (owner only) or `PUBLIC` (all members),
@@ -332,7 +338,9 @@ Backend **FastAPI**; frontend **React SPA** consuming the API. Inputs/outputs ar
 > (so they survive an editor round-trip — « retour garde la sélection »): a sort
 > selector (`?sort=modified|created|title`, pinned always first), a **density**
 > selector (`?density=full|compact` — compact caps each card body via CSS so more
-> notes fit on one screen; display-only, it never changes the set or its order), a
+> notes fit on one screen; display-only, it never changes the set or its order;
+> **compact « Aperçu » is the default** since the round-2 field feedback, `?density=full`
+> is the explicit opt-in), a
 > search reset (✕), and a **render window** that reveals cards incrementally so a
 > large imported board mounts instantly. The API still returns the full set in one
 > call. Filtering own notes by visibility is served by the top-right « Mes notes /
